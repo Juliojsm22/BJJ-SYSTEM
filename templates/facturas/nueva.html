@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Nueva Factura{% endblock %}
+{% block page_title %}Nueva Factura{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('facturas.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;">
+    <div class="card">
+        <form method="POST" id="formFactura">
+            <div class="form-group">
+                <label>Cliente *</label>
+                <select name="cliente_id" id="clienteSelect" class="form-control" required>
+                    <option value="">Seleccionar cliente...</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {% if cliente_id and cliente_id|int == c.id %}selected{% endif %}>
+                        {{ c.nombre_completo }} — {{ c.cedula }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="paquetesSection" style="display:none;">
+                <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir *</label>
+                <div id="paquetesList" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
+                    <div style="padding:20px;text-align:center;color:var(--text-muted);">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando paquetes...
+                    </div>
+                </div>
+                <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div style="font-size:13px;color:var(--text-muted);">Total seleccionado</div>
+                    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--success);" id="totalPreview">$0.00</div>
+                </div>
+            </div>
+
+            <div id="sinPaquetes" style="display:none;padding:20px;text-align:center;color:var(--text-muted);background:var(--surface2);border-radius:8px;margin-bottom:20px;">
+                <i class="fas fa-box-open" style="font-size:24px;margin-bottom:8px;display:block;opacity:0.4;"></i>
+                Este cliente no tiene paquetes pendientes de facturar.
+                <br><a href="{{ url_for('paquetes.nuevo') }}" style="color:var(--accent);">Agregar paquete</a>
+            </div>
+
+            <div class="form-group">
+                <label>Notas (opcional)</label>
+                <textarea name="notas" class="form-control" placeholder="Observaciones de la factura..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btnSubmit" disabled>
+                <i class="fas fa-file-invoice"></i> Generar factura
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let paquetesData = [];
+
+document.getElementById('clienteSelect').addEventListener('change', function() {
+    const cid = this.value;
+    if (!cid) {
+        document.getElementById('paquetesSection').style.display = 'none';
+        document.getElementById('sinPaquetes').style.display = 'none';
+        document.getElementById('btnSubmit').disabled = true;
+        return;
+    }
+    fetch(`/facturas/paquetes-cliente/${cid}`)
+        .then(r => r.json())
+        .then(paquetes => {
+            paquetesData = paquetes;
+            const section = document.getElementById('paquetesSection');
+            const sinPaq = document.getElementById('sinPaquetes');
+            if (paquetes.length === 0) {
+                section.style.display = 'none';
+                sinPaq.style.display = 'block';
+                document.getElementById('btnSubmit').disabled = true;
+                return;
+            }
+            sinPaq.style.display = 'none';
+            section.style.display = 'block';
+            renderPaquetes(paquetes);
+        });
+});
+
+function renderPaquetes(paquetes) {
+    const list = document.getElementById('paquetesList');
+    list.innerHTML = paquetes.map(p => `
+        <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" 
+               onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''" >
+            <input type="checkbox" name="paquete_ids" value="${p.id}" 
+                   onchange="actualizarTotal()" checked
+                   style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+            <div style="flex:1;">
+                <div style="font-weight:500;">${p.nombre}</div>
+                <div style="font-size:12px;color:var(--text-muted);">
+                    <span class="badge badge-${p.tipo_envio}">${p.tipo_envio === 'aereo' ? 'Aéreo' : 'Marítimo'}</span>
+                    ${p.peso.toFixed(2)} lb
+                </div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success);">$${p.costo.toFixed(2)}</div>
+        </label>
+    `).join('');
+    actualizarTotal();
+}
+
+function actualizarTotal() {
+    const checks = document.querySelectorAll('input[name="paquete_ids"]:checked');
+    let total = 0;
+    checks.forEach(c => {
+        const p = paquetesData.find(p => p.id == c.value);
+        if (p) total += p.costo;
+    });
+    document.getElementById('totalPreview').textContent = '$' + total.toFixed(2);
+    document.getElementById('btnSubmit').disabled = checks.length === 0;
+}
+
+// Auto-load if cliente_id in URL
+const params = new URLSearchParams(window.location.search);
+const cid = params.get('cliente_id');
+if (cid) {
+    const sel = document.getElementById('clienteSelect');
+    sel.value = cid;
+    sel.dispatchEvent(new Event('change'));
+}
+</script>
+{% endblock %}

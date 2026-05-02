@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+.env
+agencia.db
+.DS_Store

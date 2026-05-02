@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if paquete else 'Nuevo' }} Paquete{% endblock %}
+{% block page_title %}{{ 'Editar' if paquete else 'Registrar' }} Paquete{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;">
+    <div class="card">
+        <form method="POST" id="formPaquete">
+            <div class="form-group">
+                <label>Cliente *</label>
+                <select name="cliente_id" class="form-control" required>
+                    <option value="">Seleccionar cliente...</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {% if cliente_id and cliente_id|int == c.id %}selected{% elif paquete and paquete.cliente_id == c.id %}selected{% endif %}>
+                        {{ c.nombre_completo }} — {{ c.cedula }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nombre del paquete *</label>
+                <input type="text" name="nombre" class="form-control"
+                       value="{{ paquete.nombre if paquete else '' }}" required
+                       placeholder="Ej: Ropa deportiva, Electrónico, etc.">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea name="descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion if paquete else '' }}</textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Peso (libras) *</label>
+                    <input type="number" name="peso" id="peso" class="form-control"
+                           value="{{ paquete.peso if paquete else '' }}"
+                           step="0.01" min="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de envío *</label>
+                    <select name="tipo_envio" id="tipo_envio" class="form-control" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="aereo" {% if paquete and paquete.tipo_envio == 'aereo' %}selected{% endif %}>✈️ Aéreo — $6.50/lb</option>
+                        <option value="maritimo" {% if paquete and paquete.tipo_envio == 'maritimo' %}selected{% endif %}>🚢 Marítimo — $2.50/lb</option>
+                    </select>
+                </div>
+            </div>
+            
+            {% if paquete %}
+            <div class="form-group">
+                <label>Estado de Rastreo</label>
+                <select name="estado_rastreo" class="form-control">
+                    <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
+                    <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
+                    <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- Costo calculado -->
+            <div id="costoPreview" style="display:none;margin-bottom:20px;">
+                <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted);">COSTO CALCULADO</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="costoFormula"></div>
+                    </div>
+                    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--success);" id="costoValor">$0.00</div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ 'Actualizar' if paquete else 'Registrar' }}
+                </button>
+                <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calcularCosto() {
+    const peso = parseFloat(document.getElementById('peso').value) || 0;
+    const tipo = document.getElementById('tipo_envio').value;
+    const preview = document.getElementById('costoPreview');
+
+    if (peso > 0 && tipo) {
+        const tarifa = tipo === 'aereo' ? 6.50 : 2.50;
+        const costo = (peso * tarifa).toFixed(2);
+        document.getElementById('costoValor').textContent = '$' + costo;
+        document.getElementById('costoFormula').textContent =
+            `${peso.toFixed(2)} lb × $${tarifa.toFixed(2)} = $${costo}`;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+document.getElementById('peso').addEventListener('input', calcularCosto);
+document.getElementById('tipo_envio').addEventListener('change', calcularCosto);
+calcularCosto(); // run on load for edit mode
+</script>
+{% endblock %}

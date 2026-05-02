@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Factura {{ factura.numero }}{% endblock %}
+{% block page_title %}{{ factura.numero }}{% endblock %}
+
+{% block topbar_actions %}
+{% if factura.estado == 'borrador' %}
+<a href="{{ url_for('facturas.editar', id=factura.id) }}" class="btn btn-warning">
+    <i class="fas fa-edit"></i> Editar
+</a>
+<form method="POST" action="{{ url_for('facturas.finalizar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Finalizar factura? No podrá editarse.')">
+    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Finalizar</button>
+</form>
+{% elif factura.estado == 'finalizada' %}
+<form method="POST" action="{{ url_for('facturas.pagar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Marcar factura como pagada? Esta acción es irreversible.')">
+    <button type="submit" class="btn btn-success"><i class="fas fa-money-bill-wave"></i> Marcar como Pagada</button>
+</form>
+{% endif %}
+<a href="{{ url_for('facturas.generar_pdf', id=factura.id) }}" class="btn btn-secondary" target="_blank">
+    <i class="fas fa-file-pdf"></i> PDF
+</a>
+<a href="{{ whatsapp_url }}" class="btn btn-secondary" target="_blank" id="btnWA" style="background:rgba(37,211,102,0.15);border-color:rgba(37,211,102,0.3);color:#25d366;">
+    <i class="fab fa-whatsapp"></i> WhatsApp
+</a>
+<a href="{{ url_for('facturas.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i></a>
+{% endblock %}
+
+{% block content %}
+<!-- Estado banner -->
+{% if factura.estado == 'borrador' %}
+<div class="alert alert-warning"><i class="fas fa-edit"></i> Esta factura está en borrador. Puedes editarla antes de finalizar.</div>
+{% endif %}
+
+<div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);">{{ factura.numero }}</div>
+            <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">{{ factura.fecha_emision.strftime('%d de %B de %Y, %H:%M') }}</div>
+        </div>
+        <div style="display:grid;gap:10px;">
+            <div><span style="color:var(--text-muted);font-size:12px;">CLIENTE</span><br><strong>{{ factura.cliente.nombre_completo }}</strong></div>
+            <div><span style="color:var(--text-muted);font-size:12px;">CÉDULA</span><br>{{ factura.cliente.cedula }}</div>
+            {% if factura.cliente.telefono %}<div><span style="color:var(--text-muted);font-size:12px;">TELÉFONO</span><br>{{ factura.cliente.telefono }}</div>{% endif %}
+            {% if factura.cliente.email %}<div><span style="color:var(--text-muted);font-size:12px;">EMAIL</span><br>{{ factura.cliente.email }}</div>{% endif %}
+            {% if factura.notas %}<div><span style="color:var(--text-muted);font-size:12px;">NOTAS</span><br>{{ factura.notas }}</div>{% endif %}
+        </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;">
+        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Total a pagar</div>
+        <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--success);">${{ "%.2f"|format(factura.total) }}</div>
+        <div><span class="badge badge-{{ factura.estado }}" style="font-size:13px;padding:6px 16px;">{{ factura.estado | capitalize }}</span></div>
+        <div style="margin-top:16px;display:flex;gap:10px;">
+            <a href="{{ url_for('facturas.generar_pdf', id=factura.id) }}" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Descargar PDF
+            </a>
+            <a href="{{ whatsapp_url }}" target="_blank" class="btn" style="background:rgba(37,211,102,0.15);border:1px solid rgba(37,211,102,0.3);color:#25d366;">
+                <i class="fab fa-whatsapp"></i> Enviar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title" style="margin-bottom:20px;">Detalle de paquetes</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>#</th><th>Paquete</th><th>Descripción</th><th>Tipo</th><th>Peso</th><th>Tarifa</th><th>Costo</th></tr>
+            </thead>
+            <tbody>
+                {% for p in factura.paquetes %}
+                <tr>
+                    <td style="color:var(--text-muted)">{{ loop.index }}</td>
+                    <td><strong>{{ p.nombre }}</strong></td>
+                    <td style="color:var(--text-muted)">{{ p.descripcion or '—' }}</td>
+                    <td><span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span></td>
+                    <td>{{ "%.2f"|format(p.peso) }} lb</td>
+                    <td style="color:var(--text-muted)">${{ '6.50' if p.tipo_envio == 'aereo' else '2.50' }}/lb</td>
+                    <td style="font-weight:600;color:var(--success)">${{ "%.2f"|format(p.costo) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" style="text-align:right;padding:16px;font-weight:700;font-size:14px;">TOTAL</td>
+                    <td style="padding:16px;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--success);">${{ "%.2f"|format(factura.total) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastrear Paquete | ENVÍOS BJJ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #003399; /* Azul de la marca referente */
+            --success: #00a650; /* Verde del botón */
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --border: #e0e0e0;
+            --text: #333333;
+            --text-muted: #666666;
+            --text-light: #999999;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex; flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: var(--primary);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: -1px;
+            text-decoration: none;
+            color: white;
+        }
+        .navbar-brand img {
+            height: 40px;
+            background: white;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .navbar-links a:hover {
+            opacity: 0.8;
+        }
+        .navbar-contact {
+            text-align: right;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        .navbar-contact strong {
+            font-size: 16px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        /* Search Form */
+        .search-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        .search-label {
+            font-size: 22px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .search-input {
+            width: 300px;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            color: var(--text);
+            text-transform: uppercase;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+        .search-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-btn:hover {
+            background: #008f45;
+        }
+
+        /* Info Section */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .info-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .info-value {
+            font-size: 14px;
+            color: var(--success);
+        }
+        .info-value.muted {
+            color: var(--text-muted);
+        }
+
+        /* Stepper */
+        .stepper-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 50px;
+            position: relative;
+            padding: 0 40px;
+        }
+        .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Connecting Line */
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 25px; /* Mitad del icono */
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--text-light);
+            z-index: -1;
+        }
+        .step:last-child::after {
+            display: none;
+        }
+        
+        /* Active line */
+        .step.active::after, .step.done::after {
+            background: var(--success);
+        }
+
+        .step-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            transition: 0.3s;
+        }
+        
+        /* Done state */
+        .step.done .step-icon {
+            border-color: var(--success);
+            color: white;
+            background: var(--success);
+        }
+        
+        /* Active state */
+        .step.active .step-icon {
+            border-color: var(--success);
+            color: white;
+            background: var(--success);
+            box-shadow: 0 0 0 4px rgba(0, 166, 80, 0.2);
+        }
+
+        .step-label {
+            font-size: 13px;
+            color: var(--text-light);
+            text-align: center;
+            font-weight: 500;
+        }
+        .step.active .step-label, .step.done .step-label {
+            color: var(--text-muted);
+        }
+
+        /* Accordion */
+        .accordion {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .accordion-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+        .accordion-body {
+            padding: 20px;
+            font-size: 14px;
+            color: var(--text-muted);
+            background: #fafafa;
+        }
+        
+        .alert {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .search-container { flex-direction: column; }
+            .info-grid { grid-template-columns: 1fr 1fr; }
+            .navbar { flex-direction: column; gap: 15px; text-align: center; padding: 15px; }
+            .navbar-links { flex-direction: column; gap: 10px; }
+            .step::after { display: none; }
+            .stepper-container { flex-direction: column; gap: 30px; align-items: flex-start; }
+            .step { flex-direction: row; gap: 15px; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">
+            ENVÍOS BJJ
+        </a>
+        <div class="navbar-links">
+            <a href="#">Rastrea</a>
+            <a href="#">Envía</a>
+            <a href="{{ url_for('auth.login') }}">Mi cuenta <i class="fas fa-user-circle" style="font-size:20px; vertical-align:middle; margin-left:4px;"></i></a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <form method="GET" class="search-container">
+            <div class="search-label">FOLIO DE RASTREO</div>
+            <input type="text" name="codigo" class="search-input" value="{{ codigo }}" placeholder="BJJ-A-00001" required>
+            <button type="submit" class="search-btn">Buscar</button>
+        </form>
+
+        {% if error %}
+        <div class="alert">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        {% if paquete %}
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">SITUACIÓN DE ENVÍO</div>
+                <div class="info-value">
+                    {% if paquete.estado_rastreo == 'bodega_miami' %}
+                        En Bodega Miami
+                    {% elif paquete.estado_rastreo == 'en_transito' %}
+                        Envío en proceso
+                    {% else %}
+                        Listo para retirar
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">CLIENTE:</div>
+                <div class="info-value muted">{{ paquete.cliente.nombre_completo }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">TIPO DE ENVÍO:</div>
+                <div class="info-value muted">{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">DESCRIPCIÓN:</div>
+                <div class="info-value muted">{{ paquete.descripcion or paquete.nombre }}</div>
+            </div>
+        </div>
+
+        <div class="stepper-container">
+            <!-- Paso 1 -->
+            <div class="step {% if paquete.estado_rastreo in ['bodega_miami', 'en_transito', 'listo_para_retirar'] %}done{% endif %}">
+                <div class="step-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Recepción en Miami</div>
+            </div>
+
+            <!-- Paso 2 -->
+            <div class="step {% if paquete.estado_rastreo in ['en_transito', 'listo_para_retirar'] %}done{% endif %}">
+                <div class="step-icon">
+                    <i class="fas fa-ship"></i>
+                </div>
+                <div class="step-label">Estatus de envío</div>
+            </div>
+
+            <!-- Paso 3 -->
+            <div class="step {% if paquete.estado_rastreo == 'listo_para_retirar' %}done{% endif %}">
+                <div class="step-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="step-label">Listo para retirar</div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header">
+                DETALLES DEL ENVÍO <i class="fas fa-chevron-down" style="color:var(--primary)"></i>
+            </div>
+            <div class="accordion-body">
+                <ul style="list-style:none; display:flex; flex-direction:column; gap:15px;">
+                    <li style="display:flex; gap:15px;">
+                        <i class="fas fa-map-marker-alt" style="color:var(--text-light); width:20px; text-align:center;"></i>
+                        <div>
+                            <strong>Origen:</strong> Bodega Miami<br>
+                            <span style="font-size:12px;">Paquete recibido y procesado para transporte internacional.</span>
+                        </div>
+                    </li>
+                    <li style="display:flex; gap:15px;">
+                        <i class="fas fa-arrow-down" style="color:var(--text-light); width:20px; text-align:center;"></i>
+                        <div>
+                            <strong>Tránsito:</strong> {{ 'Vuelo aéreo' if paquete.tipo_envio == 'aereo' else 'Embarque marítimo' }}<br>
+                            <span style="font-size:12px;">El tiempo de tránsito normal es de {{ '2 a 4' if paquete.tipo_envio == 'aereo' else '12 a 15' }} días hábiles.</span>
+                        </div>
+                    </li>
+                    <li style="display:flex; gap:15px;">
+                        <i class="fas fa-circle" style="color:var(--text-light); width:20px; text-align:center;"></i>
+                        <div>
+                            <strong>Destino:</strong> Oficina Local<br>
+                            <span style="font-size:12px;">Una vez que el paquete llegue, podrás pasar a retirarlo.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

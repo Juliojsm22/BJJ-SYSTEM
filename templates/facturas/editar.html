@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Editar Factura{% endblock %}
+{% block page_title %}Editar {{ factura.numero }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('facturas.detalle', id=factura.id) }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;">
+    <div class="card">
+        <form method="POST">
+            <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+                <div style="font-size:13px;color:var(--text-muted);">Cliente</div>
+                <div style="font-size:18px;font-weight:600;margin-top:4px;">{{ factura.cliente.nombre_completo }}</div>
+            </div>
+
+            <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir</label>
+            <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
+                {% set paquetes_disponibles = factura.paquetes + paquetes_sin_facturar %}
+                {% for p in paquetes_disponibles %}
+                <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);">
+                    <input type="checkbox" name="paquete_ids" value="{{ p.id }}"
+                           {% if p in factura.paquetes %}checked{% endif %}
+                           style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+                    <div style="flex:1;">
+                        <div style="font-weight:500;">{{ p.nombre }}</div>
+                        <div style="font-size:12px;color:var(--text-muted);">
+                            <span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span>
+                            {{ "%.2f"|format(p.peso) }} lb
+                        </div>
+                    </div>
+                    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success)">${{ "%.2f"|format(p.costo) }}</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea name="notas" class="form-control">{{ factura.notas or '' }}</textarea>
+            </div>
+
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar cambios</button>
+                <a href="{{ url_for('facturas.detalle', id=factura.id) }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

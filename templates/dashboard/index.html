@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+}
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.accent::after { background: var(--accent); }
+.stat-card.teal::after { background: var(--success); }
+.stat-card.amber::after { background: var(--warning); }
+.stat-card.purple::after { background: #818cf8; }
+.stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; }
+.stat-value.accent { color: var(--accent); }
+.stat-value.teal { color: var(--success); }
+.stat-value.amber { color: var(--warning); }
+.stat-value.purple { color: #818cf8; }
+.stat-sub { font-size: 12px; color: var(--text-muted); }
+.stat-icon {
+    position: absolute; right: 20px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 36px; opacity: 0.07;
+}
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+}
+.chart-card h3 {
+    font-family: 'Syne', sans-serif; font-size: 15px;
+    font-weight: 700; margin-bottom: 20px;
+}
+.top-cliente {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(42,42,58,0.5);
+}
+.top-cliente:last-child { border-bottom: none; }
+.rank { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--accent); width: 32px; }
+.cliente-info { flex: 1; }
+.cliente-info .name { font-size: 14px; font-weight: 500; }
+.cliente-info .meta { font-size: 12px; color: var(--text-muted); }
+.cliente-lbs { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--success); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="grid-4" style="margin-bottom: 28px;">
+    <div class="stat-card accent">
+        <span class="stat-label">Ganancias esta semana</span>
+        <span class="stat-value accent">${{ "%.2f"|format(ganancias_semana) }}</span>
+        <span class="stat-sub">Facturas finalizadas</span>
+        <i class="fas fa-dollar-sign stat-icon"></i>
+    </div>
+    <div class="stat-card teal">
+        <span class="stat-label">Ganancias este mes</span>
+        <span class="stat-value teal">${{ "%.2f"|format(ganancias_mes) }}</span>
+        <span class="stat-sub">Facturas finalizadas</span>
+        <i class="fas fa-chart-line stat-icon"></i>
+    </div>
+    <div class="stat-card amber">
+        <span class="stat-label">Total clientes</span>
+        <span class="stat-value amber">{{ total_clientes }}</span>
+        <span class="stat-sub">Registrados activos</span>
+        <i class="fas fa-users stat-icon"></i>
+    </div>
+    <div class="stat-card purple">
+        <span class="stat-label">Total paquetes</span>
+        <span class="stat-value purple">{{ total_paquetes }}</span>
+        <span class="stat-sub">{{ paquetes_sin_facturar }} sin facturar</span>
+        <i class="fas fa-boxes stat-icon"></i>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="grid-2" style="margin-bottom: 28px;">
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-bar" style="color:var(--accent);margin-right:8px"></i>Ganancias últimos 6 meses</h3>
+        <canvas id="chartMeses" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-pie" style="color:var(--success);margin-right:8px"></i>Paquetes por tipo</h3>
+        <canvas id="chartTipos" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Top clientes + Quick stats -->
+<div class="grid-2">
+    <div class="chart-card">
+        <h3><i class="fas fa-trophy" style="color:var(--warning);margin-right:8px"></i>Top clientes por volumen</h3>
+        {% if top_clientes %}
+            {% for cliente in top_clientes %}
+            <div class="top-cliente">
+                <div class="rank">{{ loop.index }}</div>
+                <div class="cliente-info">
+                    <div class="name">{{ cliente.nombre_completo }}</div>
+                    <div class="meta">{{ cliente.total_paquetes }} paquete(s)</div>
+                </div>
+                <div class="cliente-lbs">{{ "%.2f"|format(cliente.total_libras) }} lb</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="padding:30px">
+                <i class="fas fa-trophy"></i>
+                <p>Sin datos aún</p>
+            </div>
+        {% endif %}
+    </div>
+    <div class="chart-card">
+        <h3><i class="fas fa-info-circle" style="color:#818cf8;margin-right:8px"></i>Estado del sistema</h3>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--surface2);border-radius:8px;">
+                <div style="font-size:13px;color:var(--text-muted)">Facturas en borrador</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--warning)">{{ facturas_pendientes }}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--surface2);border-radius:8px;">
+                <div style="font-size:13px;color:var(--text-muted)">Paquetes sin facturar</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent)">{{ paquetes_sin_facturar }}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--surface2);border-radius:8px;">
+                <div style="font-size:13px;color:var(--text-muted)">Paquetes aéreos</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;color:#818cf8">{{ aereos }}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--surface2);border-radius:8px;">
+                <div style="font-size:13px;color:var(--text-muted)">Paquetes marítimos</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;color:#22d3ee">{{ maritimos }}</div>
+            </div>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;">
+            <a href="{{ url_for('paquetes.nuevo') }}" class="btn btn-primary" style="flex:1;justify-content:center">
+                <i class="fas fa-plus"></i> Paquete
+            </a>
+            <a href="{{ url_for('facturas.nueva') }}" class="btn btn-secondary" style="flex:1;justify-content:center">
+                <i class="fas fa-file-invoice"></i> Factura
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Datos para los gráficos -->
+<script type="application/json" id="dashboard-data">
+{
+    "mesesData": {{ meses_data | tojson }},
+    "aereos": {{ aereos }},
+    "maritimos": {{ maritimos }}
+}
+</script>
+
+<script>
+const dashboardData = JSON.parse(document.getElementById('dashboard-data').textContent);
+const mesesData = dashboardData.mesesData;
+const aereos = dashboardData.aereos;
+const maritimos = dashboardData.maritimos;
+
+Chart.defaults.color = '#888899';
+Chart.defaults.borderColor = '#2a2a3a';
+
+// Ganancias por mes
+new Chart(document.getElementById('chartMeses'), {
+    type: 'bar',
+    data: {
+        labels: mesesData.map(m => m.mes),
+        datasets: [{
+            label: 'Ganancias ($)',
+            data: mesesData.map(m => m.total),
+            backgroundColor: 'rgba(233,69,96,0.6)',
+            borderColor: '#e94560',
+            borderWidth: 1,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false } },
+            y: { ticks: { callback: v => '$' + v } }
+        }
+    }
+});
+
+// Tipos de paquetes
+new Chart(document.getElementById('chartTipos'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Aéreo', 'Marítimo'],
+        datasets: [{
+            data: [aereos, maritimos],
+            backgroundColor: ['rgba(129,140,248,0.8)', 'rgba(34,211,238,0.8)'],
+            borderColor: ['#818cf8', '#22d3ee'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 20 } }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre_completo }}{% endblock %}
+{% block page_title %}Detalle del Cliente{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-warning">
+    <i class="fas fa-edit"></i> Editar
+</a>
+<a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ cliente.id }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nuevo paquete
+</a>
+<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(233,69,96,0.15);border:2px solid rgba(233,69,96,0.3);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent);">
+                {{ cliente.nombre_completo[0] }}
+            </div>
+            <div>
+                <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;">{{ cliente.nombre_completo }}</div>
+                <div style="color:var(--text-muted);font-size:13px;">Cliente desde {{ cliente.creado_en.strftime('%d/%m/%Y') }}</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:var(--surface2);padding:12px;border-radius:8px;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">CÉDULA</div>
+                <div style="font-weight:500;">{{ cliente.cedula }}</div>
+            </div>
+            <div style="background:var(--surface2);padding:12px;border-radius:8px;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TELÉFONO</div>
+                <div style="font-weight:500;">{{ cliente.telefono or '—' }}</div>
+            </div>
+            <div style="background:var(--surface2);padding:12px;border-radius:8px;grid-column:1/-1;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">EMAIL</div>
+                <div style="font-weight:500;">{{ cliente.email or '—' }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title" style="margin-bottom:16px;">Resumen</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
+                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent)">{{ cliente.paquetes|length }}</div>
+                <div style="font-size:12px;color:var(--text-muted)">Total paquetes</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
+                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--success)">{{ "%.1f"|format(cliente.total_libras) }}</div>
+                <div style="font-size:12px;color:var(--text-muted)">Total libras</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
+                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--warning)">{{ cliente.paquetes_sin_facturar|length }}</div>
+                <div style="font-size:12px;color:var(--text-muted)">Sin facturar</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
+                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#818cf8">{{ cliente.facturas|length }}</div>
+                <div style="font-size:12px;color:var(--text-muted)">Facturas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div class="card-title">Paquetes registrados</div>
+        {% if cliente.paquetes_sin_facturar %}
+        <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-file-invoice"></i> Generar factura
+        </a>
+        {% endif %}
+    </div>
+    {% if cliente.paquetes %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Paquete</th><th>Descripción</th><th>Tipo</th><th>Peso</th><th>Costo</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+                {% for p in cliente.paquetes %}
+                <tr>
+                    <td><strong>{{ p.nombre }}</strong></td>
+                    <td style="color:var(--text-muted)">{{ p.descripcion or '—' }}</td>
+                    <td><span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span></td>
+                    <td>{{ "%.2f"|format(p.peso) }} lb</td>
+                    <td style="font-weight:600;color:var(--success)">${{ "%.2f"|format(p.costo) }}</td>
+                    <td>
+                        {% if p.factura_id %}
+                        <span class="badge badge-finalizada">Facturado</span>
+                        {% else %}
+                        <span class="badge badge-borrador">Pendiente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fas fa-box"></i><p>Sin paquetes registrados</p></div>
+    {% endif %}
+</div>
+{% endblock %}

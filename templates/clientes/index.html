@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nuevo cliente
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="search-bar">
+    <form method="GET" style="display:flex;gap:12px;width:100%;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre, cédula o email..." style="max-width:360px;">
+        <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Buscar</button>
+        {% if q %}<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i></a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        {% if clientes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Paquetes</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes %}
+                <tr>
+                    <td><strong>{{ c.nombre_completo }}</strong></td>
+                    <td><code style="background:var(--surface2);padding:2px 8px;border-radius:4px;font-size:12px;">{{ c.cedula }}</code></td>
+                    <td>{{ c.telefono or '—' }}</td>
+                    <td>{{ c.email or '—' }}</td>
+                    <td>
+                        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent)">{{ c.paquetes|length }}</span>
+                        <span style="color:var(--text-muted);font-size:12px;">pkg</span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ url_for('clientes.detalle', id=c.id) }}" class="btn btn-sm btn-secondary" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('clientes.editar', id=c.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ c.id }}" class="btn btn-sm btn-success" title="Agregar paquete">
+                                <i class="fas fa-box"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('clientes.eliminar', id=c.id) }}" onsubmit="return confirm('¿Eliminar cliente?')">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <p>No se encontraron clientes{% if q %} para "{{ q }}"{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

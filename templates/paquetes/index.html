@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Paquetes{% endblock %}
+{% block page_title %}Paquetes{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('paquetes.nuevo') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nuevo paquete
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="GET" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar paquete o cliente..." style="max-width:300px;">
+    <select name="tipo" class="form-control" style="max-width:160px;">
+        <option value="">Todos los tipos</option>
+        <option value="aereo" {% if tipo=='aereo' %}selected{% endif %}>Aéreo</option>
+        <option value="maritimo" {% if tipo=='maritimo' %}selected{% endif %}>Marítimo</option>
+    </select>
+    <select name="estado" class="form-control" style="max-width:180px;">
+        <option value="">Todos los estados</option>
+        <option value="sin_facturar" {% if estado=='sin_facturar' %}selected{% endif %}>Sin facturar</option>
+        <option value="facturado" {% if estado=='facturado' %}selected{% endif %}>Facturado</option>
+    </select>
+    <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+    {% if q or tipo or estado %}
+    <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+    {% endif %}
+</form>
+
+<div class="card">
+    <div class="table-wrap">
+        {% if paquetes %}
+        <table>
+            <thead>
+                <tr><th>Paquete</th><th>Cliente</th><th>Tipo</th><th>Peso</th><th>Costo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for p in paquetes %}
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <strong>{{ p.nombre }}</strong> 
+                            {% if p.tracking_number %}
+                            <div style="display:flex; align-items:center; background:#1e1e2a; border-radius:4px; overflow:hidden;">
+                                <span style="font-size:11px; color:var(--accent); padding:2px 6px;">{{ p.tracking_number }}</span>
+                                <button data-link="{{ url_for('rastreo.index', codigo=p.tracking_number) }}" onclick="navigator.clipboard.writeText(window.location.origin + this.dataset.link); alert('Enlace de rastreo copiado al portapapeles');" style="background:var(--accent); color:#000; border:none; padding:2px 6px; cursor:pointer; font-size:10px;" title="Copiar enlace para el cliente">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <span style="font-size:11px; background:#1e1e2a; color:var(--text-muted); padding:2px 6px; border-radius:4px;">SIN-GUÍA</span>
+                            {% endif %}
+                        </div>
+                        {% if p.descripcion %}<div style="font-size:12px;color:var(--text-muted); margin-top:4px;">{{ p.descripcion[:50] }}{% if p.descripcion|length > 50 %}...{% endif %}</div>{% endif %}
+                        <div style="font-size:11px;color:#888899;margin-top:4px;">
+                            {% if p.estado_rastreo == 'bodega_miami' %}🏢 En Miami
+                            {% elif p.estado_rastreo == 'en_transito' %}🚢/✈️ En tránsito
+                            {% elif p.estado_rastreo == 'listo_para_retirar' %}✅ Listo para retirar{% endif %}
+                        </div>
+                    </td>
+                    <td><a href="{{ url_for('clientes.detalle', id=p.cliente_id) }}" style="color:var(--text);text-decoration:none;">{{ p.cliente.nombre_completo }}</a></td>
+                    <td><span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span></td>
+                    <td>{{ "%.2f"|format(p.peso) }} lb</td>
+                    <td style="font-weight:600;color:var(--success)">${{ "%.2f"|format(p.costo) }}</td>
+                    <td style="color:var(--text-muted);font-size:12px;">{{ p.registrado_en.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if p.factura_id %}
+                        <span class="badge badge-finalizada">Facturado</span>
+                        {% else %}
+                        <span class="badge badge-borrador">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            {% if not p.factura_id %}
+                            <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('facturas.detalle', id=p.factura_id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-box-open"></i><p>No se encontraron paquetes</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

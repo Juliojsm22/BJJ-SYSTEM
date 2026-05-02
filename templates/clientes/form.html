@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if cliente else 'Nuevo' }} Cliente{% endblock %}
+{% block page_title %}{{ 'Editar' if cliente else 'Nuevo' }} Cliente{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+    <div class="card">
+        <form method="POST">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Nombre completo *</label>
+                    <input type="text" name="nombre_completo" class="form-control"
+                           value="{{ cliente.nombre_completo if cliente else '' }}" required
+                           placeholder="Ej: Juan Pérez López">
+                </div>
+                <div class="form-group">
+                    <label>Número de cédula *</label>
+                    <input type="text" name="cedula" class="form-control"
+                           value="{{ cliente.cedula if cliente else '' }}" required
+                           placeholder="Ej: 001-123456-0001">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Número telefónico</label>
+                    <input type="text" name="telefono" class="form-control"
+                           value="{{ cliente.telefono if cliente else '' }}"
+                           placeholder="Ej: 8888-0000">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ cliente.email if cliente else '' }}"
+                           placeholder="cliente@email.com">
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ 'Actualizar' if cliente else 'Registrar' }}
+                </button>
+                <a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
