@@ -46,6 +46,7 @@ def nuevo():
             peso=peso,
             tipo_envio=tipo_envio,
             cliente_id=int(request.form.get('cliente_id')),
+            tracking_number=request.form.get('tracking_number', '').strip() or None,
             estado_rastreo=request.form.get('estado_rastreo', 'bodega_miami'),
             registrado_por=current_user.id
         )
@@ -74,6 +75,7 @@ def editar(id):
         paquete.descripcion = request.form.get('descripcion', '').strip()
         paquete.peso = peso
         paquete.tipo_envio = tipo_envio
+        paquete.tracking_number = request.form.get('tracking_number', '').strip() or None
         paquete.estado_rastreo = request.form.get('estado_rastreo', paquete.estado_rastreo)
         paquete.costo = round(peso * tarifa, 2)
         paquete.cliente_id = int(request.form.get('cliente_id'))
