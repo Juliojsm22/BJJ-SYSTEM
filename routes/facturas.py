@@ -137,8 +137,9 @@ def generar_pdf_factura(factura):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+    import os
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
@@ -146,15 +147,23 @@ def generar_pdf_factura(factura):
                             topMargin=0.75*inch, bottomMargin=0.75*inch)
 
     styles = getSampleStyleSheet()
-    COLOR_PRIMARIO = colors.HexColor('#1a1a2e')
-    COLOR_ACENTO = colors.HexColor('#e94560')
+    COLOR_PRIMARIO = colors.HexColor('#3d5ba0')
+    COLOR_ACENTO = colors.HexColor('#ff6b00')
 
     story = []
 
-    # Encabezado
+    # Encabezado con Logo
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'Logo.png')
+    
+    if os.path.exists(logo_path):
+        header_left = Image(logo_path, width=2.5*inch, height=0.8*inch, kind='proportional')
+        header_left.hAlign = 'LEFT'
+    else:
+        header_left = Paragraph('<font size=22 color="#3d5ba0"><b>ENVÍOS BJJ</b></font>', styles['Normal'])
+
     header_data = [
-        [Paragraph('<font size=22><b>AGENCIA DE ENVÍOS</b></font>', styles['Normal']),
-         Paragraph(f'<font size=10 color="#666666">FACTURA<br/><font size=16><b>{factura.numero}</b></font></font>', styles['Normal'])]
+        [header_left,
+         Paragraph(f'<font size=10 color="#666666">FACTURA<br/><font size=16 color="#3d5ba0"><b>{factura.numero}</b></font></font>', styles['Normal'])]
     ]
     header_table = Table(header_data, colWidths=[4*inch, 3*inch])
     header_table.setStyle(TableStyle([
@@ -190,11 +199,11 @@ def generar_pdf_factura(factura):
     story.append(Spacer(1, 0.3*inch))
 
     # Tabla de paquetes
-    table_data = [['#', 'Paquete', 'Descripción', 'Tipo', 'Peso (lb)', 'Costo']]
+    table_data = [['#', 'Paquete', 'Guía de Rastreo', 'Tipo', 'Peso (lb)', 'Costo']]
     for i, p in enumerate(factura.paquetes, 1):
         tipo = 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo'
         table_data.append([
-            str(i), p.nombre, p.descripcion or '-', tipo,
+            str(i), p.nombre, p.tracking_number or 'SIN-GUÍA', tipo,
             f'{p.peso:.2f}', f'${p.costo:.2f}'
         ])
 
