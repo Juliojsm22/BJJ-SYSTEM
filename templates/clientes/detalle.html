@@ -1,97 +1,197 @@
 {% extends "base.html" %}
 {% block title %}{{ cliente.nombre_completo }}{% endblock %}
-{% block page_title %}Detalle del Cliente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detalle-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+    @media (min-width: 768px) {
+        .detalle-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .detalle-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+    .cliente-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .cliente-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #e8edf7;
+        color: #3d5ba0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 800;
+        border: 2px solid #c0cce8;
+    }
+    .info-box {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .info-label {
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .info-val {
+        font-weight: 600;
+        color: #334155;
+        font-size: 15px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .stat-box {
+        text-align: center;
+        padding: 24px 16px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    .stat-num {
+        font-size: 32px;
+        font-weight: 800;
+        color: #3d5ba0;
+        margin-bottom: 4px;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
 
 {% block topbar_actions %}
-<a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-warning">
-    <i class="fas fa-edit"></i> Editar
-</a>
-<a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ cliente.id }}" class="btn btn-primary">
-    <i class="fas fa-plus"></i> Nuevo paquete
-</a>
-<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Volver
-</a>
+<div style="display:flex; gap:10px;">
+    <a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn" style="background:#f59e0b; color:white;">
+        <i class="fas fa-edit"></i> Editar
+    </a>
+    <a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#3d5ba0; color:white;">
+        <i class="fas fa-plus"></i> Nuevo paquete
+    </a>
+    <a href="{{ url_for('clientes.index') }}" class="btn" style="background:#64748b; color:white;">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="grid-2" style="margin-bottom:24px;">
-    <div class="card">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-            <div style="width:56px;height:56px;border-radius:50%;background:rgba(233,69,96,0.15);border:2px solid rgba(233,69,96,0.3);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent);">
-                {{ cliente.nombre_completo[0] }}
-            </div>
+<div class="detalle-grid">
+    <!-- Info del Cliente -->
+    <div class="detalle-card">
+        <div class="cliente-header">
+            <div class="cliente-avatar">{{ cliente.nombre_completo[0] }}</div>
             <div>
-                <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;">{{ cliente.nombre_completo }}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Cliente desde {{ cliente.creado_en.strftime('%d/%m/%Y') }}</div>
+                <h2 style="color:#1e293b; margin-bottom:4px;">{{ cliente.nombre_completo }}</h2>
+                <div style="color:#64748b; font-size:13px;"><i class="fas fa-calendar-alt"></i> Cliente desde {{ cliente.creado_en.strftime('%d/%m/%Y') }}</div>
             </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div style="background:var(--surface2);padding:12px;border-radius:8px;">
-                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">CÉDULA</div>
-                <div style="font-weight:500;">{{ cliente.cedula }}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="info-box">
+                <div class="info-label">Cédula</div>
+                <div class="info-val">{{ cliente.cedula }}</div>
             </div>
-            <div style="background:var(--surface2);padding:12px;border-radius:8px;">
-                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TELÉFONO</div>
-                <div style="font-weight:500;">{{ cliente.telefono or '—' }}</div>
+            <div class="info-box">
+                <div class="info-label">Teléfono</div>
+                <div class="info-val">{{ cliente.telefono or '—' }}</div>
             </div>
-            <div style="background:var(--surface2);padding:12px;border-radius:8px;grid-column:1/-1;">
-                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">EMAIL</div>
-                <div style="font-weight:500;">{{ cliente.email or '—' }}</div>
+            <div class="info-box" style="grid-column:1/-1;">
+                <div class="info-label">Correo Electrónico</div>
+                <div class="info-val">{{ cliente.email or '—' }}</div>
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-title" style="margin-bottom:16px;">Resumen</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
-                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent)">{{ cliente.paquetes|length }}</div>
-                <div style="font-size:12px;color:var(--text-muted)">Total paquetes</div>
+
+    <!-- Resumen -->
+    <div class="detalle-card">
+        <h3 style="color:#1e293b; margin-bottom:20px; font-size:18px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">Resumen de Actividad</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-num">{{ cliente.paquetes|length }}</div>
+                <div class="stat-label">Total paquetes</div>
             </div>
-            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
-                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--success)">{{ "%.1f"|format(cliente.total_libras) }}</div>
-                <div style="font-size:12px;color:var(--text-muted)">Total libras</div>
+            <div class="stat-box">
+                <div class="stat-num" style="color:#10b981;">{{ "%.1f"|format(cliente.total_libras) }}</div>
+                <div class="stat-label">Total libras</div>
             </div>
-            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
-                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--warning)">{{ cliente.paquetes_sin_facturar|length }}</div>
-                <div style="font-size:12px;color:var(--text-muted)">Sin facturar</div>
+            <div class="stat-box">
+                <div class="stat-num" style="color:#f59e0b;">{{ cliente.paquetes_sin_facturar|length }}</div>
+                <div class="stat-label">Sin facturar</div>
             </div>
-            <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:8px;">
-                <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#818cf8">{{ cliente.facturas|length }}</div>
-                <div style="font-size:12px;color:var(--text-muted)">Facturas</div>
+            <div class="stat-box">
+                <div class="stat-num" style="color:#8b5cf6;">{{ cliente.facturas|length }}</div>
+                <div class="stat-label">Facturas</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div class="card-title">Paquetes registrados</div>
+<!-- Paquetes Registrados -->
+<div class="detalle-card" style="margin-bottom: 40px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #e2e8f0; padding-bottom:16px;">
+        <h3 style="color:#1e293b; font-size:18px;">Paquetes Registrados</h3>
         {% if cliente.paquetes_sin_facturar %}
-        <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn btn-primary btn-sm">
+        <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white;">
             <i class="fas fa-file-invoice"></i> Generar factura
         </a>
         {% endif %}
     </div>
+    
     {% if cliente.paquetes %}
     <div class="table-wrap">
-        <table>
+        <table style="width:100%; text-align:left; border-collapse:collapse;">
             <thead>
-                <tr><th>Paquete</th><th>Descripción</th><th>Tipo</th><th>Peso</th><th>Costo</th><th>Estado</th></tr>
+                <tr style="border-bottom:2px solid #e2e8f0; color:#64748b;">
+                    <th style="padding:12px;">Paquete</th>
+                    <th style="padding:12px;">Rastreo</th>
+                    <th style="padding:12px;">Tipo</th>
+                    <th style="padding:12px;">Peso</th>
+                    <th style="padding:12px;">Costo</th>
+                    <th style="padding:12px;">Estado</th>
+                </tr>
             </thead>
             <tbody>
                 {% for p in cliente.paquetes %}
-                <tr>
-                    <td><strong>{{ p.nombre }}</strong></td>
-                    <td style="color:var(--text-muted)">{{ p.descripcion or '—' }}</td>
-                    <td><span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span></td>
-                    <td>{{ "%.2f"|format(p.peso) }} lb</td>
-                    <td style="font-weight:600;color:var(--success)">${{ "%.2f"|format(p.costo) }}</td>
-                    <td>
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:12px;"><strong>{{ p.nombre }}</strong></td>
+                    <td style="padding:12px; color:#64748b;">{{ p.tracking_number or '—' }}</td>
+                    <td style="padding:12px;">
+                        <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">
+                            {{ '✈️ Aéreo' if p.tipo_envio == 'aereo' else '🚢 Marítimo' }}
+                        </span>
+                    </td>
+                    <td style="padding:12px;">{{ "%.2f"|format(p.peso) }} lb</td>
+                    <td style="padding:12px; font-weight:700; color:#10b981;">${{ "%.2f"|format(p.costo) }}</td>
+                    <td style="padding:12px;">
                         {% if p.factura_id %}
-                        <span class="badge badge-finalizada">Facturado</span>
+                        <span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Facturado</span>
                         {% else %}
-                        <span class="badge badge-borrador">Pendiente</span>
+                        <span style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Pendiente</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -100,7 +200,10 @@
         </table>
     </div>
     {% else %}
-    <div class="empty-state"><i class="fas fa-box"></i><p>Sin paquetes registrados</p></div>
+    <div style="text-align:center; padding:40px; color:#94a3b8;">
+        <i class="fas fa-box-open" style="font-size:40px; margin-bottom:12px;"></i>
+        <p>No hay paquetes registrados para este cliente.</p>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
