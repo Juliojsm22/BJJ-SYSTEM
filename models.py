@@ -51,6 +51,7 @@ class Paquete(db.Model):
     tipo_envio = db.Column(db.String(10), nullable=False)  # aereo, maritimo
     costo = db.Column(db.Float)
     tracking_number = db.Column(db.String(50), unique=True)
+    numero_seguimiento = db.Column(db.String(100))
     estado_rastreo = db.Column(db.String(50), default='bodega_miami')
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)

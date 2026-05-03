@@ -179,7 +179,12 @@
                 {% for p in cliente.paquetes %}
                 <tr style="border-bottom:1px solid #f1f5f9;">
                     <td style="padding:12px;"><strong>{{ p.nombre }}</strong></td>
-                    <td style="padding:12px; color:#64748b;">{{ p.tracking_number or '—' }}</td>
+                    <td style="padding:12px; color:#64748b;">
+                        <div>{{ p.tracking_number or '—' }}</div>
+                        {% if p.numero_seguimiento %}
+                        <div style="font-size:11px; margin-top:2px; color:#94a3b8;"><i class="fas fa-barcode"></i> {{ p.numero_seguimiento }}</div>
+                        {% endif %}
+                    </td>
                     <td style="padding:12px;">
                         <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">
                             {{ '✈️ Aéreo' if p.tipo_envio == 'aereo' else '🚢 Marítimo' }}

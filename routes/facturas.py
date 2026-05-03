@@ -203,7 +203,7 @@ def generar_pdf_factura(factura):
     for i, p in enumerate(factura.paquetes, 1):
         tipo = 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo'
         table_data.append([
-            str(i), p.nombre, p.tracking_number or 'SIN-GUÍA', tipo,
+            str(i), p.nombre, p.numero_seguimiento or '—', tipo,
             f'{p.peso:.2f}', f'${p.costo:.2f}'
         ])
 

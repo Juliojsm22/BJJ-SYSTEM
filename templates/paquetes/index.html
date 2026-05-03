@@ -51,6 +51,7 @@
                             <span style="font-size:11px; background:#f0f2f5; color:#888; padding:2px 6px; border-radius:4px; border:1px solid #ddd;">SIN-GUÍA</span>
                             {% endif %}
                         </div>
+                        {% if p.numero_seguimiento %}<div style="font-size:11px;color:var(--text-muted); margin-top:4px;"><i class="fas fa-barcode"></i> Seguimiento: {{ p.numero_seguimiento }}</div>{% endif %}
                         {% if p.descripcion %}<div style="font-size:12px;color:var(--text-muted); margin-top:4px;">{{ p.descripcion[:50] }}{% if p.descripcion|length > 50 %}...{% endif %}</div>{% endif %}
                         <div style="font-size:11px;color:#888899;margin-top:4px;">
                             {% if p.estado_rastreo == 'bodega_miami' %}🏢 En Miami

@@ -40,6 +40,11 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        try:
+            db.session.execute(db.text("ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         crear_usuario_admin()
 
     return app
