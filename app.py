@@ -12,9 +12,11 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-agencia-2024')
     db_url = os.environ.get('DATABASE_URL', 'mysql+pymysql://root:2209@localhost/agencia_paqueteria')
     if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+        db_url = db_url.replace('postgres://', 'postgresql+pg8000://', 1)
     elif db_url.startswith('postgresql://'):
-        db_url = db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+        db_url = db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+    elif db_url.startswith('postgresql+psycopg2://'):
+        db_url = db_url.replace('postgresql+psycopg2://', 'postgresql+pg8000://', 1)
     
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
