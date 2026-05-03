@@ -36,7 +36,7 @@ class Cliente(db.Model):
 
     @property
     def total_libras(self):
-        return sum(p.peso for p in self.paquetes if not p.facturado or True)
+        return sum(p.peso for p in self.paquetes)
 
     @property
     def paquetes_sin_facturar(self):
