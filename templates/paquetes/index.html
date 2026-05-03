@@ -41,14 +41,14 @@
                         <div style="display:flex; align-items:center; gap:8px;">
                             <strong>{{ p.nombre }}</strong> 
                             {% if p.tracking_number %}
-                            <div style="display:flex; align-items:center; background:#1e1e2a; border-radius:4px; overflow:hidden;">
-                                <span style="font-size:11px; color:var(--accent); padding:2px 6px;">{{ p.tracking_number }}</span>
-                                <button data-link="{{ url_for('rastreo.index', codigo=p.tracking_number) }}" onclick="navigator.clipboard.writeText(window.location.origin + this.dataset.link); alert('Enlace de rastreo copiado al portapapeles');" style="background:var(--accent); color:#000; border:none; padding:2px 6px; cursor:pointer; font-size:10px;" title="Copiar enlace para el cliente">
+                            <div style="display:flex; align-items:center; background:#e8edf7; border-radius:4px; overflow:hidden; border:1px solid #c0cce8;">
+                                <span style="font-size:11px; color:#3d5ba0; padding:2px 6px; font-weight:600;">{{ p.tracking_number }}</span>
+                                <button onclick="copiarLink('{{ url_for('rastreo.index', codigo=p.tracking_number) }}')" style="background:#3d5ba0; color:#fff; border:none; padding:2px 6px; cursor:pointer; font-size:10px;" title="Copiar enlace para el cliente">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
                             {% else %}
-                            <span style="font-size:11px; background:#1e1e2a; color:var(--text-muted); padding:2px 6px; border-radius:4px;">SIN-GUÍA</span>
+                            <span style="font-size:11px; background:#f0f2f5; color:#888; padding:2px 6px; border-radius:4px; border:1px solid #ddd;">SIN-GUÍA</span>
                             {% endif %}
                         </div>
                         {% if p.descripcion %}<div style="font-size:12px;color:var(--text-muted); margin-top:4px;">{{ p.descripcion[:50] }}{% if p.descripcion|length > 50 %}...{% endif %}</div>{% endif %}
@@ -91,4 +91,34 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copiarLink(ruta) {
+    var url = window.location.origin + ruta;
+    // Intenta con Clipboard API primero (HTTPS)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(function() {
+            alert('✅ Enlace copiado:\n' + url);
+        });
+    } else {
+        // Fallback para HTTP / IPs locales
+        var el = document.createElement('textarea');
+        el.value = url;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ Enlace copiado:\n' + url);
+        } catch (err) {
+            alert('No se pudo copiar automáticamente.\nCopia este enlace manualmente:\n' + url);
+        }
+        document.body.removeChild(el);
+    }
+}
+</script>
 {% endblock %}

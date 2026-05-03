@@ -57,6 +57,40 @@
 {% endblock %}
 
 {% block content %}
+<!-- HERO NUEVO -->
+<section id="contenedor">
+    <div class="overlay"></div>
+    <h2>Bienvenido al sistema</h2>
+    <p>Seleccione una opción del menú para comenzar</p>
+    <div class="menu-opciones">
+        <div class="R">
+            <h3>Registrar Cliente</h3>
+            <p>Agregar un nuevo cliente al sistema</p>
+            <a href="{{ url_for('clientes.index') }}">
+                <button class="btn-dashboard">Registrar</button>
+            </a>
+        </div>
+        <div class="D">
+            <h3>Paquetes</h3>
+            <p>Gestionar y registrar envíos</p>
+            <a href="{{ url_for('paquetes.index') }}">
+            <button class="btn-dashboard">Paquetes</button>
+            </a>
+        </div>
+        <div class="F">
+            <h3>Facturas</h3>
+            <p>Ver historial de facturas generadas</p>
+            <a href="{{ url_for('facturas.index') }}">
+                <button class="btn-dashboard">Facturas</button>
+            </a>
+        </div>
+    </div>
+</section>
+
+<div style="margin-top: 40px;">
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 20px;">Estadísticas del Sistema</h3>
+</div>
+
 <!-- Stats Grid -->
 <div class="grid-4" style="margin-bottom: 28px;">
     <div class="stat-card accent">
