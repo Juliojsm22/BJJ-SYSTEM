@@ -46,6 +46,7 @@ def nuevo():
             peso=peso,
             tipo_envio=tipo_envio,
             cliente_id=int(request.form.get('cliente_id')),
+            estado_rastreo=request.form.get('estado_rastreo', 'bodega_miami'),
             registrado_por=current_user.id
         )
         paquete.save()

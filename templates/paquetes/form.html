@@ -50,16 +50,14 @@
                 </div>
             </div>
             
-            {% if paquete %}
             <div class="form-group">
                 <label>Estado de Rastreo</label>
                 <select name="estado_rastreo" class="form-control">
-                    <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
-                    <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
-                    <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
+                    <option value="bodega_miami" {% if paquete and paquete.estado_rastreo == 'bodega_miami' %}selected{% elif not paquete %}selected{% endif %}>🏢 En bodega Miami</option>
+                    <option value="en_transito" {% if paquete and paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
+                    <option value="listo_para_retirar" {% if paquete and paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
                 </select>
             </div>
-            {% endif %}
 
             <!-- Costo calculado -->
             <div id="costoPreview" style="display:none;margin-bottom:20px;">
