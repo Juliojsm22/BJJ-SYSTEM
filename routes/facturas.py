@@ -153,7 +153,7 @@ def generar_pdf_factura(factura):
     story = []
 
     # Encabezado con Logo
-    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'logo.png')
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'logoazul.png')
     
     if os.path.exists(logo_path):
         header_left = Image(logo_path, width=2.5*inch, height=0.8*inch, kind='proportional')
