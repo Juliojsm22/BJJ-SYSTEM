@@ -16,12 +16,12 @@ def index():
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Ganancias reales (precio venta - costo)
-    # Aéreo: $6.5 - $5.0 = $1.5 ganancia por libra
-    # Marítimo: $2.5 - $1.6 = $0.9 ganancia por libra
+    # Ganancias reales (precio de venta cobrado - costo de aduana)
+    # Costo aduana Aéreo: $5.0 por libra
+    # Costo aduana Marítimo: $1.6 por libra
     ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.peso * 1.5),
-        (Paquete.tipo_envio == 'maritimo', Paquete.peso * 0.9),
+        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
+        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
         else_=0
     )
 
@@ -122,8 +122,8 @@ def api_stats():
     hoy = datetime.utcnow()
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.peso * 1.5),
-        (Paquete.tipo_envio == 'maritimo', Paquete.peso * 0.9),
+        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
+        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
         else_=0
     )
     ganancias_mes = db.session.query(func.sum(ganancia_expr)).join(
@@ -154,8 +154,8 @@ def pdf_reporte():
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     
     ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.peso * 1.5),
-        (Paquete.tipo_envio == 'maritimo', Paquete.peso * 0.9),
+        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
+        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
         else_=0
     )
 
