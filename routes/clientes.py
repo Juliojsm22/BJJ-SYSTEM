@@ -49,6 +49,10 @@ def nuevo():
             db.session.add(tarifa_esp)
             
         db.session.commit()
+        
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Registró Cliente', f'Cliente {cliente.nombre_completo} (Cédula: {cliente.cedula})')
+        
         flash('Cliente registrado exitosamente.', 'success')
         return redirect(url_for('clientes.index'))
     
@@ -104,6 +108,10 @@ def editar(id):
             p.costo = round(p.peso * tarifa_p, 2)
 
         db.session.commit()
+        
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Editó Cliente', f'Actualizó perfil de {cliente.nombre_completo}')
+        
         flash('Cliente actualizado correctamente.', 'success')
         return redirect(url_for('clientes.index'))
     
@@ -118,6 +126,10 @@ def eliminar(id):
     cliente = Cliente.query.get_or_404(id)
     cliente.activo = False
     db.session.commit()
+    
+    from models import registrar_actividad
+    registrar_actividad(current_user.id, 'Eliminó Cliente', f'Desactivó a {cliente.nombre_completo}')
+    
     flash('Cliente eliminado.', 'success')
     return redirect(url_for('clientes.index'))
 

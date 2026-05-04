@@ -82,6 +82,9 @@ def nuevo():
         db.session.add(historial_inicial)
         db.session.commit()
 
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Registró Paquete', f'Paquete {paquete.tracking_number} para cliente {cliente.nombre_completo}')
+
         flash(f'Paquete registrado. Costo: ${paquete.costo:.2f} | Guía: {paquete.tracking_number}', 'success')
         return redirect(url_for('paquetes.index'))
 
@@ -130,6 +133,10 @@ def editar(id):
         paquete.costo = round(peso * tarifa, 2)
         paquete.cliente_id = int(request.form.get('cliente_id'))
         db.session.commit()
+        
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Editó Paquete', f'Actualizó paquete {paquete.tracking_number}')
+        
         flash('Paquete actualizado.', 'success')
         return redirect(url_for('paquetes.index'))
 
@@ -148,6 +155,10 @@ def eliminar(id):
         return redirect(url_for('paquetes.index'))
     db.session.delete(paquete)
     db.session.commit()
+    
+    from models import registrar_actividad
+    registrar_actividad(current_user.id, 'Eliminó Paquete', f'Eliminó paquete {paquete.tracking_number}')
+    
     flash('Paquete eliminado.', 'success')
     return redirect(url_for('paquetes.index'))
 
@@ -218,6 +229,10 @@ def historial(id):
             paquete.estado_rastreo = estado
             db.session.add(nuevo_historial)
             db.session.commit()
+            
+            from models import registrar_actividad
+            registrar_actividad(current_user.id, 'Actualizó Rastreo', f'Paquete {paquete.tracking_number} a estado "{estado}"')
+            
             flash('Historial actualizado correctamente.', 'success')
             return redirect(url_for('paquetes.historial', id=paquete.id))
 

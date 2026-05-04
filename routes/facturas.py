@@ -47,6 +47,10 @@ def nueva():
 
         factura.actualizar_total()
         db.session.commit()
+        
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Creó Factura', f'Factura {factura.numero} por ${factura.total:.2f}')
+        
         flash(f'Factura {factura.numero} creada.', 'success')
         return redirect(url_for('facturas.detalle', id=factura.id))
 
@@ -98,6 +102,10 @@ def finalizar(id):
     factura = Factura.query.get_or_404(id)
     factura.estado = 'finalizada'
     db.session.commit()
+    
+    from models import registrar_actividad
+    registrar_actividad(current_user.id, 'Finalizó Factura', f'Factura {factura.numero} marcada como finalizada')
+    
     flash('Factura finalizada.', 'success')
     return redirect(url_for('facturas.detalle', id=id))
 
@@ -120,6 +128,10 @@ def pagar(id):
         db.session.add(pago)
         factura.estado = 'pagada'
         db.session.commit()
+        
+        from models import registrar_actividad
+        registrar_actividad(current_user.id, 'Registró Pago', f'Pago de ${factura.total:.2f} con {metodo_pago} en factura {factura.numero}')
+        
         flash(f'Factura marcada como pagada con {metodo_pago}.', 'success')
     else:
         flash('Solo se pueden pagar facturas finalizadas.', 'warning')

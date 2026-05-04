@@ -43,7 +43,10 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ url_for('usuarios.editar', id=u.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Editar</a>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ url_for('usuarios.editar', id=u.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Editar</a>
+                            <a href="{{ url_for('usuarios.actividad', id=u.id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-history"></i> Actividad</a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

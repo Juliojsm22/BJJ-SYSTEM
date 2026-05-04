@@ -163,3 +163,17 @@ class TarifaEspecialCliente(db.Model):
     
     cliente = db.relationship('Cliente', backref=db.backref('tarifa_especial', uselist=False, cascade='all, delete-orphan'), overlaps="cliente,tarifa_especial")
 
+class RegistroActividad(db.Model):
+    __tablename__ = 'registro_actividades'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    accion = db.Column(db.String(100), nullable=False)
+    detalles = db.Column(db.Text)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', backref=db.backref('actividades', lazy=True, cascade='all, delete-orphan'))
+
+def registrar_actividad(usuario_id, accion, detalles=""):
+    actividad = RegistroActividad(usuario_id=usuario_id, accion=accion, detalles=detalles)
+    db.session.add(actividad)
+    db.session.commit()

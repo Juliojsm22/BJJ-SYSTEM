@@ -72,3 +72,16 @@ def editar(id):
         return redirect(url_for('usuarios.index'))
         
     return render_template('usuarios/form.html', usuario=usuario)
+
+@usuarios_bp.route('/actividad/<int:id>')
+@login_required
+def actividad(id):
+    if current_user.rol != 'admin':
+        flash('No tienes permisos.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    usuario = Usuario.query.get_or_404(id)
+    from models import RegistroActividad
+    actividades = RegistroActividad.query.filter_by(usuario_id=usuario.id).order_by(RegistroActividad.fecha.desc()).limit(100).all()
+    
+    return render_template('usuarios/actividad.html', usuario=usuario, actividades=actividades)
