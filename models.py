@@ -64,11 +64,25 @@ class Paquete(db.Model):
     TARIFA_MARITIMO = 2.50
 
     def calcular_costo(self):
-        tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
-        if tarifa_db:
-            tarifa = tarifa_db.precio_por_libra
-        else:
-            tarifa = self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO
+        tarifa = None
+        cliente = self.cliente
+        if not cliente and self.cliente_id:
+            from models import Cliente
+            cliente = Cliente.query.get(self.cliente_id)
+            
+        if cliente and getattr(cliente, 'tarifa_especial', None):
+            if self.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                tarifa = cliente.tarifa_especial.aereo
+            elif self.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                tarifa = cliente.tarifa_especial.maritimo
+
+        if tarifa is None:
+            tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
+            if tarifa_db:
+                tarifa = tarifa_db.precio_por_libra
+            else:
+                tarifa = self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO
+                
         return round(self.peso * tarifa, 2)
 
     def save(self):
