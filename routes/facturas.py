@@ -168,7 +168,9 @@ def generar_pdf_factura(factura):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=0.75*inch, leftMargin=0.75*inch,
-                            topMargin=0.75*inch, bottomMargin=0.75*inch)
+                            topMargin=0.75*inch, bottomMargin=0.75*inch,
+                            title=f"Factura {factura.numero}",
+                            author="BJJ SYSTEM")
 
     styles = getSampleStyleSheet()
     COLOR_PRIMARIO = colors.HexColor('#3d5ba0')
