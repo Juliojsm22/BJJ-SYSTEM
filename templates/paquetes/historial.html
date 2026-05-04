@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Historial de Rastreo - {{ paquete.tracking_number }}{% endblock %}
+{% block page_title %}Historial de Rastreo{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver a Paquetes
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display:flex; justify-content: space-between; flex-wrap: wrap; align-items: center;">
+        <div>
+            <h3 style="margin: 0; font-size: 1.2rem; color: var(--text);">Paquete: {{ paquete.nombre }}</h3>
+            <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.95rem;">
+                <strong>Guía:</strong> {{ paquete.tracking_number }} | 
+                <strong>Cliente:</strong> {{ paquete.cliente.nombre_completo }}
+            </p>
+            {% if paquete.numero_seguimiento %}
+            <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;"><i class="fas fa-barcode"></i> Seguimiento: {{ paquete.numero_seguimiento }}</p>
+            {% endif %}
+        </div>
+        <div style="text-align: right; margin-top: 10px;">
+            <span class="badge badge-{{ paquete.tipo_envio }}" style="font-size: 0.9rem;">{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</span>
+            <div style="margin-top: 8px; font-weight: bold; color: var(--primary); font-size: 1.1rem;">Estado Actual: {{ paquete.estado_rastreo }}</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+    <!-- Formulario para agregar nuevo estado -->
+    <div class="card">
+        <h4 style="margin-top: 0; margin-bottom: 20px; color: var(--text); border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <i class="fas fa-plus-circle" style="color: var(--primary);"></i> Nueva Actualización
+        </h4>
+        <form method="POST">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 500;">Estado *</label>
+                <select name="estado" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" required>
+                    <option value="">Seleccione el estado...</option>
+                    <option value="Recibido en Bodega Miami">Recibido en Bodega Miami</option>
+                    <option value="En Tránsito (Aéreo)">En Tránsito (Aéreo)</option>
+                    <option value="En Tránsito (Marítimo)">En Tránsito (Marítimo)</option>
+                    <option value="En Aduana">En Aduana</option>
+                    <option value="Listo para Retirar">Listo para Retirar</option>
+                    <option value="Entregado">Entregado</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 500;">Ubicación (Opcional)</label>
+                <input type="text" name="ubicacion" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" placeholder="Ej. Miami, Aduana local, Sucursal Centro...">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 500;">Comentarios (Opcional)</label>
+                <textarea name="comentarios" class="form-control" rows="3" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; resize: vertical;" placeholder="Ej. Vuelo retrasado, listo para entregar en sucursal..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;">
+                <i class="fas fa-save"></i> Registrar Estado
+            </button>
+        </form>
+    </div>
+
+    <!-- Línea de tiempo (Timeline) -->
+    <div class="card">
+        <h4 style="margin-top: 0; margin-bottom: 20px; color: var(--text); border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <i class="fas fa-stream" style="color: var(--primary);"></i> Línea de Tiempo
+        </h4>
+        
+        <div style="position: relative; padding-left: 20px; border-left: 2px solid #e0e6f0; margin-left: 10px;">
+            {% for h in paquete.historial|sort(attribute='creado_en', reverse=True) %}
+            <div style="margin-bottom: 25px; position: relative;">
+                <!-- Puntito en la línea -->
+                <div style="position: absolute; left: -27px; top: 2px; width: 14px; height: 14px; background: {% if loop.first %}var(--primary){% else %}#a0b0d0{% endif %}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px {% if loop.first %}rgba(61,91,160,0.2){% else %}transparent{% endif %};"></div>
+                
+                <div style="font-weight: 600; color: {% if loop.first %}var(--primary){% else %}var(--text){% endif %}; font-size: 1.05rem;">
+                    {{ h.estado }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+                    <i class="far fa-clock"></i> {{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }} 
+                    {% if h.ubicacion %} &nbsp;|&nbsp; <i class="fas fa-map-marker-alt" style="color:#d9534f;"></i> {{ h.ubicacion }}{% endif %}
+                </div>
+                {% if h.comentarios %}
+                <div style="margin-top: 8px; font-size: 0.9rem; color: #444; background: #f8f9fa; padding: 10px 12px; border-radius: 6px; border-left: 4px solid #ced4da;">
+                    <i class="fas fa-comment-alt" style="color:#adb5bd; margin-right: 6px; font-size: 0.8rem;"></i> {{ h.comentarios }}
+                </div>
+                {% endif %}
+                <div style="font-size: 0.75rem; color: #aaa; margin-top: 6px; text-align: right;">
+                    <i class="fas fa-user-circle"></i> {{ h.usuario.nombre_completo }}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 30px 0; text-align: center; color: #888;">
+                <i class="fas fa-history" style="font-size: 3rem; color: #ddd; margin-bottom: 10px;"></i>
+                <p>No hay registros en el historial.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

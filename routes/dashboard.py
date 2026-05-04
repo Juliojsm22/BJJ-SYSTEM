@@ -10,8 +10,8 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 @login_required
 def index():
     hoy = datetime.utcnow()
-    inicio_semana = hoy - timedelta(days=hoy.weekday())
-    inicio_mes = hoy.replace(day=1)
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Ganancias reales (precio venta - costo)
     # Aéreo: $6.5 - $5.0 = $1.5 ganancia por libra
@@ -73,6 +73,28 @@ def index():
             'total': float(total)
         })
 
+    # Ganancias últimas 4 semanas
+    semanas_data = []
+    for i in range(3, -1, -1):
+        inicio = inicio_semana - timedelta(days=7 * i)
+        fin = inicio + timedelta(days=7)
+        total = db.session.query(func.sum(ganancia_expr)).join(
+            Factura, Paquete.factura_id == Factura.id
+        ).filter(
+            Factura.fecha_emision >= inicio,
+            Factura.fecha_emision < fin,
+            Factura.estado.in_(['finalizada', 'pagada'])
+        ).scalar() or 0
+        
+        lbl = f"{inicio.strftime('%d %b')} - {(fin - timedelta(days=1)).strftime('%d %b')}"
+        if i == 0:
+            lbl = "Esta Semana"
+            
+        semanas_data.append({
+            'semana': lbl,
+            'total': float(total)
+        })
+
     # Paquetes por tipo
     aereos = Paquete.query.filter_by(tipo_envio='aereo').count()
     maritimos = Paquete.query.filter_by(tipo_envio='maritimo').count()
@@ -86,6 +108,7 @@ def index():
         facturas_pendientes=facturas_pendientes,
         top_clientes=top_clientes,
         meses_data=meses_data,
+        semanas_data=semanas_data,
         aereos=aereos,
         maritimos=maritimos
     )
@@ -94,7 +117,7 @@ def index():
 @login_required
 def api_stats():
     hoy = datetime.utcnow()
-    inicio_mes = hoy.replace(day=1)
+    inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ganancia_expr = case(
         (Paquete.tipo_envio == 'aereo', Paquete.peso * 1.5),
         (Paquete.tipo_envio == 'maritimo', Paquete.peso * 0.9),
@@ -107,3 +130,106 @@ def api_stats():
         Factura.estado.in_(['finalizada', 'pagada'])
     ).scalar() or 0
     return jsonify({'ganancias_mes': float(ganancias_mes)})
+
+@dashboard_bp.route('/pdf-reporte')
+@login_required
+def pdf_reporte():
+    from flask import make_response
+    import io
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    import os
+
+    hoy = datetime.utcnow()
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    ganancia_expr = case(
+        (Paquete.tipo_envio == 'aereo', Paquete.peso * 1.5),
+        (Paquete.tipo_envio == 'maritimo', Paquete.peso * 0.9),
+        else_=0
+    )
+
+    meses_data = []
+    for i in range(5, -1, -1):
+        mes = hoy - timedelta(days=30 * i)
+        inicio = mes.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if mes.month == 12:
+            fin = mes.replace(year=mes.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            fin = mes.replace(month=mes.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        total = db.session.query(func.sum(ganancia_expr)).join(
+            Factura, Paquete.factura_id == Factura.id
+        ).filter(
+            Factura.fecha_emision >= inicio,
+            Factura.fecha_emision < fin,
+            Factura.estado.in_(['finalizada', 'pagada'])
+        ).scalar() or 0
+        meses_data.append([mes.strftime('%b %Y'), f'${total:.2f}'])
+
+    semanas_data = []
+    for i in range(3, -1, -1):
+        inicio = inicio_semana - timedelta(days=7 * i)
+        fin = inicio + timedelta(days=7)
+        total = db.session.query(func.sum(ganancia_expr)).join(
+            Factura, Paquete.factura_id == Factura.id
+        ).filter(
+            Factura.fecha_emision >= inicio,
+            Factura.fecha_emision < fin,
+            Factura.estado.in_(['finalizada', 'pagada'])
+        ).scalar() or 0
+        
+        lbl = f"{inicio.strftime('%d %b')} - {(fin - timedelta(days=1)).strftime('%d %b')}"
+        if i == 0:
+            lbl = "Esta Semana"
+        semanas_data.append([lbl, f'${total:.2f}'])
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=inch, leftMargin=inch, topMargin=inch, bottomMargin=inch)
+    styles = getSampleStyleSheet()
+    story = []
+
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'logoazul.PNG')
+    if os.path.exists(logo_path):
+        header_left = Image(logo_path, width=3.0*inch, height=1.0*inch, kind='proportional')
+        header_left.hAlign = 'CENTER'
+        story.append(header_left)
+    
+    story.append(Spacer(1, 0.3*inch))
+    story.append(Paragraph('<font size=18 color="#3d5ba0"><b>REPORTE FINANCIERO</b></font>', styles['Title']))
+    story.append(Paragraph(f'<font size=10 color="#666666">Generado el: {hoy.strftime("%d/%m/%Y %H:%M")}</font>', styles['Title']))
+    story.append(Spacer(1, 0.5*inch))
+
+    story.append(Paragraph('<b>Resumen Semanal (Últimas 4 Semanas)</b>', styles['Heading3']))
+    story.append(Spacer(1, 0.1*inch))
+    t_semana = Table([['Semana', 'Ganancia Neta']] + semanas_data, colWidths=[4*inch, 2*inch])
+    t_semana.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#3d5ba0')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dddddd')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(t_semana)
+    story.append(Spacer(1, 0.5*inch))
+
+    story.append(Paragraph('<b>Resumen Mensual (Últimos 6 Meses)</b>', styles['Heading3']))
+    story.append(Spacer(1, 0.1*inch))
+    t_mes = Table([['Mes', 'Ganancia Neta']] + meses_data, colWidths=[4*inch, 2*inch])
+    t_mes.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#3d5ba0')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dddddd')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(t_mes)
+
+    doc.build(story)
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=reporte-financiero-{hoy.strftime("%Y%m%d")}.pdf'
+    return response

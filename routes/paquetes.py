@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from models import Paquete, Cliente, db
+from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
 from datetime import datetime
 
 paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
@@ -39,6 +39,13 @@ def nuevo():
         tipo_envio = request.form.get('tipo_envio')
         tarifa = 6.50 if tipo_envio == 'aereo' else 2.50
         costo = round(peso * tarifa, 2)
+        
+        numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
+        if numero_seguimiento:
+            existente = Paquete.query.filter_by(numero_seguimiento=numero_seguimiento).first()
+            if existente:
+                flash(f'El número de seguimiento "{numero_seguimiento}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
+                return redirect(request.url)
 
         paquete = Paquete(
             nombre=request.form.get('nombre').strip(),
@@ -46,11 +53,22 @@ def nuevo():
             peso=peso,
             tipo_envio=tipo_envio,
             cliente_id=int(request.form.get('cliente_id')),
-            numero_seguimiento=request.form.get('numero_seguimiento').strip(),
+            numero_seguimiento=numero_seguimiento,
             estado_rastreo=request.form.get('estado_rastreo', 'bodega_miami'),
             registrado_por=current_user.id
         )
         paquete.save()
+        
+        historial_inicial = HistorialRastreo(
+            paquete_id=paquete.id,
+            estado=paquete.estado_rastreo,
+            ubicacion='Miami',
+            comentarios='Paquete registrado en el sistema',
+            creado_por=current_user.id
+        )
+        db.session.add(historial_inicial)
+        db.session.commit()
+
         flash(f'Paquete registrado. Costo: ${paquete.costo:.2f} | Guía: {paquete.tracking_number}', 'success')
         return redirect(url_for('paquetes.index'))
 
@@ -71,11 +89,18 @@ def editar(id):
         tipo_envio = request.form.get('tipo_envio')
         tarifa = 6.50 if tipo_envio == 'aereo' else 2.50
 
+        numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
+        if numero_seguimiento and numero_seguimiento != paquete.numero_seguimiento:
+            existente = Paquete.query.filter_by(numero_seguimiento=numero_seguimiento).first()
+            if existente:
+                flash(f'El número de seguimiento "{numero_seguimiento}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
+                return redirect(request.url)
+
         paquete.nombre = request.form.get('nombre').strip()
         paquete.descripcion = request.form.get('descripcion', '').strip()
         paquete.peso = peso
         paquete.tipo_envio = tipo_envio
-        paquete.numero_seguimiento = request.form.get('numero_seguimiento').strip()
+        paquete.numero_seguimiento = numero_seguimiento
         paquete.estado_rastreo = request.form.get('estado_rastreo', paquete.estado_rastreo)
         paquete.costo = round(peso * tarifa, 2)
         paquete.cliente_id = int(request.form.get('cliente_id'))
@@ -102,6 +127,32 @@ def eliminar(id):
 def calcular_costo():
     peso = float(request.args.get('peso', 0))
     tipo = request.args.get('tipo', 'aereo')
-    tarifa = 6.50 if tipo == 'aereo' else 2.50
+    tarifa_db = Tarifa.query.filter_by(nombre=tipo).first()
+    tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo == 'aereo' else 2.50)
     costo = round(peso * tarifa, 2)
     return jsonify({'costo': costo, 'tarifa': tarifa})
+
+@paquetes_bp.route('/<int:id>/historial', methods=['GET', 'POST'])
+@login_required
+def historial(id):
+    paquete = Paquete.query.get_or_404(id)
+    if request.method == 'POST':
+        estado = request.form.get('estado').strip()
+        ubicacion = request.form.get('ubicacion', '').strip()
+        comentarios = request.form.get('comentarios', '').strip()
+
+        if estado:
+            nuevo_historial = HistorialRastreo(
+                paquete_id=paquete.id,
+                estado=estado,
+                ubicacion=ubicacion,
+                comentarios=comentarios,
+                creado_por=current_user.id
+            )
+            paquete.estado_rastreo = estado
+            db.session.add(nuevo_historial)
+            db.session.commit()
+            flash('Historial actualizado correctamente.', 'success')
+            return redirect(url_for('paquetes.historial', id=paquete.id))
+
+    return render_template('paquetes/historial.html', paquete=paquete)

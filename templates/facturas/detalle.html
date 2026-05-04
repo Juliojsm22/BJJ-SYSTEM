@@ -11,9 +11,7 @@
     <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Finalizar</button>
 </form>
 {% elif factura.estado == 'finalizada' %}
-<form method="POST" action="{{ url_for('facturas.pagar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Marcar factura como pagada? Esta acción es irreversible.')">
-    <button type="submit" class="btn btn-success"><i class="fas fa-money-bill-wave"></i> Marcar como Pagada</button>
-</form>
+<!-- El botón de pagar ahora está en la tarjeta de totales con el método de pago -->
 {% endif %}
 <a href="{{ url_for('facturas.generar_pdf', id=factura.id) }}" class="btn btn-secondary" target="_blank">
     <i class="fas fa-file-pdf"></i> PDF
@@ -48,6 +46,29 @@
         <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Total a pagar</div>
         <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--success);">${{ "%.2f"|format(factura.total) }}</div>
         <div><span class="badge badge-{{ factura.estado }}" style="font-size:13px;padding:6px 16px;">{{ factura.estado | capitalize }}</span></div>
+
+        {% if factura.estado == 'finalizada' %}
+        <div style="margin-top: 16px; width: 100%; border-top: 1px solid var(--border); padding-top: 16px;">
+            <form method="POST" action="{{ url_for('facturas.pagar', id=factura.id) }}" style="display: flex; flex-direction: column; gap: 10px; width: 100%;" onsubmit="return confirm('¿Marcar factura como pagada? Esta acción es irreversible.')">
+                <select name="metodo_pago" class="form-control" required style="font-size: 13px;">
+                    <option value="">-- Método de Pago --</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                </select>
+                <input type="text" name="referencia" class="form-control" placeholder="No. Referencia (Opcional)" style="font-size: 13px;">
+                <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center;"><i class="fas fa-money-bill-wave"></i> Procesar Pago</button>
+            </form>
+        </div>
+        {% elif factura.estado == 'pagada' and factura.pagos %}
+        <div style="margin-top: 16px; width: 100%; background: var(--surface2); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 12px; color: var(--text-muted);">PAGADO CON</div>
+            <div style="font-weight: 700; color: var(--text);">{{ factura.pagos[0].metodo_pago }}</div>
+            {% if factura.pagos[0].referencia %}
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Ref: {{ factura.pagos[0].referencia }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
         <div style="margin-top:16px;display:flex;gap:10px;">
             <a href="{{ url_for('facturas.generar_pdf', id=factura.id) }}" target="_blank" class="btn btn-secondary">
                 <i class="fas fa-download"></i> Descargar PDF

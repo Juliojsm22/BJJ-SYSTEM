@@ -87,8 +87,11 @@
     </div>
 </section>
 
-<div style="margin-top: 40px;">
-    <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 20px;">Estadísticas del Sistema</h3>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 20px;">
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin: 0;">Estadísticas del Sistema</h3>
+    <a href="{{ url_for('dashboard.pdf_reporte') }}" target="_blank" class="btn btn-primary" style="background-color: var(--accent); padding: 10px 16px;">
+        <i class="fas fa-file-pdf"></i> Descargar Reporte (PDF)
+    </a>
 </div>
 
 <!-- Stats Grid -->
@@ -181,6 +184,49 @@
                 <i class="fas fa-file-invoice"></i> Factura
             </a>
         </div>
+    </div>
+</div>
+
+<!-- Resumen Financiero -->
+<div class="grid-2" style="margin-top: 28px;">
+    <div class="chart-card">
+        <h3><i class="fas fa-calendar-week" style="color:var(--success);margin-right:8px"></i>Resumen de Ganancias (Semanales)</h3>
+        <table style="width: 100%; text-align: left;">
+            <thead>
+                <tr>
+                    <th style="padding-bottom: 12px; border-bottom: 1px solid var(--border);">Semana</th>
+                    <th style="padding-bottom: 12px; border-bottom: 1px solid var(--border); text-align: right;">Ganancia Neta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in semanas_data|reverse %}
+                <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid var(--border);">{{ s.semana }}</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid var(--border); text-align: right; font-family: 'Syne', sans-serif; font-weight: 700; color: var(--success);">${{ "%.2f"|format(s.total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-card">
+        <h3><i class="fas fa-calendar-alt" style="color:var(--accent);margin-right:8px"></i>Resumen de Ganancias (Mensuales)</h3>
+        <table style="width: 100%; text-align: left;">
+            <thead>
+                <tr>
+                    <th style="padding-bottom: 12px; border-bottom: 1px solid var(--border);">Mes</th>
+                    <th style="padding-bottom: 12px; border-bottom: 1px solid var(--border); text-align: right;">Ganancia Neta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in meses_data|reverse %}
+                <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid var(--border);">{{ m.mes }}</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid var(--border); text-align: right; font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent);">${{ "%.2f"|format(m.total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

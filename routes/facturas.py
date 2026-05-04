@@ -104,11 +104,23 @@ def finalizar(id):
 @facturas_bp.route('/pagar/<int:id>', methods=['POST'])
 @login_required
 def pagar(id):
+    from models import Pago
     factura = Factura.query.get_or_404(id)
     if factura.estado == 'finalizada':
+        metodo_pago = request.form.get('metodo_pago', 'Efectivo')
+        referencia = request.form.get('referencia', '')
+        
+        pago = Pago(
+            factura_id=factura.id,
+            monto=factura.total,
+            metodo_pago=metodo_pago,
+            referencia=referencia,
+            registrado_por=current_user.id
+        )
+        db.session.add(pago)
         factura.estado = 'pagada'
         db.session.commit()
-        flash('Factura marcada como pagada.', 'success')
+        flash(f'Factura marcada como pagada con {metodo_pago}.', 'success')
     else:
         flash('Solo se pueden pagar facturas finalizadas.', 'warning')
     return redirect(url_for('facturas.detalle', id=id))
@@ -148,7 +160,7 @@ def generar_pdf_factura(factura):
 
     styles = getSampleStyleSheet()
     COLOR_PRIMARIO = colors.HexColor('#3d5ba0')
-    COLOR_ACENTO = colors.HexColor('#ff6b00')
+    COLOR_ACENTO = colors.HexColor('#3d5ba0')
 
     story = []
 
@@ -156,7 +168,7 @@ def generar_pdf_factura(factura):
     logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'logoazul.PNG')
     
     if os.path.exists(logo_path):
-        header_left = Image(logo_path, width=2.5*inch, height=0.8*inch, kind='proportional')
+        header_left = Image(logo_path, width=3.5*inch, height=1.2*inch, kind='proportional')
         header_left.hAlign = 'LEFT'
     else:
         header_left = Paragraph('<font size=22 color="#3d5ba0"><b>ENVÍOS BJJ</b></font>', styles['Normal'])

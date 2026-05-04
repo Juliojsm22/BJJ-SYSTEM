@@ -81,6 +81,7 @@
                             {% else %}
                             <a href="{{ url_for('facturas.detalle', id=p.factura_id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
                             {% endif %}
+                            <a href="{{ url_for('paquetes.historial', id=p.id) }}" class="btn btn-sm" style="background:#17a2b8; color:white;" title="Historial"><i class="fas fa-history"></i></a>
                         </div>
                     </td>
                 </tr>
