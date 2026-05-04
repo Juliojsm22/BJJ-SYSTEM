@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if usuario else 'Nuevo' }} Usuario{% endblock %}
+{% block page_title %}{{ 'Editar' if usuario else 'Crear' }} Usuario{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('usuarios.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px;">
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input type="text" name="nombre_completo" class="form-control" value="{{ usuario.nombre_completo if usuario else '' }}" required placeholder="Ej: Carlos Mejía">
+            </div>
+            <div class="form-group">
+                <label>Nombre de Usuario * (Para iniciar sesión)</label>
+                <input type="text" name="username" class="form-control" value="{{ usuario.username if usuario else '' }}" required placeholder="Ej: carlosm">
+            </div>
+            <div class="form-group">
+                <label>Correo Electrónico *</label>
+                <input type="email" name="email" class="form-control" value="{{ usuario.email if usuario else '' }}" required placeholder="carlos@ejemplo.com">
+            </div>
+            <div class="form-group">
+                <label>Rol del Sistema *</label>
+                <select name="rol" class="form-control" required>
+                    <option value="empleado" {% if usuario and usuario.rol == 'empleado' %}selected{% endif %}>Trabajador (Acceso limitado)</option>
+                    <option value="admin" {% if usuario and usuario.rol == 'admin' %}selected{% endif %}>Administrador (Acceso total)</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-top:20px;">
+                <label>Contraseña {% if not usuario %}*{% else %}(Dejar en blanco para NO cambiarla){% endif %}</label>
+                <input type="password" name="password" class="form-control" {% if not usuario %}required{% endif %} placeholder="****">
+            </div>
+            
+            {% if usuario and current_user.id != usuario.id %}
+            <div class="form-group" style="margin-top:20px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" name="activo" {% if usuario.activo %}checked{% endif %}>
+                    Usuario Activo (Habilitado para iniciar sesión)
+                </label>
+            </div>
+            {% elif usuario %}
+            <input type="hidden" name="activo" value="on">
+            <div class="alert alert-warning" style="margin-top:20px;">
+                <i class="fas fa-info-circle"></i> No puedes deshabilitar tu propio usuario.
+            </div>
+            {% endif %}
+            
+            <div style="display:flex;gap:12px;margin-top:24px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ 'Actualizar Usuario' if usuario else 'Crear Usuario' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

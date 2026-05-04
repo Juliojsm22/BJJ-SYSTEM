@@ -138,6 +138,10 @@ def editar(id):
 @paquetes_bp.route('/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar(id):
+    if current_user.rol != 'admin':
+        flash('Solo los administradores pueden eliminar paquetes.', 'error')
+        return redirect(url_for('paquetes.index'))
+        
     paquete = Paquete.query.get_or_404(id)
     if paquete.factura_id:
         flash('No se puede eliminar un paquete facturado.', 'error')

@@ -146,11 +146,16 @@
         <nav>
             <ul>
                 {% if current_user.is_authenticated %}
+                {% if current_user.rol == 'admin' %}
                 <li><a href="{{ url_for('dashboard.index') }}">Inicio</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('clientes.index') }}">Cliente</a></li>
                 <li><a href="{{ url_for('paquetes.index') }}">Paquetes</a></li>
                 <li><a href="{{ url_for('facturas.index') }}">Facturas</a></li>
                 <li><a href="{{ url_for('rastreo.index') }}" target="_blank">Rastreo Público</a></li>
+                {% if current_user.rol == 'admin' %}
+                <li><a href="{{ url_for('usuarios.index') }}">Usuarios</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Salir</a></li>
                 {% endif %}
             </ul>

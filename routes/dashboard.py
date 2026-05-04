@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, jsonify
-from flask_login import login_required
+from flask import Blueprint, render_template, jsonify, redirect, url_for, flash
+from flask_login import login_required, current_user
 from models import Cliente, Paquete, Factura, db
 from datetime import datetime, timedelta
 from sqlalchemy import func, case
@@ -9,6 +9,9 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 @dashboard_bp.route('/')
 @login_required
 def index():
+    if current_user.rol != 'admin':
+        return redirect(url_for('paquetes.index'))
+        
     hoy = datetime.utcnow()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -134,6 +137,10 @@ def api_stats():
 @dashboard_bp.route('/pdf-reporte')
 @login_required
 def pdf_reporte():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos.', 'error')
+        return redirect(url_for('paquetes.index'))
+        
     from flask import make_response
     import io
     from reportlab.lib.pagesizes import letter
