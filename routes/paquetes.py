@@ -37,7 +37,20 @@ def nuevo():
     if request.method == 'POST':
         peso = float(request.form.get('peso', 0))
         tipo_envio = request.form.get('tipo_envio')
-        tarifa = 6.50 if tipo_envio == 'aereo' else 2.50
+        cliente_id = int(request.form.get('cliente_id'))
+        
+        cliente = Cliente.query.get(cliente_id)
+        tarifa = None
+        if cliente and cliente.tarifa_especial:
+            if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                tarifa = cliente.tarifa_especial.aereo
+            elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                tarifa = cliente.tarifa_especial.maritimo
+                
+        if tarifa is None:
+            tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
+            tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
+            
         costo = round(peso * tarifa, 2)
         
         numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
@@ -87,7 +100,19 @@ def editar(id):
     if request.method == 'POST':
         peso = float(request.form.get('peso', 0))
         tipo_envio = request.form.get('tipo_envio')
-        tarifa = 6.50 if tipo_envio == 'aereo' else 2.50
+        cliente_id = int(request.form.get('cliente_id'))
+        
+        cliente = Cliente.query.get(cliente_id)
+        tarifa = None
+        if cliente and cliente.tarifa_especial:
+            if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                tarifa = cliente.tarifa_especial.aereo
+            elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                tarifa = cliente.tarifa_especial.maritimo
+                
+        if tarifa is None:
+            tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
+            tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
 
         numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
         if numero_seguimiento and numero_seguimiento != paquete.numero_seguimiento:
@@ -127,10 +152,47 @@ def eliminar(id):
 def calcular_costo():
     peso = float(request.args.get('peso', 0))
     tipo = request.args.get('tipo', 'aereo')
-    tarifa_db = Tarifa.query.filter_by(nombre=tipo).first()
-    tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo == 'aereo' else 2.50)
+    cliente_id = request.args.get('cliente_id')
+    
+    tarifa = None
+    if cliente_id:
+        cliente = Cliente.query.get(int(cliente_id))
+        if cliente and cliente.tarifa_especial:
+            if tipo == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                tarifa = cliente.tarifa_especial.aereo
+            elif tipo == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                tarifa = cliente.tarifa_especial.maritimo
+                
+    if tarifa is None:
+        tarifa_db = Tarifa.query.filter_by(nombre=tipo).first()
+        tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo == 'aereo' else 2.50)
+        
     costo = round(peso * tarifa, 2)
     return jsonify({'costo': costo, 'tarifa': tarifa})
+
+@paquetes_bp.route('/tarifas-cliente')
+@login_required
+def tarifas_cliente():
+    cliente_id = request.args.get('cliente_id')
+    
+    t_aereo = Tarifa.query.filter_by(nombre='aereo').first()
+    t_maritimo = Tarifa.query.filter_by(nombre='maritimo').first()
+    
+    precio_aereo = t_aereo.precio_por_libra if t_aereo else 6.50
+    precio_maritimo = t_maritimo.precio_por_libra if t_maritimo else 2.50
+    
+    if cliente_id:
+        cliente = Cliente.query.get(int(cliente_id))
+        if cliente and cliente.tarifa_especial:
+            if cliente.tarifa_especial.aereo is not None:
+                precio_aereo = cliente.tarifa_especial.aereo
+            if cliente.tarifa_especial.maritimo is not None:
+                precio_maritimo = cliente.tarifa_especial.maritimo
+                
+    return jsonify({
+        'aereo': precio_aereo,
+        'maritimo': precio_maritimo
+    })
 
 @paquetes_bp.route('/<int:id>/historial', methods=['GET', 'POST'])
 @login_required

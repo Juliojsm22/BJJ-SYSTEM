@@ -34,6 +34,20 @@ def nuevo():
             email=request.form.get('email').strip()
         )
         db.session.add(cliente)
+        db.session.flush() # Para obtener el ID del cliente
+        
+        tarifa_aereo = request.form.get('tarifa_aereo')
+        tarifa_maritimo = request.form.get('tarifa_maritimo')
+        
+        if tarifa_aereo or tarifa_maritimo:
+            from models import TarifaEspecialCliente
+            tarifa_esp = TarifaEspecialCliente(
+                cliente_id=cliente.id,
+                aereo=float(tarifa_aereo) if tarifa_aereo else None,
+                maritimo=float(tarifa_maritimo) if tarifa_maritimo else None
+            )
+            db.session.add(tarifa_esp)
+            
         db.session.commit()
         flash('Cliente registrado exitosamente.', 'success')
         return redirect(url_for('clientes.index'))
@@ -55,6 +69,20 @@ def editar(id):
         cliente.cedula = cedula
         cliente.telefono = request.form.get('telefono').strip()
         cliente.email = request.form.get('email').strip()
+        
+        tarifa_aereo = request.form.get('tarifa_aereo')
+        tarifa_maritimo = request.form.get('tarifa_maritimo')
+        
+        from models import TarifaEspecialCliente
+        if tarifa_aereo or tarifa_maritimo:
+            if not cliente.tarifa_especial:
+                cliente.tarifa_especial = TarifaEspecialCliente(cliente_id=cliente.id)
+            cliente.tarifa_especial.aereo = float(tarifa_aereo) if tarifa_aereo else None
+            cliente.tarifa_especial.maritimo = float(tarifa_maritimo) if tarifa_maritimo else None
+        else:
+            if cliente.tarifa_especial:
+                db.session.delete(cliente.tarifa_especial)
+                
         db.session.commit()
         flash('Cliente actualizado correctamente.', 'success')
         return redirect(url_for('clientes.index'))

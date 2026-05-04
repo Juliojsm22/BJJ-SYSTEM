@@ -50,8 +50,8 @@
                     <label>Tipo de envío *</label>
                     <select name="tipo_envio" id="tipo_envio" class="form-control" required>
                         <option value="">Seleccionar...</option>
-                        <option value="aereo" {% if paquete and paquete.tipo_envio == 'aereo' %}selected{% endif %}>✈️ Aéreo — $6.50/lb</option>
-                        <option value="maritimo" {% if paquete and paquete.tipo_envio == 'maritimo' %}selected{% endif %}>🚢 Marítimo — $2.50/lb</option>
+                        <option id="opt_aereo" value="aereo" {% if paquete and paquete.tipo_envio == 'aereo' %}selected{% endif %}>✈️ Aéreo — $6.50/lb</option>
+                        <option id="opt_maritimo" value="maritimo" {% if paquete and paquete.tipo_envio == 'maritimo' %}selected{% endif %}>🚢 Marítimo — $2.50/lb</option>
                     </select>
                 </div>
             </div>
@@ -92,15 +92,25 @@
 function calcularCosto() {
     const peso = parseFloat(document.getElementById('peso').value) || 0;
     const tipo = document.getElementById('tipo_envio').value;
+    const selectCliente = document.querySelector('select[name="cliente_id"]');
+    const cliente_id = selectCliente ? selectCliente.value : null;
     const preview = document.getElementById('costoPreview');
 
     if (peso > 0 && tipo) {
-        const tarifa = tipo === 'aereo' ? 6.50 : 2.50;
-        const costo = (peso * tarifa).toFixed(2);
-        document.getElementById('costoValor').textContent = '$' + costo;
-        document.getElementById('costoFormula').textContent =
-            `${peso.toFixed(2)} lb × $${tarifa.toFixed(2)} = $${costo}`;
-        preview.style.display = 'block';
+        let url = `{{ url_for('paquetes.calcular_costo') }}?peso=${peso}&tipo=${tipo}`;
+        if (cliente_id) url += `&cliente_id=${cliente_id}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('costoValor').textContent = '$' + data.costo.toFixed(2);
+                document.getElementById('costoFormula').textContent =
+                    `${peso.toFixed(2)} lb × $${data.tarifa.toFixed(2)} = $${data.costo.toFixed(2)}`;
+                preview.style.display = 'block';
+            })
+            .catch(error => {
+                console.error("Error calculando costo:", error);
+            });
     } else {
         preview.style.display = 'none';
     }
@@ -108,6 +118,28 @@ function calcularCosto() {
 
 document.getElementById('peso').addEventListener('input', calcularCosto);
 document.getElementById('tipo_envio').addEventListener('change', calcularCosto);
-calcularCosto(); // run on load for edit mode
+
+const selCliente = document.querySelector('select[name="cliente_id"]');
+
+function actualizarTextosTarifa() {
+    const cliente_id = selCliente ? selCliente.value : null;
+    let url = `{{ url_for('paquetes.tarifas_cliente') }}`;
+    if (cliente_id) url += `?cliente_id=${cliente_id}`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const optAereo = document.getElementById('opt_aereo');
+            const optMaritimo = document.getElementById('opt_maritimo');
+            
+            if(optAereo) optAereo.textContent = `✈️ Aéreo — $${data.aereo.toFixed(2)}/lb`;
+            if(optMaritimo) optMaritimo.textContent = `🚢 Marítimo — $${data.maritimo.toFixed(2)}/lb`;
+            
+            calcularCosto();
+        });
+}
+
+if (selCliente) selCliente.addEventListener('change', actualizarTextosTarifa);
+actualizarTextosTarifa(); // run on load
 </script>
 {% endblock %}

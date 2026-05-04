@@ -140,3 +140,12 @@ class Tarifa(db.Model):
     precio_por_libra = db.Column(db.Float, nullable=False)
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class TarifaEspecialCliente(db.Model):
+    __tablename__ = 'tarifas_especiales_cliente'
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    aereo = db.Column(db.Float, nullable=True)
+    maritimo = db.Column(db.Float, nullable=True)
+    
+    cliente = db.relationship('Cliente', backref=db.backref('tarifa_especial', uselist=False, cascade='all, delete-orphan'), overlaps="cliente,tarifa_especial")
+

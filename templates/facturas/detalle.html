@@ -95,7 +95,7 @@
                     <td style="color:var(--text-muted)">{{ p.descripcion or '—' }}</td>
                     <td><span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span></td>
                     <td>{{ "%.2f"|format(p.peso) }} lb</td>
-                    <td style="color:var(--text-muted)">${{ '6.50' if p.tipo_envio == 'aereo' else '2.50' }}/lb</td>
+                    <td style="color:var(--text-muted)">${{ "%.2f"|format(p.costo / p.peso) if p.peso > 0 else "0.00" }}/lb</td>
                     <td style="font-weight:600;color:var(--success)">${{ "%.2f"|format(p.costo) }}</td>
                 </tr>
                 {% endfor %}
