@@ -73,7 +73,7 @@ def editar(id):
         tarifa_aereo = request.form.get('tarifa_aereo')
         tarifa_maritimo = request.form.get('tarifa_maritimo')
         
-        from models import TarifaEspecialCliente
+        from models import TarifaEspecialCliente, Paquete, Tarifa
         if tarifa_aereo or tarifa_maritimo:
             if not cliente.tarifa_especial:
                 cliente.tarifa_especial = TarifaEspecialCliente(cliente_id=cliente.id)
@@ -83,6 +83,26 @@ def editar(id):
             if cliente.tarifa_especial:
                 db.session.delete(cliente.tarifa_especial)
                 
+        # Recalcular costos de paquetes pendientes
+        t_aereo = Tarifa.query.filter_by(nombre='aereo').first()
+        t_maritimo = Tarifa.query.filter_by(nombre='maritimo').first()
+        precio_aereo_base = t_aereo.precio_por_libra if t_aereo else 6.50
+        precio_maritimo_base = t_maritimo.precio_por_libra if t_maritimo else 2.50
+        
+        paquetes_pendientes = Paquete.query.filter_by(cliente_id=cliente.id, factura_id=None).all()
+        for p in paquetes_pendientes:
+            tarifa_p = None
+            if cliente.tarifa_especial:
+                if p.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                    tarifa_p = cliente.tarifa_especial.aereo
+                elif p.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                    tarifa_p = cliente.tarifa_especial.maritimo
+            
+            if tarifa_p is None:
+                tarifa_p = precio_aereo_base if p.tipo_envio == 'aereo' else precio_maritimo_base
+                
+            p.costo = round(p.peso * tarifa_p, 2)
+
         db.session.commit()
         flash('Cliente actualizado correctamente.', 'success')
         return redirect(url_for('clientes.index'))
