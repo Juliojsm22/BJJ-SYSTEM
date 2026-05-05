@@ -10,7 +10,7 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-agencia-2024')
-    db_url = os.environ.get('DATABASE_URL', 'mysql+pymysql://root:2209@localhost/agencia_paqueteria')
+    db_url = os.environ.get('DATABASE_URL', 'postgresql+pg8000://postgres:2209@localhost/agencia_paqueteria')
     if db_url.startswith('postgres'):
         # Extraer el resto de la URL después del '://'
         resto_url = db_url.split('://', 1)[1]
