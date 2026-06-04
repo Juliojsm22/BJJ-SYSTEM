@@ -1,25 +1,29 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Cargar variables de entorno desde .env
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-agencia-2024')
-    db_url = os.environ.get('DATABASE_URL', 'postgresql+pg8000://postgres:2209@localhost/agencia_paqueteria')
-    if db_url.startswith('postgres'):
-        # Extraer el resto de la URL después del '://'
-        resto_url = db_url.split('://', 1)[1]
-        db_url = f"postgresql+pg8000://{resto_url}"
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Seleccionar configuración según FLASK_ENV
+    env = os.environ.get('FLASK_ENV', 'development')
+    if env == 'production':
+        app.config.from_object('config.ProductionConfig')
+    else:
+        app.config.from_object('config.DevelopmentConfig')
 
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Por favor inicia sesión para acceder.'
@@ -41,12 +45,17 @@ def create_app():
     app.register_blueprint(usuarios_bp)
 
     with app.app_context():
-        db.create_all()
-        try:
-            db.session.execute(db.text("ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+        # Cuando se usa Flask-Migrate, en producción ya NO usamos db.create_all()
+        # Solo lo mantenemos para desarrollo rápido o en el primer run si no hay bd.
+        # Lo ideal es que Migrate tome el control total.
+        if env == 'development':
+            db.create_all()
+            try:
+                db.session.execute(db.text("ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        
         crear_usuario_admin()
 
     return app

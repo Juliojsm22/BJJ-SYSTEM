@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BJJ SYSTEM{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='Logo.png') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Raleway:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -22,6 +22,15 @@
             --text-muted: #666666;
             --success: #10b981;
             --warning: #f59e0b;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface2: #2d2d2d;
+            --border: #333333;
+            --accent: #5e81d8;
+            --text: #e0e0e0;
+            --text-muted: #9e9e9e;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -52,17 +61,17 @@
             display: inline-flex; align-items: center; gap: 8px;
             padding: 9px 18px; border-radius: 8px; border: none;
             font-size: 14px; font-weight: 500; cursor: pointer;
-            text-decoration: none; transition: all 0.2s;
-            font-family: 'DM Sans', sans-serif;
+            text-decoration: none; transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
         }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent2); }
+        .btn-primary:hover { background: var(--accent2); transform: scale(1.03); }
         .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { border-color: var(--text-muted); }
+        .btn-secondary:hover { border-color: var(--text-muted); transform: scale(1.03); }
         .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-        .btn-success:hover { background: rgba(16,185,129,0.25); }
+        .btn-success:hover { background: rgba(16,185,129,0.25); transform: scale(1.03); }
         .btn-danger { background: rgba(233,69,96,0.15); color: #e94560; border: 1px solid rgba(233,69,96,0.3); }
-        .btn-danger:hover { background: rgba(233,69,96,0.25); }
+        .btn-danger:hover { background: rgba(233,69,96,0.25); transform: scale(1.03); }
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
         .btn-warning:hover { background: rgba(245,158,11,0.25); }
@@ -100,11 +109,15 @@
             width: 100%; padding: 10px 14px;
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 8px; color: var(--text); font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
-            transition: border-color 0.2s;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s ease;
             outline: none;
         }
-        .form-control:focus { border-color: var(--accent); }
+        .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(61,91,160,0.1); }
+        .form-control.is-valid { border-color: var(--success); }
+        .form-control.is-valid:focus { box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+        .form-control.is-invalid { border-color: #e94560; }
+        .form-control.is-invalid:focus { box-shadow: 0 0 0 3px rgba(233,69,96,0.1); }
         select.form-control { cursor: pointer; }
         textarea.form-control { resize: vertical; min-height: 80px; }
 
@@ -160,6 +173,7 @@
                 {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Salir</a></li>
                 {% endif %}
+                <li><a href="#" id="theme-toggle" aria-label="Cambiar tema oscuro"><i class="fas fa-moon"></i></a></li>
             </ul>
         </nav>
     </header>
@@ -232,6 +246,49 @@
     function onScanFailure(error) {
         // Ignorar errores continuos mientras escanea
     }
+
+    // Modo Oscuro
+    const themeToggle = document.getElementById('theme-toggle');
+    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        if (themeToggle) {
+            themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+    }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        setTheme(savedTheme);
+    } else if (prefersDarkScheme.matches) {
+        setTheme('dark');
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            let currentTheme = document.documentElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+    }
+
+    // Validación visual de formularios (soporta elementos dinámicos)
+    document.addEventListener('blur', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('form-control')) {
+            if (e.target.hasAttribute('required')) {
+                if (e.target.checkValidity()) {
+                    e.target.classList.add('is-valid');
+                    e.target.classList.remove('is-invalid');
+                } else {
+                    e.target.classList.add('is-invalid');
+                    e.target.classList.remove('is-valid');
+                }
+            }
+        }
+    }, true);
     </script>
 
     <footer>

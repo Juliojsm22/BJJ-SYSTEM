@@ -2,17 +2,18 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 :root {
-    --color-principal: #3d5ba0;
-    --color-secundario: #fff;
-    --color-hover: #ff6b00; /* coral */
+    --color-principal: var(--accent, #3d5ba0);
+    --color-secundario: var(--surface, #fff);
+    --color-hover: var(--accent2, #ff6b00);
 }
 
 body {
-    background-color: #f4f6f9;
+    background-color: var(--bg, #f4f6f9);
+    color: var(--text, #333333);
 }
 
 /* ==================== BARRA SUPERIOR ==================== */
