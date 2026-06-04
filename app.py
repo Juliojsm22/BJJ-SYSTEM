@@ -1,7 +1,5 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_migrate import Migrate
+from extensions import db, login_manager, migrate
 from datetime import datetime
 import os
 import sys
@@ -12,10 +10,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dotenv import load_dotenv
 
 load_dotenv()  # Cargar variables de entorno desde .env
-
-db = SQLAlchemy()
-login_manager = LoginManager()
-migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
