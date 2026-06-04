@@ -14,10 +14,14 @@ class DevelopmentConfig(BaseConfig):
         'sqlite:///dev.db'  # fallback para desarrollo rápido
     )
 
+def get_prod_db_url():
+    url = os.getenv('DATABASE_URL', 'postgresql+pg8000://postgres:2209@localhost/agencia_paqueteria')
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql+pg8000://', 1)
+    elif url.startswith('postgresql://'):
+        url = url.replace('postgresql://', 'postgresql+pg8000://', 1)
+    return url
+
 class ProductionConfig(BaseConfig):
     DEBUG = False
-    # En producción suele usarse Postgres vía URL en env var
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        'postgresql+pg8000://postgres:2209@localhost/agencia_paqueteria'
-    )
+    SQLALCHEMY_DATABASE_URI = get_prod_db_url()
