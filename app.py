@@ -1,12 +1,12 @@
-from flask import Flask
-from extensions import db, login_manager, migrate
-from datetime import datetime
 import os
 import sys
 
-# Asegurar que el directorio actual esté en el path para poder importar config
+# Asegurar que el directorio actual esté en el path para poder importar config y extensions en Render
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from flask import Flask
+from extensions import db, login_manager, migrate
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()  # Cargar variables de entorno desde .env
