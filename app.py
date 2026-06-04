@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from flask import Flask
-from extensions import db, login_manager, migrate
+from extensions import db, login_manager, migrate, csrf, limiter
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -23,6 +23,8 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
+    limiter.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Por favor inicia sesión para acceder.'

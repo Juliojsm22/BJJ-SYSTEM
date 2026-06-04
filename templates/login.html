@@ -13,6 +13,7 @@
         </div>
 
         <form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-group">
                 <label>Usuario</label>
                 <div style="position: relative;">

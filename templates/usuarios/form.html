@@ -12,6 +12,7 @@
 <div style="max-width: 500px;">
     <div class="card">
         <form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-group">
                 <label>Nombre Completo *</label>
                 <input type="text" name="nombre_completo" class="form-control" value="{{ usuario.nombre_completo if usuario else '' }}" required placeholder="Ej: Carlos Mejía">

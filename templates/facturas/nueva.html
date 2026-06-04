@@ -10,6 +10,7 @@
 <div style="max-width:800px;">
     <div class="card">
         <form method="POST" id="formFactura">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-group">
                 <label>Cliente *</label>
                 <select name="cliente_id" id="clienteSelect" class="form-control" required>

@@ -39,6 +39,7 @@
                             {% if f.estado == 'borrador' or current_user.rol == 'admin' %}
                             <a href="{{ url_for('facturas.editar', id=f.id) }}" class="btn btn-sm btn-warning" title="Editar"><i class="fas fa-edit"></i></a>
                             <form method="POST" action="{{ url_for('facturas.eliminar', id=f.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar factura?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </form>
                             {% endif %}

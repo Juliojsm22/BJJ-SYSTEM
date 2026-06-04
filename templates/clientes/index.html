@@ -54,6 +54,7 @@
                                 <i class="fas fa-box"></i>
                             </a>
                             <form method="POST" action="{{ url_for('clientes.eliminar', id=c.id) }}" onsubmit="return confirm('¿Eliminar cliente?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
                                     <i class="fas fa-trash"></i>
                                 </button>

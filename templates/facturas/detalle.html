@@ -8,12 +8,14 @@
     <i class="fas fa-edit"></i> Editar
 </a>
 <form method="POST" action="{{ url_for('facturas.eliminar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta factura? Se desvincularán los paquetes y eliminarán los pagos.')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
 </form>
 {% endif %}
 
 {% if factura.estado == 'borrador' %}
 <form method="POST" action="{{ url_for('facturas.finalizar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Finalizar factura? No podrá editarse normalmente.')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Finalizar</button>
 </form>
 {% elif factura.estado == 'finalizada' %}
@@ -56,6 +58,7 @@
         {% if factura.estado == 'finalizada' %}
         <div style="margin-top: 16px; width: 100%; border-top: 1px solid var(--border); padding-top: 16px;">
             <form method="POST" action="{{ url_for('facturas.pagar', id=factura.id) }}" style="display: flex; flex-direction: column; gap: 10px; width: 100%;" onsubmit="return confirm('¿Marcar factura como pagada? Esta acción es irreversible.')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <select name="metodo_pago" class="form-control" required style="font-size: 13px;">
                     <option value="">-- Método de Pago --</option>
                     <option value="Efectivo">Efectivo</option>

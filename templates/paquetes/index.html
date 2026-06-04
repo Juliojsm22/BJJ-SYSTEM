@@ -76,6 +76,7 @@
                             {% if not p.factura_id %}
                             <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                             <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                             </form>
                             {% else %}

@@ -12,6 +12,7 @@
 <div style="max-width:640px;">
     <div class="card">
         <form method="POST" id="formPaquete">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-group">
                 <label>Cliente *</label>
                 <select name="cliente_id" class="form-control" required>
