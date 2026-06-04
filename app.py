@@ -4,6 +4,11 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from datetime import datetime
 import os
+import sys
+
+# Asegurar que el directorio actual esté en el path para poder importar config
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from dotenv import load_dotenv
 
 load_dotenv()  # Cargar variables de entorno desde .env
