@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 from models import Cliente, db
 import io
 import openpyxl
+import re
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 
@@ -26,15 +27,24 @@ def index():
 @login_required
 def nuevo():
     if request.method == 'POST':
-        cedula = request.form.get('cedula').strip()
+        cedula = request.form.get('cedula').strip().upper()
+        if not re.match(r'^\d{3}-\d{6}-\d{4}[A-Z]$', cedula):
+            flash('La cédula debe tener el formato de Nicaragua: 000-000000-0000A', 'error')
+            return render_template('clientes/form.html', cliente=None)
+            
         if Cliente.query.filter_by(cedula=cedula).first():
             flash('Ya existe un cliente con esa cédula.', 'error')
             return render_template('clientes/form.html', cliente=None)
         
+        telefono = request.form.get('telefono', '').strip()
+        if telefono and (len(telefono) != 8 or not telefono.isdigit()):
+            flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
+            return render_template('clientes/form.html', cliente=None)
+            
         cliente = Cliente(
             nombre_completo=request.form.get('nombre_completo').strip(),
             cedula=cedula,
-            telefono=request.form.get('telefono').strip(),
+            telefono=telefono,
             email=request.form.get('email').strip()
         )
         db.session.add(cliente)
@@ -67,15 +77,24 @@ def nuevo():
 def editar(id):
     cliente = Cliente.query.get_or_404(id)
     if request.method == 'POST':
-        cedula = request.form.get('cedula').strip()
+        cedula = request.form.get('cedula').strip().upper()
+        if not re.match(r'^\d{3}-\d{6}-\d{4}[A-Z]$', cedula):
+            flash('La cédula debe tener el formato de Nicaragua: 000-000000-0000A', 'error')
+            return render_template('clientes/form.html', cliente=cliente)
+            
         existente = Cliente.query.filter_by(cedula=cedula).first()
         if existente and existente.id != id:
             flash('Ya existe un cliente con esa cédula.', 'error')
             return render_template('clientes/form.html', cliente=cliente)
         
+        telefono = request.form.get('telefono', '').strip()
+        if telefono and (len(telefono) != 8 or not telefono.isdigit()):
+            flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
+            return render_template('clientes/form.html', cliente=cliente)
+            
         cliente.nombre_completo = request.form.get('nombre_completo').strip()
         cliente.cedula = cedula
-        cliente.telefono = request.form.get('telefono').strip()
+        cliente.telefono = telefono
         cliente.email = request.form.get('email').strip()
         
         tarifa_aereo = request.form.get('tarifa_aereo')

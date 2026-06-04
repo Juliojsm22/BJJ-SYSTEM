@@ -24,15 +24,19 @@
                     <label>Número de cédula *</label>
                     <input type="text" name="cedula" class="form-control"
                            value="{{ cliente.cedula if cliente else '' }}" required
-                           placeholder="Ej: 001-123456-0001">
+                           pattern="\d{3}-\d{6}-\d{4}[a-zA-Z]" maxlength="16" 
+                           title="Formato: 000-000000-0000A"
+                           style="text-transform: uppercase;"
+                           placeholder="Ej: 001-123456-0001A">
                 </div>
             </div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Número telefónico</label>
+                    <label>Número telefónico (Nicaragua)</label>
                     <input type="text" name="telefono" class="form-control"
                            value="{{ cliente.telefono if cliente else '' }}"
-                           placeholder="Ej: 8888-0000">
+                           pattern="\d{8}" maxlength="8" minlength="8" title="Debe contener exactamente 8 dígitos"
+                           placeholder="Ej: 88880000">
                 </div>
                 <div class="form-group">
                     <label>Correo electrónico</label>
