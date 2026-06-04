@@ -3,11 +3,17 @@
 {% block page_title %}{{ factura.numero }}{% endblock %}
 
 {% block topbar_actions %}
-{% if factura.estado == 'borrador' %}
+{% if factura.estado == 'borrador' or current_user.rol == 'admin' %}
 <a href="{{ url_for('facturas.editar', id=factura.id) }}" class="btn btn-warning">
     <i class="fas fa-edit"></i> Editar
 </a>
-<form method="POST" action="{{ url_for('facturas.finalizar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Finalizar factura? No podrá editarse.')">
+<form method="POST" action="{{ url_for('facturas.eliminar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta factura? Se desvincularán los paquetes y eliminarán los pagos.')">
+    <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
+</form>
+{% endif %}
+
+{% if factura.estado == 'borrador' %}
+<form method="POST" action="{{ url_for('facturas.finalizar', id=factura.id) }}" style="display:inline;" onsubmit="return confirm('¿Finalizar factura? No podrá editarse normalmente.')">
     <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Finalizar</button>
 </form>
 {% elif factura.estado == 'finalizada' %}

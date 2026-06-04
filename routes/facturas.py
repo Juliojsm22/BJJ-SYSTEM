@@ -72,8 +72,8 @@ def detalle(id):
 @login_required
 def editar(id):
     factura = Factura.query.get_or_404(id)
-    if factura.estado == 'finalizada':
-        flash('No se puede editar una factura finalizada.', 'warning')
+    if factura.estado in ['finalizada', 'pagada'] and current_user.rol != 'admin':
+        flash('Solo los administradores pueden editar una factura finalizada.', 'warning')
         return redirect(url_for('facturas.detalle', id=id))
 
     if request.method == 'POST':
@@ -156,6 +156,32 @@ def paquetes_cliente(cliente_id):
         'tipo_envio': p.tipo_envio, 'costo': p.costo
     } for p in paquetes])
 
+@facturas_bp.route('/eliminar/<int:id>', methods=['POST'])
+@login_required
+def eliminar(id):
+    factura = Factura.query.get_or_404(id)
+    if factura.estado in ['finalizada', 'pagada'] and current_user.rol != 'admin':
+        flash('Solo los administradores pueden eliminar una factura finalizada.', 'error')
+        return redirect(url_for('facturas.index'))
+        
+    for p in factura.paquetes:
+        p.factura_id = None
+        
+    from models import Pago
+    pagos = Pago.query.filter_by(factura_id=factura.id).all()
+    for pago in pagos:
+        db.session.delete(pago)
+        
+    numero = factura.numero
+    db.session.delete(factura)
+    db.session.commit()
+    
+    from models import registrar_actividad
+    registrar_actividad(current_user.id, 'Eliminó Factura', f'Factura {numero} eliminada')
+    
+    flash('Factura eliminada correctamente.', 'success')
+    return redirect(url_for('facturas.index'))
+
 def generar_pdf_factura(factura):
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -226,10 +252,15 @@ def generar_pdf_factura(factura):
 
     # Tabla de paquetes
     table_data = [['#', 'Paquete', 'Guía de Rastreo', 'Tipo', 'Peso (lb)', 'Costo']]
+    
+    cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=9, wordWrap='CJK')
+    
     for i, p in enumerate(factura.paquetes, 1):
         tipo = 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo'
+        nombre_p = Paragraph(p.nombre, cell_style)
+        rastreo_p = Paragraph(p.numero_seguimiento or '—', cell_style)
         table_data.append([
-            str(i), p.nombre, p.numero_seguimiento or '—', tipo,
+            str(i), nombre_p, rastreo_p, tipo,
             f'{p.peso:.2f}', f'${p.costo:.2f}'
         ])
 
@@ -242,6 +273,7 @@ def generar_pdf_factura(factura):
         ('FONTSIZE', (0,0), (-1,-1), 9),
         ('ALIGN', (4,0), (5,-1), 'RIGHT'),
         ('ALIGN', (0,0), (0,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f5f5f5')]),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dddddd')),
         ('TOPPADDING', (0,0), (-1,-1), 6),

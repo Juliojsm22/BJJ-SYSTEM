@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
-from datetime import datetime
 
 paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
 
@@ -35,60 +34,76 @@ def nuevo():
     cliente_id = request.args.get('cliente_id')
 
     if request.method == 'POST':
-        peso = float(request.form.get('peso', 0))
-        tipo_envio = request.form.get('tipo_envio')
-        cliente_id = int(request.form.get('cliente_id'))
+        cliente_id_form = int(request.form.get('cliente_id'))
+        cliente = Cliente.query.get(cliente_id_form)
         
-        cliente = Cliente.query.get(cliente_id)
-        tarifa = None
-        if cliente and cliente.tarifa_especial:
-            if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                tarifa = cliente.tarifa_especial.aereo
-            elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                tarifa = cliente.tarifa_especial.maritimo
-                
-        if tarifa is None:
-            tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
-            tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
+        nombres = request.form.getlist('nombre[]')
+        descripciones = request.form.getlist('descripcion[]')
+        pesos = request.form.getlist('peso[]')
+        tipos_envio = request.form.getlist('tipo_envio[]')
+        numeros_seguimiento = request.form.getlist('numero_seguimiento[]')
+        estados_rastreo = request.form.getlist('estado_rastreo[]')
+        
+        # Validar números de seguimiento duplicados antes de guardar
+        for num in numeros_seguimiento:
+            if num.strip():
+                existente = Paquete.query.filter_by(numero_seguimiento=num.strip()).first()
+                if existente:
+                    flash(f'El número de seguimiento "{num.strip()}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
+                    return redirect(request.url)
+                    
+        paquetes_creados = []
+        costo_total = 0
+        
+        for i in range(len(nombres)):
+            peso = float(pesos[i] if pesos[i] else 0)
+            tipo_envio = tipos_envio[i]
+            numero_seg = numeros_seguimiento[i].strip()
             
-        costo = round(peso * tarifa, 2)
-        
-        numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
-        if numero_seguimiento:
-            existente = Paquete.query.filter_by(numero_seguimiento=numero_seguimiento).first()
-            if existente:
-                flash(f'El número de seguimiento "{numero_seguimiento}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
-                return redirect(request.url)
-
-        paquete = Paquete(
-            nombre=request.form.get('nombre').strip(),
-            descripcion=request.form.get('descripcion', '').strip(),
-            peso=peso,
-            tipo_envio=tipo_envio,
-            cliente_id=int(request.form.get('cliente_id')),
-            numero_seguimiento=numero_seguimiento,
-            estado_rastreo=request.form.get('estado_rastreo', 'bodega_miami'),
-            registrado_por=current_user.id
-        )
-        paquete.save()
-        
-        historial_inicial = HistorialRastreo(
-            paquete_id=paquete.id,
-            estado=paquete.estado_rastreo,
-            ubicacion='Miami',
-            comentarios='Paquete registrado en el sistema',
-            creado_por=current_user.id
-        )
-        db.session.add(historial_inicial)
+            tarifa = None
+            if cliente and cliente.tarifa_especial:
+                if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
+                    tarifa = cliente.tarifa_especial.aereo
+                elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
+                    tarifa = cliente.tarifa_especial.maritimo
+                    
+            if tarifa is None:
+                tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
+                tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
+                
+            paquete = Paquete(
+                nombre=nombres[i].strip(),
+                descripcion=descripciones[i].strip() if i < len(descripciones) else '',
+                peso=peso,
+                tipo_envio=tipo_envio,
+                cliente_id=cliente_id_form,
+                numero_seguimiento=numero_seg,
+                estado_rastreo=estados_rastreo[i] if i < len(estados_rastreo) else 'bodega_miami',
+                registrado_por=current_user.id
+            )
+            paquete.save()
+            costo_total += paquete.costo
+            paquetes_creados.append(paquete)
+            
+            historial_inicial = HistorialRastreo(
+                paquete_id=paquete.id,
+                estado=paquete.estado_rastreo,
+                ubicacion='Miami',
+                comentarios='Paquete registrado en el sistema',
+                creado_por=current_user.id
+            )
+            db.session.add(historial_inicial)
+            
         db.session.commit()
-
-        from models import registrar_actividad
-        registrar_actividad(current_user.id, 'Registró Paquete', f'Paquete {paquete.tracking_number} para cliente {cliente.nombre_completo}')
-
-        flash(f'Paquete registrado. Costo: ${paquete.costo:.2f} | Guía: {paquete.tracking_number}', 'success')
+        
+        if paquetes_creados:
+            from models import registrar_actividad
+            registrar_actividad(current_user.id, 'Registró Paquetes', f'Registró {len(paquetes_creados)} paquete(s) para {cliente.nombre_completo}')
+            flash(f'Se registraron {len(paquetes_creados)} paquete(s) con éxito. Costo total estimado: ${costo_total:.2f}', 'success')
+            
         return redirect(url_for('paquetes.index'))
 
-    return render_template('paquetes/form.html', clientes=clientes, cliente_id=cliente_id, paquete=None)
+    return render_template('paquetes/nuevo.html', clientes=clientes, cliente_id=cliente_id)
 
 @paquetes_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required

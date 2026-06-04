@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Paquete{% endblock %}
+{% block page_title %}Registrar Paquetes{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:100%;">
+    <div class="card">
+        <form method="POST" id="formPaquetes">
+            <div class="form-group" style="max-width: 400px; margin-bottom: 24px;">
+                <label>Cliente *</label>
+                <select name="cliente_id" id="cliente_id" class="form-control" required>
+                    <option value="">Seleccionar cliente...</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {% if cliente_id and cliente_id|int == c.id %}selected{% endif %} data-tarifa-aereo="{{ c.tarifa_especial.aereo if c.tarifa_especial and c.tarifa_especial.aereo else 'default' }}" data-tarifa-maritimo="{{ c.tarifa_especial.maritimo if c.tarifa_especial and c.tarifa_especial.maritimo else 'default' }}">
+                        {{ c.nombre_completo }} — {{ c.cedula }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="paquetes-container">
+                <!-- Se inyectarán las filas de paquetes dinámicamente -->
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <button type="button" class="btn btn-secondary" onclick="agregarPaquete()">
+                    <i class="fas fa-plus"></i> Agregar otro paquete
+                </button>
+            </div>
+
+            <!-- Costo calculado global -->
+            <div id="costoPreview" style="margin-bottom:20px;">
+                <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted);">COSTO TOTAL ESTIMADO</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="costoFormula">0 paquetes ingresados</div>
+                    </div>
+                    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--success);" id="costoValor">$0.00</div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Registrar Todo
+                </button>
+                <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<template id="paquete-template">
+    <div class="paquete-row" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; position: relative;">
+        <button type="button" class="btn btn-sm btn-danger btn-eliminar" style="position: absolute; top: 16px; right: 16px;" onclick="eliminarPaquete(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+        <h4 style="margin-bottom: 16px; font-size: 16px; color: var(--accent);"><i class="fas fa-box"></i> Paquete <span class="paquete-index"></span></h4>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Nombre del paquete *</label>
+                <input type="text" name="nombre[]" class="form-control" required placeholder="Ej: Ropa, Zapatos...">
+            </div>
+            <div class="form-group">
+                <label>Número de Seguimiento *</label>
+                <input type="text" name="numero_seguimiento[]" class="form-control" placeholder="Tracking Number" required>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Peso (libras) *</label>
+                <input type="number" name="peso[]" class="form-control input-peso" step="0.01" min="0.01" required placeholder="0.00" oninput="calcularCostoGlobal()">
+            </div>
+            <div class="form-group">
+                <label>Tipo de envío *</label>
+                <select name="tipo_envio[]" class="form-control select-tipo" required onchange="calcularCostoGlobal()">
+                    <option value="">Seleccionar...</option>
+                    <option value="aereo" class="opt-aereo">✈️ Aéreo</option>
+                    <option value="maritimo" class="opt-maritimo">🚢 Marítimo</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Estado de Rastreo</label>
+                <select name="estado_rastreo[]" class="form-control">
+                    <option value="bodega_miami" selected>🏢 En bodega Miami</option>
+                    <option value="en_transito">🚢/✈️ En tránsito</option>
+                    <option value="listo_para_retirar">✅ Listo para retirar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" name="descripcion[]" class="form-control" placeholder="Contenido (opcional)...">
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let paqueteCount = 0;
+let tarifaAereoBase = 6.50;
+let tarifaMaritimoBase = 2.50;
+
+function cargarTarifasBase() {
+    fetch(`{{ url_for('paquetes.tarifas_cliente') }}`)
+        .then(res => res.json())
+        .then(data => {
+            tarifaAereoBase = data.aereo;
+            tarifaMaritimoBase = data.maritimo;
+            actualizarTextosTarifa();
+        });
+}
+
+function actualizarTextosTarifa() {
+    const selCliente = document.getElementById('cliente_id');
+    const option = selCliente.options[selCliente.selectedIndex];
+    
+    let tarifaAereo = tarifaAereoBase;
+    let tarifaMaritimo = tarifaMaritimoBase;
+
+    if (option && option.value) {
+        if (option.dataset.tarifaAereo !== 'default' && option.dataset.tarifaAereo !== '') {
+            tarifaAereo = parseFloat(option.dataset.tarifaAereo);
+        }
+        if (option.dataset.tarifaMaritimo !== 'default' && option.dataset.tarifaMaritimo !== '') {
+            tarifaMaritimo = parseFloat(option.dataset.tarifaMaritimo);
+        }
+    }
+
+    document.querySelectorAll('.opt-aereo').forEach(opt => {
+        opt.textContent = `✈️ Aéreo — $${tarifaAereo.toFixed(2)}/lb`;
+    });
+    document.querySelectorAll('.opt-maritimo').forEach(opt => {
+        opt.textContent = `🚢 Marítimo — $${tarifaMaritimo.toFixed(2)}/lb`;
+    });
+
+    calcularCostoGlobal(tarifaAereo, tarifaMaritimo);
+}
+
+function calcularCostoGlobal(tAereo, tMaritimo) {
+    if (tAereo === undefined || tMaritimo === undefined) {
+        const selCliente = document.getElementById('cliente_id');
+        const option = selCliente.options[selCliente.selectedIndex];
+        tAereo = tarifaAereoBase;
+        tMaritimo = tarifaMaritimoBase;
+        if (option && option.value) {
+            if (option.dataset.tarifaAereo !== 'default' && option.dataset.tarifaAereo !== '') tAereo = parseFloat(option.dataset.tarifaAereo);
+            if (option.dataset.tarifaMaritimo !== 'default' && option.dataset.tarifaMaritimo !== '') tMaritimo = parseFloat(option.dataset.tarifaMaritimo);
+        }
+    }
+
+    let costoTotal = 0;
+    let paquetesValidos = 0;
+
+    const filas = document.querySelectorAll('.paquete-row');
+    filas.forEach(fila => {
+        const pesoStr = fila.querySelector('.input-peso').value;
+        const tipo = fila.querySelector('.select-tipo').value;
+        
+        if (pesoStr && tipo) {
+            const peso = parseFloat(pesoStr);
+            if (peso > 0) {
+                const tarifa = tipo === 'aereo' ? tAereo : tMaritimo;
+                costoTotal += peso * tarifa;
+                paquetesValidos++;
+            }
+        }
+    });
+
+    document.getElementById('costoValor').textContent = '$' + costoTotal.toFixed(2);
+    document.getElementById('costoFormula').textContent = `${paquetesValidos} paquete(s) configurado(s)`;
+}
+
+function agregarPaquete() {
+    paqueteCount++;
+    const container = document.getElementById('paquetes-container');
+    const template = document.getElementById('paquete-template');
+    const clone = template.content.cloneNode(true);
+    
+    clone.querySelector('.paquete-index').textContent = paqueteCount;
+    container.appendChild(clone);
+    actualizarTextosTarifa();
+    actualizarBotonesEliminar();
+}
+
+function eliminarPaquete(btn) {
+    btn.closest('.paquete-row').remove();
+    actualizarBotonesEliminar();
+    calcularCostoGlobal();
+}
+
+function actualizarBotonesEliminar() {
+    const filas = document.querySelectorAll('.paquete-row');
+    // Si solo hay un paquete, ocultar el botón eliminar
+    if (filas.length <= 1) {
+        filas.forEach(fila => {
+            const btn = fila.querySelector('.btn-eliminar');
+            if(btn) btn.style.display = 'none';
+        });
+    } else {
+        filas.forEach(fila => {
+            const btn = fila.querySelector('.btn-eliminar');
+            if(btn) btn.style.display = 'block';
+        });
+    }
+}
+
+document.getElementById('cliente_id').addEventListener('change', actualizarTextosTarifa);
+
+// Init
+cargarTarifasBase();
+agregarPaquete(); // Agrega al menos un paquete inicial
+</script>
+{% endblock %}

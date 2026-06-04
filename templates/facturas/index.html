@@ -36,8 +36,11 @@
                         <div style="display:flex;gap:6px;">
                             <a href="{{ url_for('facturas.detalle', id=f.id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-eye"></i></a>
                             <a href="{{ url_for('facturas.generar_pdf', id=f.id) }}" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-file-pdf"></i></a>
-                            {% if f.estado == 'borrador' %}
-                            <a href="{{ url_for('facturas.editar', id=f.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                            {% if f.estado == 'borrador' or current_user.rol == 'admin' %}
+                            <a href="{{ url_for('facturas.editar', id=f.id) }}" class="btn btn-sm btn-warning" title="Editar"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('facturas.eliminar', id=f.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar factura?')">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </form>
                             {% endif %}
                         </div>
                     </td>

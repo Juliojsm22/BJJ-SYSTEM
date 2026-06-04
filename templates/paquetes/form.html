@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Editar' if paquete else 'Nuevo' }} Paquete{% endblock %}
-{% block page_title %}{{ 'Editar' if paquete else 'Registrar' }} Paquete{% endblock %}
+{% block title %}Editar Paquete{% endblock %}
+{% block page_title %}Editar Paquete{% endblock %}
 
 {% block topbar_actions %}
 <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">
@@ -17,7 +17,7 @@
                 <select name="cliente_id" class="form-control" required>
                     <option value="">Seleccionar cliente...</option>
                     {% for c in clientes %}
-                    <option value="{{ c.id }}" {% if cliente_id and cliente_id|int == c.id %}selected{% elif paquete and paquete.cliente_id == c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if paquete.cliente_id == c.id %}selected{% endif %}>
                         {{ c.nombre_completo }} — {{ c.cedula }}
                     </option>
                     {% endfor %}
@@ -26,32 +26,32 @@
             <div class="form-group">
                 <label>Nombre del paquete *</label>
                 <input type="text" name="nombre" class="form-control"
-                       value="{{ paquete.nombre if paquete else '' }}" required
+                       value="{{ paquete.nombre }}" required
                        placeholder="Ej: Ropa deportiva, Electrónico, etc.">
             </div>
             <div class="form-group">
                 <label>Número de Seguimiento *</label>
                 <input type="text" name="numero_seguimiento" class="form-control"
-                       value="{{ paquete.numero_seguimiento if paquete else '' }}"
+                       value="{{ paquete.numero_seguimiento }}"
                        placeholder="Ej: 1Z9999999999999999" required>
             </div>
             <div class="form-group">
                 <label>Descripción</label>
-                <textarea name="descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion if paquete else '' }}</textarea>
+                <textarea name="descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion }}</textarea>
             </div>
             <div class="grid-2">
                 <div class="form-group">
                     <label>Peso (libras) *</label>
                     <input type="number" name="peso" id="peso" class="form-control"
-                           value="{{ paquete.peso if paquete else '' }}"
+                           value="{{ paquete.peso }}"
                            step="0.01" min="0.01" required placeholder="0.00">
                 </div>
                 <div class="form-group">
                     <label>Tipo de envío *</label>
                     <select name="tipo_envio" id="tipo_envio" class="form-control" required>
                         <option value="">Seleccionar...</option>
-                        <option id="opt_aereo" value="aereo" {% if paquete and paquete.tipo_envio == 'aereo' %}selected{% endif %}>✈️ Aéreo — $6.50/lb</option>
-                        <option id="opt_maritimo" value="maritimo" {% if paquete and paquete.tipo_envio == 'maritimo' %}selected{% endif %}>🚢 Marítimo — $2.50/lb</option>
+                        <option id="opt_aereo" value="aereo" {% if paquete.tipo_envio == 'aereo' %}selected{% endif %}>✈️ Aéreo — $6.50/lb</option>
+                        <option id="opt_maritimo" value="maritimo" {% if paquete.tipo_envio == 'maritimo' %}selected{% endif %}>🚢 Marítimo — $2.50/lb</option>
                     </select>
                 </div>
             </div>
@@ -59,9 +59,9 @@
             <div class="form-group">
                 <label>Estado de Rastreo</label>
                 <select name="estado_rastreo" class="form-control">
-                    <option value="bodega_miami" {% if paquete and paquete.estado_rastreo == 'bodega_miami' %}selected{% elif not paquete %}selected{% endif %}>🏢 En bodega Miami</option>
-                    <option value="en_transito" {% if paquete and paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
-                    <option value="listo_para_retirar" {% if paquete and paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
+                    <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
+                    <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
+                    <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
                 </select>
             </div>
 
@@ -78,7 +78,7 @@
 
             <div style="display:flex;gap:12px;">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> {{ 'Actualizar' if paquete else 'Registrar' }}
+                    <i class="fas fa-save"></i> Actualizar
                 </button>
                 <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
             </div>
