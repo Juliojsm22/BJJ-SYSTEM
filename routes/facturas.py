@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 from models import Factura, Paquete, Cliente, db
 from datetime import datetime
 import io
+import openpyxl
 
 facturas_bp = Blueprint('facturas', __name__, url_prefix='/facturas')
 
@@ -308,3 +309,59 @@ def generar_pdf_factura(factura):
 
     doc.build(story)
     return buffer.getvalue()
+
+@facturas_bp.route('/exportar')
+@login_required
+def exportar():
+    estado = request.args.get('estado', '')
+    query = Factura.query.options(joinedload(Factura.cliente), joinedload(Factura.paquetes)).join(Cliente)
+    if estado:
+        query = query.filter(Factura.estado == estado)
+    facturas = query.order_by(Factura.fecha_emision.desc()).all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Facturas"
+
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Cant. Paquetes', 'Notas']
+    ws.append(headers)
+
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+        cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
+
+    for f in facturas:
+        ws.append([
+            f.id,
+            f.numero,
+            f.cliente.nombre_completo,
+            f.cliente.cedula,
+            f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
+            f.estado.upper(),
+            f.total,
+            len(f.paquetes),
+            f.notas or ''
+        ])
+
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        ws.column_dimensions[column].width = (max_length + 2)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = f"Facturas_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    return response

@@ -14,6 +14,10 @@
     <a href="{{ url_for('facturas.index', estado='borrador') }}" class="btn {% if estado=='borrador' %}btn-primary{% else %}btn-secondary{% endif %}">Borrador</a>
     <a href="{{ url_for('facturas.index', estado='finalizada') }}" class="btn {% if estado=='finalizada' %}btn-primary{% else %}btn-secondary{% endif %}">Finalizadas</a>
     <a href="{{ url_for('facturas.index', estado='pagada') }}" class="btn {% if estado=='pagada' %}btn-primary{% else %}btn-secondary{% endif %}">Pagadas</a>
+    
+    <a href="{{ url_for('facturas.exportar', estado=estado) }}" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;">
+        <i class="fas fa-file-excel"></i> Exportar a Excel
+    </a>
 </div>
 
 <div class="card">

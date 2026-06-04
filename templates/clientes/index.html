@@ -14,6 +14,10 @@
         <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre, cédula o email..." style="max-width:360px;">
         <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Buscar</button>
         {% if q %}<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i></a>{% endif %}
+        
+        <a href="{{ url_for('clientes.exportar', q=q) }}" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </a>
     </form>
 </div>
 

@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
+import io
+import openpyxl
 
 paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
 
@@ -253,3 +255,76 @@ def historial(id):
             return redirect(url_for('paquetes.historial', id=paquete.id))
 
     return render_template('paquetes/historial.html', paquete=paquete)
+
+@paquetes_bp.route('/exportar')
+@login_required
+def exportar():
+    q = request.args.get('q', '')
+    tipo = request.args.get('tipo', '')
+    estado = request.args.get('estado', '')
+
+    query = Paquete.query.options(joinedload(Paquete.cliente), joinedload(Paquete.factura)).join(Cliente).filter(Cliente.activo == True)
+    if q:
+        query = query.filter(
+            (Paquete.nombre.ilike(f'%{q}%')) |
+            (Cliente.nombre_completo.ilike(f'%{q}%')) |
+            (Paquete.numero_seguimiento.ilike(f'%{q}%'))
+        )
+    if tipo:
+        query = query.filter(Paquete.tipo_envio == tipo)
+    if estado == 'sin_facturar':
+        query = query.filter(Paquete.factura_id == None)
+    elif estado == 'facturado':
+        query = query.filter(Paquete.factura_id != None)
+
+    paquetes = query.order_by(Paquete.registrado_en.desc()).all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Paquetes"
+
+    headers = ['ID', 'Tracking (Sistema)', 'Guía Rastreo', 'Cliente', 'Contenido', 'Peso (lb)', 'Tipo', 'Costo', 'Estado Actual', 'Facturado', 'Fecha Registro']
+    ws.append(headers)
+
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+        cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
+
+    for p in paquetes:
+        ws.append([
+            p.id,
+            p.tracking_number,
+            p.numero_seguimiento or '',
+            p.cliente.nombre_completo,
+            p.nombre,
+            p.peso,
+            p.tipo_envio.upper(),
+            p.costo,
+            p.estado_rastreo.replace('_', ' ').title(),
+            'SÍ' if p.factura_id else 'NO',
+            p.registrado_en.strftime('%Y-%m-%d %H:%M') if p.registrado_en else ''
+        ])
+
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        ws.column_dimensions[column].width = (max_length + 2)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    from datetime import datetime
+    filename = f"Paquetes_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    return response

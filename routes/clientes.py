@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 from models import Cliente, db
+import io
+import openpyxl
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 
@@ -149,3 +151,68 @@ def buscar_json():
 def detalle(id):
     cliente = Cliente.query.get_or_404(id)
     return render_template('clientes/detalle.html', cliente=cliente)
+
+@clientes_bp.route('/exportar')
+@login_required
+def exportar():
+    q = request.args.get('q', '')
+    query = Cliente.query.options(joinedload(Cliente.paquetes)).filter_by(activo=True)
+    if q:
+        clientes = query.filter(
+            (Cliente.nombre_completo.ilike(f'%{q}%')) |
+            (Cliente.cedula.ilike(f'%{q}%')) |
+            (Cliente.email.ilike(f'%{q}%'))
+        ).order_by(Cliente.nombre_completo).all()
+    else:
+        clientes = query.order_by(Cliente.nombre_completo).all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Clientes"
+
+    # Encabezados
+    headers = ['ID', 'Nombre Completo', 'Cédula', 'Teléfono', 'Email', 'Paquetes Sin Facturar', 'Total Libras Histórico', 'Fecha Registro']
+    ws.append(headers)
+
+    # Formato de encabezados
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+        cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
+
+    for c in clientes:
+        ws.append([
+            c.id,
+            c.nombre_completo,
+            c.cedula,
+            c.telefono or '',
+            c.email or '',
+            len(c.paquetes_sin_facturar),
+            c.total_libras,
+            c.creado_en.strftime('%Y-%m-%d %H:%M') if c.creado_en else ''
+        ])
+
+    # Autoajustar columnas
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    from datetime import datetime
+    filename = f"Clientes_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    return response

@@ -25,6 +25,10 @@
     {% if q or tipo or estado %}
     <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
     {% endif %}
+    
+    <a href="{{ url_for('paquetes.exportar', q=q, tipo=tipo, estado=estado) }}" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;">
+        <i class="fas fa-file-excel"></i> Exportar a Excel
+    </a>
 </form>
 
 <div class="card">
