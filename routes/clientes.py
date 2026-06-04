@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from models import Cliente, db
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
@@ -8,14 +9,15 @@ clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 @login_required
 def index():
     q = request.args.get('q', '')
+    query = Cliente.query.options(joinedload(Cliente.paquetes)).filter_by(activo=True)
     if q:
-        clientes = Cliente.query.filter(
+        clientes = query.filter(
             (Cliente.nombre_completo.ilike(f'%{q}%')) |
             (Cliente.cedula.ilike(f'%{q}%')) |
             (Cliente.email.ilike(f'%{q}%'))
-        ).filter_by(activo=True).order_by(Cliente.nombre_completo).all()
+        ).order_by(Cliente.nombre_completo).all()
     else:
-        clientes = Cliente.query.filter_by(activo=True).order_by(Cliente.nombre_completo).all()
+        clientes = query.order_by(Cliente.nombre_completo).all()
     return render_template('clientes/index.html', clientes=clientes, q=q)
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])

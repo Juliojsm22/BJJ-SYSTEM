@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
 
 paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
@@ -11,7 +12,7 @@ def index():
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
 
-    query = Paquete.query.join(Cliente).filter(Cliente.activo == True)
+    query = Paquete.query.options(joinedload(Paquete.cliente), joinedload(Paquete.factura)).join(Cliente).filter(Cliente.activo == True)
     if q:
         query = query.filter(
             (Paquete.nombre.ilike(f'%{q}%')) |

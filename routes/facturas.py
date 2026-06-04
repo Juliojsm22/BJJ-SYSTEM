@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from models import Factura, Paquete, Cliente, db
 from datetime import datetime
 import io
@@ -10,7 +11,7 @@ facturas_bp = Blueprint('facturas', __name__, url_prefix='/facturas')
 @login_required
 def index():
     estado = request.args.get('estado', '')
-    query = Factura.query.join(Cliente)
+    query = Factura.query.options(joinedload(Factura.cliente), joinedload(Factura.paquetes)).join(Cliente)
     if estado:
         query = query.filter(Factura.estado == estado)
     facturas = query.order_by(Factura.fecha_emision.desc()).all()

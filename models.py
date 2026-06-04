@@ -48,12 +48,12 @@ class Paquete(db.Model):
     nombre = db.Column(db.String(150), nullable=False)
     descripcion = db.Column(db.Text)
     peso = db.Column(db.Float, nullable=False)
-    tipo_envio = db.Column(db.String(10), nullable=False)  # aereo, maritimo
+    tipo_envio = db.Column(db.String(10), nullable=False, index=True)  # aereo, maritimo
     costo = db.Column(db.Float)
     tracking_number = db.Column(db.String(50), unique=True)
-    numero_seguimiento = db.Column(db.String(100))
-    estado_rastreo = db.Column(db.String(50), default='bodega_miami')
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    numero_seguimiento = db.Column(db.String(100), index=True)
+    estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
     registrado_en = db.Column(db.DateTime, default=datetime.utcnow)
     registrado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
@@ -99,9 +99,9 @@ class Factura(db.Model):
     __tablename__ = 'facturas'
     id = db.Column(db.Integer, primary_key=True)
     numero = db.Column(db.String(20), unique=True, nullable=False)
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
-    fecha_emision = db.Column(db.DateTime, default=datetime.utcnow)
-    estado = db.Column(db.String(20), default='borrador')  # borrador, finalizada, pagada
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
+    fecha_emision = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    estado = db.Column(db.String(20), default='borrador', index=True)  # borrador, finalizada, pagada
     total = db.Column(db.Float, default=0.0)
     notas = db.Column(db.Text)
     creado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
