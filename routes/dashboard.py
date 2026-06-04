@@ -194,7 +194,8 @@ def pdf_reporte():
         semanas_data.append([lbl, f'${total:.2f}'])
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=inch, leftMargin=inch, topMargin=inch, bottomMargin=inch)
+    numero_reporte = f"REP-{hoy.strftime('%Y%m%d%H%M')}"
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=inch, leftMargin=inch, topMargin=inch, bottomMargin=inch, title=f"Reporte Financiero {numero_reporte}", author="BJJ SYSTEM")
     styles = getSampleStyleSheet()
     story = []
 
