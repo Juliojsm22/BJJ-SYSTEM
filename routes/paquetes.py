@@ -109,7 +109,7 @@ def nuevo():
                 factura = Factura(
                     numero=Factura.generar_numero(),
                     cliente_id=cliente.id,
-                    notas='Factura generada automáticamente al registrar paquetes.',
+                    notas='',
                     creado_por=current_user.id,
                     estado='borrador'
                 )
