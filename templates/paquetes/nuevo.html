@@ -47,8 +47,11 @@
             </div>
 
             <div style="display:flex;gap:12px;">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" name="accion" value="guardar" class="btn btn-primary">
                     <i class="fas fa-save"></i> Registrar Todo
+                </button>
+                <button type="submit" name="accion" value="facturar" class="btn btn-success">
+                    <i class="fas fa-file-invoice-dollar"></i> Registrar y Facturar
                 </button>
                 <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
             </div>

@@ -296,7 +296,7 @@ def generar_pdf_factura(factura):
     # Total
     total_cordobas = factura.total * 37
     total_data = [
-        ['', '', '', '', 'TOTAL USD:', f'${factura.total:.2f}'],
+        ['', '', '', '', 'TOTAL $:', f'${factura.total:.2f}'],
         ['', '', '', '', 'TOTAL C$:', f'C${total_cordobas:.2f}']
     ]
     total_table = Table(total_data, colWidths=col_widths)

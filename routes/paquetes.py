@@ -102,6 +102,30 @@ def nuevo():
         if paquetes_creados:
             from models import registrar_actividad
             registrar_actividad(current_user.id, 'Registró Paquetes', f'Registró {len(paquetes_creados)} paquete(s) para {cliente.nombre_completo}')
+            
+            accion = request.form.get('accion')
+            if accion == 'facturar':
+                from models import Factura
+                factura = Factura(
+                    numero=Factura.generar_numero(),
+                    cliente_id=cliente.id,
+                    notas='Factura generada automáticamente al registrar paquetes.',
+                    creado_por=current_user.id,
+                    estado='borrador'
+                )
+                db.session.add(factura)
+                db.session.flush()
+
+                for p in paquetes_creados:
+                    p.factura_id = factura.id
+                
+                factura.actualizar_total()
+                db.session.commit()
+                
+                registrar_actividad(current_user.id, 'Creó Factura', f'Factura {factura.numero} generada automáticamente')
+                flash(f'Paquetes registrados y factura {factura.numero} creada con éxito.', 'success')
+                return redirect(url_for('facturas.detalle', id=factura.id))
+            
             flash(f'Se registraron {len(paquetes_creados)} paquete(s) con éxito. Costo total estimado: ${costo_total:.2f}', 'success')
             
         return redirect(url_for('paquetes.index'))
@@ -303,9 +327,9 @@ def exportar():
             p.cliente.nombre_completo,
             p.nombre,
             p.peso,
-            p.tipo_envio.upper(),
+            p.tipo_envio.upper() if p.tipo_envio else '',
             p.costo,
-            p.estado_rastreo.replace('_', ' ').title(),
+            p.estado_rastreo.replace('_', ' ').title() if p.estado_rastreo else '',
             'SÍ' if p.factura_id else 'NO',
             p.registrado_en.strftime('%Y-%m-%d %H:%M') if p.registrado_en else ''
         ])
