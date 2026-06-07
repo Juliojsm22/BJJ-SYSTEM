@@ -319,8 +319,14 @@ def exportar():
         cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
         cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
 
+    import re
+    def clean_text(val):
+        if isinstance(val, str):
+            return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', val)
+        return val
+
     for p in paquetes:
-        ws.append([
+        row = [
             p.id,
             p.tracking_number,
             p.numero_seguimiento or '',
@@ -332,7 +338,8 @@ def exportar():
             p.estado_rastreo.replace('_', ' ').title() if p.estado_rastreo else '',
             'SÍ' if p.factura_id else 'NO',
             p.registrado_en.strftime('%Y-%m-%d %H:%M') if p.registrado_en else ''
-        ])
+        ]
+        ws.append([clean_text(v) for v in row])
 
     for col in ws.columns:
         max_length = 0
