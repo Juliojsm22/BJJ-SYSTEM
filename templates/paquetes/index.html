@@ -77,13 +77,16 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:6px;">
-                            {% if not p.factura_id %}
+                            {% if not p.factura_id or current_user.rol == 'admin' %}
                             <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            {% if not p.factura_id %}
                             <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                             </form>
-                            {% else %}
+                            {% endif %}
+                            {% if p.factura_id %}
                             <a href="{{ url_for('facturas.detalle', id=p.factura_id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
                             {% endif %}
                             <a href="{{ url_for('paquetes.historial', id=p.id) }}" class="btn btn-sm" style="background:#17a2b8; color:white;" title="Historial"><i class="fas fa-history"></i></a>

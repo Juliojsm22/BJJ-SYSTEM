@@ -229,7 +229,7 @@ def exportar():
     buffer.seek(0)
 
     from datetime import datetime
-    filename = f"Clientes_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    filename = f"Clientes_{datetime.now().strftime('%Y%m%d')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

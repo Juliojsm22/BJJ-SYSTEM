@@ -215,6 +215,13 @@ def generar_pdf_factura(factura):
     else:
         header_left = Paragraph('<font size=22 color="#3d5ba0"><b>ENVÍOS BJJ</b></font>', styles['Normal'])
 
+    company_info_text = (
+        '<font size=9 color="#333333">'
+        '<b>RUC:</b> 001-220905-1038A<br/>'
+        '<b>Dirección:</b> Villa flor Norte, Iglesia Catolica, 3C N, 10vrs E. Casa 1031'
+        '</font>'
+    )
+
     header_data = [
         [header_left,
          Paragraph(f'<font size=10 color="#666666">FACTURA<br/><font size=16 color="#3d5ba0"><b>{factura.numero}</b></font></font>', styles['Normal'])]
@@ -225,6 +232,8 @@ def generar_pdf_factura(factura):
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     story.append(header_table)
+    story.append(Spacer(1, 0.1*inch))
+    story.append(Paragraph(company_info_text, styles['Normal']))
     story.append(Spacer(1, 0.2*inch))
 
     # Línea separadora
@@ -285,18 +294,23 @@ def generar_pdf_factura(factura):
     story.append(Spacer(1, 0.2*inch))
 
     # Total
+    total_cordobas = factura.total * 37
     total_data = [
-        ['', '', '', '', 'TOTAL:', f'${factura.total:.2f}']
+        ['', '', '', '', 'TOTAL USD:', f'${factura.total:.2f}'],
+        ['', '', '', '', 'TOTAL C$:', f'C${total_cordobas:.2f}']
     ]
     total_table = Table(total_data, colWidths=col_widths)
     total_table.setStyle(TableStyle([
-        ('FONTNAME', (4,0), (5,0), 'Helvetica-Bold'),
+        ('FONTNAME', (4,0), (5,1), 'Helvetica-Bold'),
         ('FONTSIZE', (4,0), (5,0), 12),
-        ('ALIGN', (4,0), (5,0), 'RIGHT'),
-        ('BACKGROUND', (4,0), (5,0), COLOR_ACENTO),
-        ('TEXTCOLOR', (4,0), (5,0), colors.white),
-        ('TOPPADDING', (0,0), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+        ('FONTSIZE', (4,1), (5,1), 10),
+        ('ALIGN', (4,0), (5,1), 'RIGHT'),
+        ('BACKGROUND', (4,0), (5,1), COLOR_ACENTO),
+        ('TEXTCOLOR', (4,0), (5,1), colors.white),
+        ('TOPPADDING', (4,0), (5,0), 8),
+        ('BOTTOMPADDING', (4,0), (5,0), 2),
+        ('TOPPADDING', (4,1), (5,1), 2),
+        ('BOTTOMPADDING', (4,1), (5,1), 8),
     ]))
     story.append(total_table)
 
@@ -359,7 +373,7 @@ def exportar():
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"Facturas_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    filename = f"Facturas_{datetime.now().strftime('%Y%m%d')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

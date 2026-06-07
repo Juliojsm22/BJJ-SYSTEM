@@ -12,7 +12,7 @@ def index():
     if current_user.rol != 'admin':
         return redirect(url_for('paquetes.index'))
         
-    hoy = datetime.utcnow()
+    hoy = datetime.now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -119,7 +119,7 @@ def index():
 @dashboard_bp.route('/api/stats')
 @login_required
 def api_stats():
-    hoy = datetime.utcnow()
+    hoy = datetime.now()
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ganancia_expr = case(
         (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
@@ -150,7 +150,7 @@ def pdf_reporte():
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     import os
 
-    hoy = datetime.utcnow()
+    hoy = datetime.now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     
     ganancia_expr = case(

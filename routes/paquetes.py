@@ -114,8 +114,8 @@ def editar(id):
     paquete = Paquete.query.get_or_404(id)
     clientes = Cliente.query.filter_by(activo=True).order_by(Cliente.nombre_completo).all()
 
-    if paquete.factura_id:
-        flash('No se puede editar un paquete ya facturado.', 'warning')
+    if paquete.factura_id and current_user.rol != 'admin':
+        flash('Solo los administradores pueden editar un paquete ya facturado.', 'warning')
         return redirect(url_for('paquetes.index'))
 
     if request.method == 'POST':
@@ -150,6 +150,10 @@ def editar(id):
         paquete.estado_rastreo = request.form.get('estado_rastreo', paquete.estado_rastreo)
         paquete.costo = round(peso * tarifa, 2)
         paquete.cliente_id = int(request.form.get('cliente_id'))
+        
+        if paquete.factura:
+            paquete.factura.actualizar_total()
+            
         db.session.commit()
         
         from models import registrar_actividad
@@ -322,7 +326,7 @@ def exportar():
     buffer.seek(0)
 
     from datetime import datetime
-    filename = f"Paquetes_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    filename = f"Paquetes_{datetime.now().strftime('%Y%m%d')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

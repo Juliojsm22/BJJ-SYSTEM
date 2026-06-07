@@ -41,6 +41,10 @@
         <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
             <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);">{{ factura.numero }}</div>
             <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">{{ factura.fecha_emision.strftime('%d de %B de %Y, %H:%M') }}</div>
+            <div style="color:var(--text-muted);font-size:13px;margin-top:8px;">
+                <strong>RUC:</strong> 001-220905-1038A<br>
+                <strong>Dirección:</strong> Villa flor Norte, Iglesia Catolica, 3C N, 10vrs E. Casa 1031
+            </div>
         </div>
         <div style="display:grid;gap:10px;">
             <div><span style="color:var(--text-muted);font-size:12px;">CLIENTE</span><br><strong>{{ factura.cliente.nombre_completo }}</strong></div>
@@ -53,6 +57,7 @@
     <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;">
         <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Total a pagar</div>
         <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--success);">${{ "%.2f"|format(factura.total) }}</div>
+        <div style="font-size:18px;font-weight:600;color:var(--text-muted);margin-top:-8px;margin-bottom:8px;">C${{ "%.2f"|format(factura.total * 37) }}</div>
         <div><span class="badge badge-{{ factura.estado }}" style="font-size:13px;padding:6px 16px;">{{ factura.estado | capitalize }}</span></div>
 
         {% if factura.estado == 'finalizada' %}
@@ -112,7 +117,10 @@
             <tfoot>
                 <tr>
                     <td colspan="6" style="text-align:right;padding:16px;font-weight:700;font-size:14px;">TOTAL</td>
-                    <td style="padding:16px;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--success);">${{ "%.2f"|format(factura.total) }}</td>
+                    <td style="padding:16px;font-family:'Syne',sans-serif;font-weight:800;color:var(--success);">
+                        <div style="font-size:20px;">${{ "%.2f"|format(factura.total) }}</div>
+                        <div style="font-size:14px;color:var(--text-muted);margin-top:4px;">C${{ "%.2f"|format(factura.total * 37) }}</div>
+                    </td>
                 </tr>
             </tfoot>
         </table>
