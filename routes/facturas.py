@@ -302,15 +302,15 @@ def generar_pdf_factura(factura):
     total_table = Table(total_data, colWidths=col_widths)
     total_table.setStyle(TableStyle([
         ('FONTNAME', (4,0), (5,1), 'Helvetica-Bold'),
-        ('FONTSIZE', (4,0), (5,0), 12),
+        ('FONTSIZE', (4,0), (5,0), 11),
         ('FONTSIZE', (4,1), (5,1), 10),
-        ('ALIGN', (4,0), (5,1), 'RIGHT'),
+        ('ALIGN', (4,0), (4,1), 'LEFT'),
+        ('ALIGN', (5,0), (5,1), 'RIGHT'),
         ('BACKGROUND', (4,0), (5,1), COLOR_ACENTO),
         ('TEXTCOLOR', (4,0), (5,1), colors.white),
-        ('TOPPADDING', (4,0), (5,0), 8),
-        ('BOTTOMPADDING', (4,0), (5,0), 2),
-        ('TOPPADDING', (4,1), (5,1), 2),
-        ('BOTTOMPADDING', (4,1), (5,1), 8),
+        ('TOPPADDING', (4,0), (5,1), 6),
+        ('BOTTOMPADDING', (4,0), (5,1), 6),
+        ('LINEBELOW', (4,0), (5,0), 0.5, colors.white),
     ]))
     story.append(total_table)
 
