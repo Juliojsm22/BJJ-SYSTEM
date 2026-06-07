@@ -186,9 +186,59 @@ footer {
     margin-top: auto;
 }
 
+/* ==================== MENU HAMBURGUESA ==================== */
+.menu-toggle {
+    display: none;
+    font-size: 1.5rem;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+    #barrasuperior {
+        padding: 12px 20px;
+        flex-wrap: wrap;
+    }
+    
+    .menu-toggle {
+        display: block;
+    }
+
+    nav {
+        width: 100%;
+    }
+
+    nav ul {
+        flex-direction: column;
+        width: 100%;
+        display: none;
+        gap: 0;
+        margin-top: 15px;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    nav ul.nav-active {
+        display: flex;
+    }
+
+    nav ul li a {
+        display: block;
+        padding: 15px;
+        border-radius: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
+    }
+    
+    nav ul li:last-child a {
+        border-bottom: none;
+    }
+
     #contenedor h1 { font-size: 2.8rem; }
     #contenedor h2 { font-size: 1.6rem; }
     .menu-opciones { grid-template-columns: 1fr; }
-} 
+}

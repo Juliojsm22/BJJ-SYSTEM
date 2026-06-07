@@ -146,8 +146,15 @@
         }
         .search-bar .form-control { max-width: 320px; }
 
+        .content-padding { padding: 0 32px 32px 32px; }
+        .topbar-actions-container { display:flex; justify-content:flex-end; padding: 16px 32px 16px 32px; min-height: 0; gap: 12px; }
+        
         @media (max-width: 768px) {
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .content-padding { padding: 0 16px 24px 16px; }
+            .topbar-actions-container { padding: 16px; justify-content: flex-start; flex-wrap: wrap; }
+            .search-bar { flex-direction: column; align-items: stretch; }
+            .search-bar .form-control { max-width: 100%; }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -158,8 +165,11 @@
         <a href="{{ url_for('dashboard.index') }}">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo BJJ">
         </a>
+        <button id="mobile-menu-btn" class="menu-toggle" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
         <nav>
-            <ul>
+            <ul id="nav-menu">
                 {% if current_user.is_authenticated %}
                 {% if current_user.rol == 'admin' %}
                 <li><a href="{{ url_for('dashboard.index') }}">Inicio</a></li>
@@ -180,10 +190,10 @@
 
     <main class="main">
         <div class="content">
-            <div style="display:flex; justify-content:flex-end; padding: 16px 32px 0 32px; min-height: 0;">
+            <div class="topbar-actions-container">
                 {% block topbar_actions %}{% endblock %}
             </div>
-            <div style="padding: 0 32px 32px 32px;">
+            <div class="content-padding">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
@@ -245,6 +255,15 @@
 
     function onScanFailure(error) {
         // Ignorar errores continuos mientras escanea
+    }
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const navMenu = document.getElementById('nav-menu');
+    if (menuBtn && navMenu) {
+        menuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('nav-active');
+        });
     }
 
     // Modo Oscuro
