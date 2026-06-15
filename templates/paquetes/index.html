@@ -26,9 +26,11 @@
     <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
     {% endif %}
     
+    {% if current_user.rol == 'admin' %}
     <button type="button" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;" onclick="abrirExportModal()">
         <i class="fas fa-file-excel"></i> Exportar a Excel
     </button>
+    {% endif %}
 </form>
 
 <div class="card">
@@ -77,10 +79,8 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:6px;">
-                            {% if not p.factura_id or current_user.rol == 'admin' %}
+                            {% if current_user.rol == 'admin' %}
                             <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
-                            {% endif %}
-                            {% if not p.factura_id %}
                             <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>

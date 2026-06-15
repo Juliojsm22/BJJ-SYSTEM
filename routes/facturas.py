@@ -73,10 +73,11 @@ def detalle(id):
 @facturas_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para editar facturas.', 'error')
+        return redirect(url_for('facturas.index'))
+        
     factura = Factura.query.get_or_404(id)
-    if factura.estado in ['finalizada', 'pagada'] and current_user.rol != 'admin':
-        flash('Solo los administradores pueden editar una factura finalizada.', 'warning')
-        return redirect(url_for('facturas.detalle', id=id))
 
     if request.method == 'POST':
         factura.notas = request.form.get('notas', '')
@@ -161,10 +162,11 @@ def paquetes_cliente(cliente_id):
 @facturas_bp.route('/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar(id):
-    factura = Factura.query.get_or_404(id)
-    if factura.estado in ['finalizada', 'pagada'] and current_user.rol != 'admin':
-        flash('Solo los administradores pueden eliminar una factura finalizada.', 'error')
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para eliminar facturas.', 'error')
         return redirect(url_for('facturas.index'))
+        
+    factura = Factura.query.get_or_404(id)
         
     for p in factura.paquetes:
         p.factura_id = None
@@ -327,6 +329,10 @@ def generar_pdf_factura(factura):
 @facturas_bp.route('/exportar')
 @login_required
 def exportar():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para exportar datos.', 'error')
+        return redirect(url_for('facturas.index'))
+        
     estado = request.args.get('estado', '')
     filtro_fecha = request.args.get('filtro_fecha', '')
     mes = request.args.get('mes', '')
@@ -357,7 +363,7 @@ def exportar():
     ws = wb.active
     ws.title = "Facturas"
 
-    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Cant. Paquetes', 'Notas']
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Notas']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -366,6 +372,9 @@ def exportar():
         cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
 
     for f in facturas:
+        costo_agencia = sum((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6) for p in f.paquetes)
+        ganancia = f.total - costo_agencia
+        
         ws.append([
             f.id,
             f.numero,
@@ -374,6 +383,8 @@ def exportar():
             f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
             f.estado.upper(),
             f.total,
+            costo_agencia,
+            ganancia,
             len(f.paquetes),
             f.notas or ''
         ])

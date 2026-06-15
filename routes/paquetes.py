@@ -135,12 +135,12 @@ def nuevo():
 @paquetes_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para editar paquetes.', 'error')
+        return redirect(url_for('paquetes.index'))
+        
     paquete = Paquete.query.get_or_404(id)
     clientes = Cliente.query.filter_by(activo=True).order_by(Cliente.nombre_completo).all()
-
-    if paquete.factura_id and current_user.rol != 'admin':
-        flash('Solo los administradores pueden editar un paquete ya facturado.', 'warning')
-        return redirect(url_for('paquetes.index'))
 
     if request.method == 'POST':
         peso = float(request.form.get('peso', 0))
@@ -287,6 +287,10 @@ def historial(id):
 @paquetes_bp.route('/exportar')
 @login_required
 def exportar():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para exportar datos.', 'error')
+        return redirect(url_for('paquetes.index'))
+        
     q = request.args.get('q', '')
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
@@ -329,7 +333,7 @@ def exportar():
     ws = wb.active
     ws.title = "Paquetes"
 
-    headers = ['ID', 'Tracking (Sistema)', 'Guía Rastreo', 'Cliente', 'Contenido', 'Peso (lb)', 'Tipo', 'Costo', 'Estado Actual', 'Facturado', 'Fecha Registro']
+    headers = ['ID', 'Tracking (Sistema)', 'Guía Rastreo', 'Cliente', 'Contenido', 'Peso (lb)', 'Tipo', 'Precio Costo ($)', 'Precio Venta ($)', 'Ganancia ($)', 'Estado Actual', 'Facturado', 'Fecha Registro']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -344,6 +348,10 @@ def exportar():
         return val
 
     for p in paquetes:
+        precio_costo = (p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6)
+        precio_venta = p.costo or 0
+        ganancia = precio_venta - precio_costo
+        
         row = [
             p.id,
             p.tracking_number,
@@ -352,7 +360,9 @@ def exportar():
             p.nombre,
             p.peso,
             p.tipo_envio.upper() if p.tipo_envio else '',
-            p.costo,
+            precio_costo,
+            precio_venta,
+            ganancia,
             p.estado_rastreo.replace('_', ' ').title() if p.estado_rastreo else '',
             'SÍ' if p.factura_id else 'NO',
             p.registrado_en.strftime('%Y-%m-%d %H:%M') if p.registrado_en else ''

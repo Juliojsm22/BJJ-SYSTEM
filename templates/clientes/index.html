@@ -15,9 +15,11 @@
         <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Buscar</button>
         {% if q %}<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i></a>{% endif %}
         
+        {% if current_user.rol == 'admin' %}
         <button type="button" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;" onclick="abrirExportModal()">
             <i class="fas fa-file-excel"></i> Exportar a Excel
         </button>
+        {% endif %}
     </form>
 </div>
 
@@ -51,11 +53,12 @@
                             <a href="{{ url_for('clientes.detalle', id=c.id) }}" class="btn btn-sm btn-secondary" title="Ver detalle">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ url_for('clientes.editar', id=c.id) }}" class="btn btn-sm btn-warning" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </a>
                             <a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ c.id }}" class="btn btn-sm btn-success" title="Agregar paquete">
                                 <i class="fas fa-box"></i>
+                            </a>
+                            {% if current_user.rol == 'admin' %}
+                            <a href="{{ url_for('clientes.editar', id=c.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
                             </a>
                             <form method="POST" action="{{ url_for('clientes.eliminar', id=c.id) }}" onsubmit="return confirm('¿Eliminar cliente?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -63,6 +66,7 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
