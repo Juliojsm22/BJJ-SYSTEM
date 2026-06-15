@@ -290,6 +290,9 @@ def exportar():
     q = request.args.get('q', '')
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
+    filtro_fecha = request.args.get('filtro_fecha', '')
+    mes = request.args.get('mes', '')
+    semana = request.args.get('semana', '')
 
     query = Paquete.query.options(joinedload(Paquete.cliente), joinedload(Paquete.factura)).join(Cliente).filter(Cliente.activo == True)
     if q:
@@ -304,6 +307,21 @@ def exportar():
         query = query.filter(Paquete.factura_id == None)
     elif estado == 'facturado':
         query = query.filter(Paquete.factura_id != None)
+
+    if filtro_fecha == 'mes' and mes:
+        year, month = map(int, mes.split('-'))
+        import calendar
+        from datetime import datetime
+        _, last_day = calendar.monthrange(year, month)
+        start_date = datetime(year, month, 1)
+        end_date = datetime(year, month, last_day, 23, 59, 59)
+        query = query.filter(Paquete.registrado_en >= start_date, Paquete.registrado_en <= end_date)
+    elif filtro_fecha == 'semana' and semana:
+        from datetime import datetime, timedelta
+        year_str, week_str = semana.split('-W')
+        start_date = datetime.strptime(semana + '-1', '%G-W%V-%u')
+        end_date = start_date + timedelta(days=7)
+        query = query.filter(Paquete.registrado_en >= start_date, Paquete.registrado_en < end_date)
 
     paquetes = query.order_by(Paquete.registrado_en.desc()).all()
 

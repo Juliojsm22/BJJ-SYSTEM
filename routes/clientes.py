@@ -175,15 +175,34 @@ def detalle(id):
 @login_required
 def exportar():
     q = request.args.get('q', '')
+    filtro_fecha = request.args.get('filtro_fecha', '')
+    mes = request.args.get('mes', '')
+    semana = request.args.get('semana', '')
+
     query = Cliente.query.options(joinedload(Cliente.paquetes)).filter_by(activo=True)
     if q:
-        clientes = query.filter(
+        query = query.filter(
             (Cliente.nombre_completo.ilike(f'%{q}%')) |
             (Cliente.cedula.ilike(f'%{q}%')) |
             (Cliente.email.ilike(f'%{q}%'))
-        ).order_by(Cliente.nombre_completo).all()
-    else:
-        clientes = query.order_by(Cliente.nombre_completo).all()
+        )
+        
+    if filtro_fecha == 'mes' and mes:
+        year, month = map(int, mes.split('-'))
+        import calendar
+        from datetime import datetime
+        _, last_day = calendar.monthrange(year, month)
+        start_date = datetime(year, month, 1)
+        end_date = datetime(year, month, last_day, 23, 59, 59)
+        query = query.filter(Cliente.creado_en >= start_date, Cliente.creado_en <= end_date)
+    elif filtro_fecha == 'semana' and semana:
+        from datetime import datetime, timedelta
+        year_str, week_str = semana.split('-W')
+        start_date = datetime.strptime(semana + '-1', '%G-W%V-%u')
+        end_date = start_date + timedelta(days=7)
+        query = query.filter(Cliente.creado_en >= start_date, Cliente.creado_en < end_date)
+
+    clientes = query.order_by(Cliente.nombre_completo).all()
 
     wb = openpyxl.Workbook()
     ws = wb.active

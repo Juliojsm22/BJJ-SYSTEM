@@ -328,9 +328,29 @@ def generar_pdf_factura(factura):
 @login_required
 def exportar():
     estado = request.args.get('estado', '')
+    filtro_fecha = request.args.get('filtro_fecha', '')
+    mes = request.args.get('mes', '')
+    semana = request.args.get('semana', '')
+
     query = Factura.query.options(joinedload(Factura.cliente), joinedload(Factura.paquetes)).join(Cliente)
     if estado:
         query = query.filter(Factura.estado == estado)
+
+    if filtro_fecha == 'mes' and mes:
+        year, month = map(int, mes.split('-'))
+        import calendar
+        from datetime import datetime
+        _, last_day = calendar.monthrange(year, month)
+        start_date = datetime(year, month, 1)
+        end_date = datetime(year, month, last_day, 23, 59, 59)
+        query = query.filter(Factura.fecha_emision >= start_date, Factura.fecha_emision <= end_date)
+    elif filtro_fecha == 'semana' and semana:
+        from datetime import datetime, timedelta
+        year_str, week_str = semana.split('-W')
+        start_date = datetime.strptime(semana + '-1', '%G-W%V-%u')
+        end_date = start_date + timedelta(days=7)
+        query = query.filter(Factura.fecha_emision >= start_date, Factura.fecha_emision < end_date)
+
     facturas = query.order_by(Factura.fecha_emision.desc()).all()
 
     wb = openpyxl.Workbook()

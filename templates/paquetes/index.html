@@ -26,9 +26,9 @@
     <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
     {% endif %}
     
-    <a href="{{ url_for('paquetes.exportar', q=q, tipo=tipo, estado=estado) }}" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;">
+    <button type="button" class="btn" style="background:#107c41; color:white; border:none; margin-left:auto;" onclick="abrirExportModal()">
         <i class="fas fa-file-excel"></i> Exportar a Excel
-    </a>
+    </button>
 </form>
 
 <div class="card">
@@ -101,6 +101,42 @@
         {% endif %}
     </div>
 </div>
+
+<div id="exportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:var(--surface); padding:24px; border-radius:12px; max-width:400px; width:90%; position:relative;">
+        <button type="button" onclick="cerrarExportModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+        <h3 style="margin-bottom:16px; font-family:'Syne', sans-serif;"><i class="fas fa-file-excel"></i> Exportar Paquetes</h3>
+        <form action="{{ url_for('paquetes.exportar') }}" method="GET">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="tipo" value="{{ tipo }}">
+            <input type="hidden" name="estado" value="{{ estado }}">
+            
+            <div class="form-group">
+                <label>Filtrar por Fecha:</label>
+                <select name="filtro_fecha" id="filtro_fecha" class="form-control" onchange="toggleFiltroFecha()">
+                    <option value="">Todo (Sin filtro de fecha)</option>
+                    <option value="mes">Por Mes</option>
+                    <option value="semana">Por Semana</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="div_mes" style="display:none;">
+                <label>Seleccione el Mes:</label>
+                <input type="month" name="mes" class="form-control">
+            </div>
+            
+            <div class="form-group" id="div_semana" style="display:none;">
+                <label>Seleccione la Semana:</label>
+                <input type="week" name="semana" class="form-control">
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                <button type="button" class="btn btn-secondary" onclick="cerrarExportModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" onclick="cerrarExportModal()"><i class="fas fa-download"></i> Descargar</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -129,6 +165,20 @@ function copiarLink(ruta) {
         }
         document.body.removeChild(el);
     }
+}
+
+function abrirExportModal() {
+    document.getElementById('exportModal').style.display = 'flex';
+}
+
+function cerrarExportModal() {
+    document.getElementById('exportModal').style.display = 'none';
+}
+
+function toggleFiltroFecha() {
+    var val = document.getElementById('filtro_fecha').value;
+    document.getElementById('div_mes').style.display = (val === 'mes') ? 'block' : 'none';
+    document.getElementById('div_semana').style.display = (val === 'semana') ? 'block' : 'none';
 }
 </script>
 {% endblock %}
