@@ -65,13 +65,17 @@ def create_app():
 def crear_usuario_admin():
     from models import Usuario
     from werkzeug.security import generate_password_hash
-    if not Usuario.query.filter_by(username='admin').first():
-        admin = Usuario(
-            username='admin',
-            email='admin@agencia.com',
-            password=generate_password_hash('admin123'),
-            rol='admin',
-            nombre_completo='Administrador'
-        )
-        db.session.add(admin)
-        db.session.commit()
+    try:
+        if not Usuario.query.filter_by(username='admin').first():
+            admin = Usuario(
+                username='admin',
+                email='admin@agencia.com',
+                password=generate_password_hash('admin123'),
+                rol='admin',
+                nombre_completo='Administrador'
+            )
+            db.session.add(admin)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Aviso: No se pudo verificar el usuario admin (probablemente falte correr migraciones). Detalles: {e}")
