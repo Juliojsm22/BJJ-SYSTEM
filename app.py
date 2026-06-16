@@ -59,6 +59,7 @@ def create_app():
         
         crear_usuario_admin()
 
+
     return app
 
 def crear_usuario_admin():

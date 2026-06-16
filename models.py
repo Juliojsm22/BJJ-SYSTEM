@@ -14,6 +14,7 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     nombre_completo = db.Column(db.String(150))
+    telefono = db.Column(db.String(20))
     rol = db.Column(db.String(20), default='empleado')  # admin, empleado
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.now)

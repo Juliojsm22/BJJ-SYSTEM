@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from markupsafe import Markup
 from flask_login import login_user, logout_user, login_required, current_user
 from models import Usuario
 from werkzeug.security import generate_password_hash
@@ -46,7 +47,15 @@ def forgot_password():
             s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
             token = s.dumps(usuario.email, salt='recover-key')
             reset_url = url_for('auth.reset_password', token=token, _external=True)
-            flash(f'Enlace de recuperación generado: <a href="{reset_url}" style="font-weight:bold;text-decoration:underline;">Click aquí para restablecer</a>. (Simulado porque no hay correo).', 'info')
+            
+            if usuario.telefono:
+                import urllib.parse
+                telefono_limpio = ''.join(filter(str.isdigit, str(usuario.telefono)))
+                mensaje = f"Hola {usuario.nombre_completo},\n\nAquí tienes tu enlace para restablecer tu contraseña:\n{reset_url}\n\nEste enlace expira en 1 hora."
+                wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
+                flash(Markup(f'Enlace generado exitosamente. <br><a href="{wa_url}" target="_blank" class="btn btn-success" style="margin-top:10px;"><i class="fab fa-whatsapp"></i> Recibir enlace por WhatsApp</a><br><small style="display:block;margin-top:8px;">(Se abrirá tu WhatsApp y podrás enviártelo a ti mismo para guardarlo y usarlo)</small>'), 'success')
+            else:
+                flash(Markup(f'Enlace de recuperación generado: <a href="{reset_url}" style="font-weight:bold;text-decoration:underline;">Click aquí para restablecer</a>. (Pide a un admin que agregue tu número de teléfono para enviarlo por WhatsApp).'), 'info')
         else:
             flash('Si el correo existe en nuestro sistema y está activo, recibirás un enlace.', 'info')
         return redirect(url_for('auth.login'))

@@ -26,6 +26,10 @@
                 <input type="email" name="email" class="form-control" value="{{ usuario.email if usuario else '' }}" required placeholder="carlos@ejemplo.com">
             </div>
             <div class="form-group">
+                <label>Teléfono (Opcional, para recibir enlaces de recuperación)</label>
+                <input type="tel" name="telefono" class="form-control" value="{{ usuario.telefono if usuario else '' }}" placeholder="Ej: +505 8888 8888">
+            </div>
+            <div class="form-group">
                 <label>Rol del Sistema *</label>
                 <select name="rol" class="form-control" required>
                     <option value="empleado" {% if usuario and usuario.rol == 'empleado' %}selected{% endif %}>Trabajador (Acceso limitado)</option>

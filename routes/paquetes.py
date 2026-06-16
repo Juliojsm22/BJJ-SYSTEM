@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
+from markupsafe import Markup
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
@@ -102,6 +103,20 @@ def nuevo():
         if paquetes_creados:
             from models import registrar_actividad
             registrar_actividad(current_user.id, 'Registró Paquetes', f'Registró {len(paquetes_creados)} paquete(s) para {cliente.nombre_completo}')
+            
+            paquetes_miami = [p for p in paquetes_creados if p.estado_rastreo == 'bodega_miami']
+            if paquetes_miami and cliente.telefono:
+                import urllib.parse
+                mensaje = f"Hola {cliente.nombre_completo},\n\nTe informamos que hemos recibido tu(s) paquete(s) en nuestra bodega de Miami y puedes monitorearlos usando los siguientes enlaces de rastreo:\n"
+                for p in paquetes_miami:
+                    track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
+                    mensaje += f"- {p.nombre} (Tracking: {p.tracking_number})\n  Rastrear: {track_url}\n"
+                mensaje += "\nGracias por preferir BJJ SYSTEM."
+                
+                telefono_limpio = ''.join(filter(str.isdigit, str(cliente.telefono)))
+                if telefono_limpio:
+                    wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
+                    flash(Markup(f'<div style="margin-top:10px;"><a href="{wa_url}" target="_blank" class="btn" style="background:#25D366;color:white;text-decoration:none;"><i class="fab fa-whatsapp"></i> Notificar a Cliente por WhatsApp</a></div>'), 'success')
             
             accion = request.form.get('accion')
             if accion == 'facturar':

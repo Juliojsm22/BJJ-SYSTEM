@@ -32,6 +32,7 @@ def nuevo():
             email=request.form.get('email').strip(),
             password=generate_password_hash(request.form.get('password')),
             nombre_completo=request.form.get('nombre_completo').strip(),
+            telefono=request.form.get('telefono', '').strip(),
             rol=request.form.get('rol'),
             activo=True
         )
@@ -60,6 +61,7 @@ def editar(id):
         usuario.username = username
         usuario.email = request.form.get('email').strip()
         usuario.nombre_completo = request.form.get('nombre_completo').strip()
+        usuario.telefono = request.form.get('telefono', '').strip()
         usuario.rol = request.form.get('rol')
         usuario.activo = request.form.get('activo') == 'on'
         
