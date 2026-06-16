@@ -42,7 +42,6 @@ def forgot_password():
     
     if request.method == 'POST':
         username = request.form.get('username')
-        telefono = request.form.get('telefono')
         usuario = Usuario.query.filter_by(username=username, activo=True).first()
         if usuario:
             s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
@@ -50,9 +49,13 @@ def forgot_password():
             reset_url = url_for('auth.reset_password', token=token, _external=True)
             
             import urllib.parse
-            telefono_limpio = ''.join(filter(str.isdigit, str(telefono)))
+            if not usuario.telefono:
+                flash('Tu usuario no tiene un número de teléfono asignado. Pídele al administrador que lo agregue.', 'error')
+                return redirect(url_for('auth.forgot_password'))
+                
+            telefono_limpio = ''.join(filter(str.isdigit, str(usuario.telefono)))
             if not telefono_limpio:
-                flash('El número de teléfono proporcionado no es válido.', 'error')
+                flash('El número de teléfono asignado a tu usuario no es válido.', 'error')
                 return redirect(url_for('auth.forgot_password'))
                 
             mensaje = f"Hola {usuario.nombre_completo},\n\nAquí tienes tu enlace para restablecer tu contraseña:\n{reset_url}\n\nEste enlace expira en 1 hora."
