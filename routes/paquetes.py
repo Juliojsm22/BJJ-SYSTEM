@@ -385,9 +385,9 @@ def exportar():
     buffer.seek(0)
 
     from datetime import datetime
-    filename = f"Paquetes_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    filename = f"Paquetes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

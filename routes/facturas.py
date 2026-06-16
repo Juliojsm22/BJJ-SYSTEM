@@ -321,7 +321,7 @@ def generar_pdf_factura(factura):
         story.append(Paragraph(f'<b>Notas:</b> {factura.notas}', styles['Normal']))
 
     story.append(Spacer(1, 0.5*inch))
-    story.append(Paragraph('<font size=12 color="#999999"><b>Gracias por confiar su carga con nosotros.</b></font>', styles['Normal']))
+    story.append(Paragraph('<font size=12 color="#000000"><b>Gracias por confiar su carga con nosotros.</b></font>', styles['Normal']))
 
     doc.build(story)
     return buffer.getvalue()
@@ -404,9 +404,9 @@ def exportar():
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"Facturas_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    filename = f"Facturas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
