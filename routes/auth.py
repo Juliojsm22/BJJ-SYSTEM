@@ -41,11 +41,11 @@ def forgot_password():
         return redirect(url_for('dashboard.index'))
     
     if request.method == 'POST':
-        email = request.form.get('email')
-        usuario = Usuario.query.filter_by(email=email, activo=True).first()
+        username = request.form.get('username')
+        usuario = Usuario.query.filter_by(username=username, activo=True).first()
         if usuario:
             s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-            token = s.dumps(usuario.email, salt='recover-key')
+            token = s.dumps(usuario.username, salt='recover-key')
             reset_url = url_for('auth.reset_password', token=token, _external=True)
             
             if usuario.telefono:
@@ -57,7 +57,7 @@ def forgot_password():
             else:
                 flash(Markup(f'Enlace de recuperación generado: <a href="{reset_url}" style="font-weight:bold;text-decoration:underline;">Click aquí para restablecer</a>. (Pide a un admin que agregue tu número de teléfono para enviarlo por WhatsApp).'), 'info')
         else:
-            flash('Si el correo existe en nuestro sistema y está activo, recibirás un enlace.', 'info')
+            flash('Si el usuario existe en nuestro sistema y está activo, recibirás un enlace.', 'info')
         return redirect(url_for('auth.login'))
         
     return render_template('forgot_password.html')
@@ -69,7 +69,7 @@ def reset_password(token):
         
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     try:
-        email = s.loads(token, salt='recover-key', max_age=3600)
+        username = s.loads(token, salt='recover-key', max_age=3600)
     except:
         flash('El enlace de recuperación es inválido o ha expirado.', 'error')
         return redirect(url_for('auth.forgot_password'))
@@ -86,7 +86,7 @@ def reset_password(token):
             flash('Las contraseñas no coinciden.', 'error')
             return redirect(url_for('auth.reset_password', token=token))
             
-        usuario = Usuario.query.filter_by(email=email, activo=True).first()
+        usuario = Usuario.query.filter_by(username=username, activo=True).first()
         if usuario:
             usuario.password = generate_password_hash(password)
             db.session.commit()
