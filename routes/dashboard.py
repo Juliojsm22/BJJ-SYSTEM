@@ -44,13 +44,13 @@ def index():
     paquetes_sin_facturar = Paquete.query.filter_by(factura_id=None).count()
     facturas_pendientes = Factura.query.filter_by(estado='borrador').count()
 
-    # Top clientes por libras
+    # Top clientes por libras (este mes)
     top_clientes = db.session.query(
         Cliente.nombre_completo,
         func.sum(Paquete.peso).label('total_libras'),
         func.count(Paquete.id).label('total_paquetes')
     ).join(Paquete, Cliente.id == Paquete.cliente_id)\
-     .filter(Cliente.activo == True)\
+     .filter(Cliente.activo == True, Paquete.registrado_en >= inicio_mes)\
      .group_by(Cliente.id)\
      .order_by(func.sum(Paquete.peso).desc())\
      .limit(5).all()
@@ -98,9 +98,9 @@ def index():
             'total': float(total)
         })
 
-    # Paquetes por tipo
-    aereos = Paquete.query.filter_by(tipo_envio='aereo').count()
-    maritimos = Paquete.query.filter_by(tipo_envio='maritimo').count()
+    # Paquetes por tipo (este mes)
+    aereos = Paquete.query.filter(Paquete.tipo_envio == 'aereo', Paquete.registrado_en >= inicio_mes).count()
+    maritimos = Paquete.query.filter(Paquete.tipo_envio == 'maritimo', Paquete.registrado_en >= inicio_mes).count()
 
     return render_template('dashboard/index.html',
         ganancias_semana=ganancias_semana,

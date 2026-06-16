@@ -321,7 +321,7 @@ def generar_pdf_factura(factura):
         story.append(Paragraph(f'<b>Notas:</b> {factura.notas}', styles['Normal']))
 
     story.append(Spacer(1, 0.5*inch))
-    story.append(Paragraph('<font size=8 color="#999999">Gracias por confiar en nosotros.</font>', styles['Normal']))
+    story.append(Paragraph('<font size=12 color="#999999"><b>Gracias por confiar su carga con nosotros.</b></font>', styles['Normal']))
 
     doc.build(story)
     return buffer.getvalue()
