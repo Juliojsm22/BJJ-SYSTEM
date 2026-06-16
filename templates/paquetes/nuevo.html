@@ -83,7 +83,7 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>Peso (libras) *</label>
-                <input type="number" name="peso[]" class="form-control input-peso" step="0.01" min="0.01" required placeholder="0.00" oninput="calcularCostoGlobal()">
+                <input type="number" name="peso[]" class="form-control input-peso" step="1" min="1" required placeholder="0" oninput="calcularCostoGlobal()">
             </div>
             <div class="form-group">
                 <label>Tipo de envío *</label>
@@ -175,7 +175,7 @@ function calcularCostoGlobal(tAereo, tMaritimo) {
         const tipo = fila.querySelector('.select-tipo').value;
         
         if (pesoStr && tipo) {
-            const peso = parseFloat(pesoStr);
+            const peso = parseInt(pesoStr, 10);
             if (peso > 0) {
                 const tarifa = tipo === 'aereo' ? tAereo : tMaritimo;
                 costoTotal += peso * tarifa;

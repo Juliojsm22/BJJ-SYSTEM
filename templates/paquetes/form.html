@@ -49,8 +49,8 @@
                 <div class="form-group">
                     <label>Peso (libras) *</label>
                     <input type="number" name="peso" id="peso" class="form-control"
-                           value="{{ paquete.peso }}"
-                           step="0.01" min="0.01" required placeholder="0.00">
+                           value="{{ paquete.peso | int }}"
+                           step="1" min="1" required placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>Tipo de envío *</label>
@@ -96,7 +96,7 @@
 {% block extra_js %}
 <script>
 function calcularCosto() {
-    const peso = parseFloat(document.getElementById('peso').value) || 0;
+    const peso = parseInt(document.getElementById('peso').value, 10) || 0;
     const tipo = document.getElementById('tipo_envio').value;
     const selectCliente = document.querySelector('select[name="cliente_id"]');
     const cliente_id = selectCliente ? selectCliente.value : null;

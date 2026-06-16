@@ -60,7 +60,7 @@ def nuevo():
         costo_total = 0
         
         for i in range(len(nombres)):
-            peso = float(pesos[i] if pesos[i] else 0)
+            peso = int(pesos[i] if pesos[i] else 0)
             tipo_envio = tipos_envio[i]
             numero_seg = numeros_seguimiento[i].strip()
             
@@ -158,7 +158,7 @@ def editar(id):
     clientes = Cliente.query.filter_by(activo=True).order_by(Cliente.nombre_completo).all()
 
     if request.method == 'POST':
-        peso = float(request.form.get('peso', 0))
+        peso = int(request.form.get('peso', 0))
         tipo_envio = request.form.get('tipo_envio')
         cliente_id = int(request.form.get('cliente_id'))
         
@@ -226,7 +226,7 @@ def eliminar(id):
 @paquetes_bp.route('/calcular-costo')
 @login_required
 def calcular_costo():
-    peso = float(request.args.get('peso', 0))
+    peso = int(float(request.args.get('peso', 0)))
     tipo = request.args.get('tipo', 'aereo')
     cliente_id = request.args.get('cliente_id')
     

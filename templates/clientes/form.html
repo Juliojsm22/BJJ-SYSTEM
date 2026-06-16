@@ -22,12 +22,17 @@
                 </div>
                 <div class="form-group">
                     <label>Número de cédula *</label>
-                    <input type="text" name="cedula" class="form-control"
-                           value="{{ cliente.cedula if cliente else '' }}" required
-                           pattern="\d{3}-\d{6}-\d{4}[a-zA-Z]" maxlength="16" 
-                           title="Formato: 000-000000-0000A"
-                           style="text-transform: uppercase;"
-                           placeholder="Ej: 001-123456-0001A">
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" name="cedula" class="form-control"
+                               value="{{ cliente.cedula if cliente else '' }}" required
+                               pattern="\d{3}-\d{6}-\d{4}[a-zA-Z]" maxlength="16" 
+                               title="Formato: 000-000000-0000A"
+                               style="text-transform: uppercase;"
+                               placeholder="Ej: 001-123456-0001A">
+                        <button type="button" class="btn btn-secondary" title="Escanear con cámara" onclick="abrirScanner(this.previousElementSibling)" style="padding: 10px 14px;">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="grid-2">
