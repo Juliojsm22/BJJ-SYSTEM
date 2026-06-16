@@ -42,22 +42,25 @@ def forgot_password():
     
     if request.method == 'POST':
         username = request.form.get('username')
+        telefono = request.form.get('telefono')
         usuario = Usuario.query.filter_by(username=username, activo=True).first()
         if usuario:
             s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
             token = s.dumps(usuario.username, salt='recover-key')
             reset_url = url_for('auth.reset_password', token=token, _external=True)
             
-            if usuario.telefono:
-                import urllib.parse
-                telefono_limpio = ''.join(filter(str.isdigit, str(usuario.telefono)))
-                mensaje = f"Hola {usuario.nombre_completo},\n\nAquí tienes tu enlace para restablecer tu contraseña:\n{reset_url}\n\nEste enlace expira en 1 hora."
-                wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
-                flash(Markup(f'Enlace generado exitosamente. <br><a href="{wa_url}" target="_blank" class="btn btn-success" style="margin-top:10px;"><i class="fab fa-whatsapp"></i> Recibir enlace por WhatsApp</a><br><small style="display:block;margin-top:8px;">(Se abrirá tu WhatsApp y podrás enviártelo a ti mismo para guardarlo y usarlo)</small>'), 'success')
-            else:
-                flash(Markup(f'Enlace de recuperación generado: <a href="{reset_url}" style="font-weight:bold;text-decoration:underline;">Click aquí para restablecer</a>. (Pide a un admin que agregue tu número de teléfono para enviarlo por WhatsApp).'), 'info')
+            import urllib.parse
+            telefono_limpio = ''.join(filter(str.isdigit, str(telefono)))
+            if not telefono_limpio:
+                flash('El número de teléfono proporcionado no es válido.', 'error')
+                return redirect(url_for('auth.forgot_password'))
+                
+            mensaje = f"Hola {usuario.nombre_completo},\n\nAquí tienes tu enlace para restablecer tu contraseña:\n{reset_url}\n\nEste enlace expira en 1 hora."
+            wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
+            
+            return redirect(wa_url)
         else:
-            flash('Si el usuario existe en nuestro sistema y está activo, recibirás un enlace.', 'info')
+            flash('Si el usuario existe en nuestro sistema y está activo, se generará el enlace.', 'info')
         return redirect(url_for('auth.login'))
         
     return render_template('forgot_password.html')

@@ -11,7 +11,7 @@
 {% block content %}
 <div style="max-width: 500px;">
     <div class="card">
-        <form method="POST">
+        <form method="POST" autocomplete="off">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-group">
                 <label>Nombre Completo *</label>
@@ -39,7 +39,7 @@
             
             <div class="form-group" style="margin-top:20px;">
                 <label>Contraseña {% if not usuario %}*{% else %}(Dejar en blanco para NO cambiarla){% endif %}</label>
-                <input type="password" name="password" class="form-control" {% if not usuario %}required{% endif %} placeholder="****">
+                <input type="password" name="password" class="form-control" {% if not usuario %}required{% endif %} placeholder="****" autocomplete="new-password">
             </div>
             
             {% if usuario and current_user.id != usuario.id %}
