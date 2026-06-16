@@ -107,16 +107,16 @@ def nuevo():
             paquetes_miami = [p for p in paquetes_creados if p.estado_rastreo == 'bodega_miami']
             if paquetes_miami and cliente.telefono:
                 import urllib.parse
-                mensaje = f"Hola {cliente.nombre_completo},\n\nTe informamos que hemos recibido tu(s) paquete(s) en nuestra bodega de Miami y puedes monitorearlos usando los siguientes enlaces de rastreo:\n"
+                mensaje = f"👋 *Hola {cliente.nombre_completo}*,\n\nTe informamos que hemos recibido tu(s) paquete(s) en nuestra *Bodega de Miami* 🏢🇺🇸.\n\n📦 *Detalles:*\n"
                 for p in paquetes_miami:
                     track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
-                    mensaje += f"- {p.nombre} (Tracking: {p.tracking_number})\n  Rastrear: {track_url}\n"
-                mensaje += "\nGracias por preferir BJJ SYSTEM."
+                    mensaje += f"🔸 *{p.nombre}*\nTracking: {p.tracking_number}\n🔗 Rastreo: {track_url}\n\n"
+                mensaje += "¡Gracias por preferir *BJJ SYSTEM*! 🚀"
                 
                 telefono_limpio = ''.join(filter(str.isdigit, str(cliente.telefono)))
                 if telefono_limpio:
                     wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
-                    flash(Markup(f'<div style="margin-top:10px;"><a href="{wa_url}" target="_blank" class="btn" style="background:#25D366;color:white;text-decoration:none;"><i class="fab fa-whatsapp"></i> Notificar a Cliente por WhatsApp</a></div>'), 'success')
+                    flash(wa_url, 'whatsapp')
             
             accion = request.form.get('accion')
             if accion == 'facturar':

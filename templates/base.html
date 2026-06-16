@@ -195,12 +195,39 @@
             </div>
             <div class="content-padding">
             {% with messages = get_flashed_messages(with_categories=true) %}
+                {% set whatsapp_links = [] %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                    {{ message }}
-                </div>
+                    {% if category == 'whatsapp' %}
+                        {% set _ = whatsapp_links.append(message) %}
+                    {% else %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endif %}
                 {% endfor %}
+                
+                {% if whatsapp_links %}
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            title: '¡Registro Exitoso!',
+                            text: 'El paquete ha sido ingresado al sistema. ¿Deseas notificar al cliente ahora mismo?',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonColor: '#25D366',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: '<i class="fab fa-whatsapp" style="margin-right:8px;"></i> Notificar por WhatsApp',
+                            cancelButtonText: 'Más tarde'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.open('{{ whatsapp_links[0]|safe }}', '_blank');
+                            }
+                        });
+                    });
+                </script>
+                {% endif %}
             {% endwith %}
             {% block content %}{% endblock %}
             </div>
