@@ -437,7 +437,7 @@
     }
     .footer-grid {
         display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr 1fr;
+        grid-template-columns: 1.5fr 1fr 1fr;
         gap: 40px;
         position: relative;
         z-index: 2;
@@ -709,6 +709,12 @@
         </div>
     </section>
 
+
+
+</div>
+{% endblock %}
+
+{% block footer %}
     <!-- FOOTER AWBOX STYLE -->
     <footer class="bjj-footer">
         <div class="l-container" style="position:relative;">
@@ -727,7 +733,7 @@
                 <!-- Columna 2: Horarios y Dirección Nicaragua -->
                 <div class="footer-info">
                     <h4>Horarios de atención Managua</h4>
-                    <p>Lunes a viernes 8:00am - 5:00pm</p>
+                    <p>Lunes a Viernes 8:00am - 5:00pm</p>
                     <p>Sábados de 8:00am a 12:00md</p>
                     
                     <h4><i class="fas fa-map-marker-alt" style="color:var(--bjj-muted);"></i> Dirección Nicaragua</h4>
@@ -737,22 +743,13 @@
                 <!-- Columna 3: Contacto Nicaragua -->
                 <div class="footer-info">
                     <h4>Contacto:</h4>
-                    <p><i class="fas fa-envelope"></i> info@enviosbjj.com</p>
+                    <p><i class="fas fa-envelope"></i> enviosbjjexpress@gmail.com</p>
                     <p><i class="fas fa-phone-alt"></i> +505 8662 8557</p>
                     <p><i class="fab fa-whatsapp"></i> +505 8662 8557</p>
                 </div>
-
-                <!-- Columna 4: Contacto Miami -->
-                <div class="footer-info">
-                    <h4>Contacto Miami:</h4>
-                    <p><i class="fas fa-building"></i> 8611 NW 72ND ST. STE 8<br>Doral. Florida.</p>
-                    <p><i class="fas fa-phone-alt"></i> (786) 123 4567</p>
-                    <p><i class="far fa-clock"></i> Lun - Vie 8:30 - 17:30<br>Sab - Dom / Cerrado</p>
-                </div>
-            </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024, ENVÍOS BJJ Todos los derechos reservados.</p>
+                <p>&copy; 2026, ENVÍOS BJJ Todos los derechos reservados.</p>
                 
                 <!-- Botón Subir -->
                 <button class="btn-subir" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
@@ -770,6 +767,4 @@
     <a href="https://wa.me/50586628557" class="floating-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="Escríbenos por WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
-
-</div>
 {% endblock %}
