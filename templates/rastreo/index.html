@@ -434,11 +434,12 @@
         overflow: hidden;
         margin-top: 60px;
         border-top: 1px solid var(--bjj-border);
+        text-align: left; /* Fix inherited center alignment */
     }
     .footer-grid {
         display: grid;
         grid-template-columns: 1.5fr 1fr 1fr;
-        gap: 40px;
+        gap: 60px;
         position: relative;
         z-index: 2;
     }
@@ -490,7 +491,7 @@
         margin-top: 0;
     }
     .footer-info p {
-        color: #0083B0; /* AWBOX style light blue */
+        color: var(--bjj-accent); /* BJJ Primary Color */
         font-size: 0.95rem;
         margin-bottom: 12px;
         font-weight: 600;
@@ -501,7 +502,7 @@
     }
     .footer-info p i {
         margin-top: 3px;
-        color: #0083B0;
+        color: var(--bjj-accent);
     }
     .footer-bottom {
         border-top: 1px solid var(--bjj-border);
@@ -724,9 +725,8 @@
                     <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Logo BJJ" class="footer-logo">
                     <p>Traemos tus compras en línea y encomiendas de EEUU a Nicaragua, con seguridad y al mejor precio.</p>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                        <a href="https://www.facebook.com/share/1CwWSP9ogH/" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/enviosbjj.nic?igsh=NG1saGVvOXdkajFx" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
 
