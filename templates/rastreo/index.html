@@ -689,6 +689,43 @@
         z-index: 0;
         pointer-events: none;
     }
+    /* --- BRANDS CAROUSEL --- */
+    .brands-section {
+        padding: 40px 0;
+        background: white;
+        overflow: hidden;
+        border-bottom: 1px solid var(--bjj-border);
+    }
+    .brands-carousel {
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+    .brands-track {
+        display: flex;
+        gap: 60px;
+        align-items: center;
+        width: max-content;
+        animation: scrollBrands 30s linear infinite;
+    }
+    .brand-item {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--bjj-primary);
+        opacity: 0.5;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+    }
+    .brand-item:hover {
+        opacity: 1;
+    }
+    @keyframes scrollBrands {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
 </style>
 {% endblock %}
 
@@ -726,6 +763,36 @@
             <a href="#seccion-rastreo" style="display: inline-block; padding: 15px 40px; background: white; color: var(--bjj-primary); border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); transition: transform 0.3s;">
                 <i class="fas fa-search-location"></i> Rastrear Mi Paquete
             </a>
+        </div>
+    </section>
+
+<!-- BRANDS CAROUSEL -->
+    <section class="brands-section">
+        <div class="l-container">
+            <p style="text-align: center; color: var(--bjj-muted); font-weight: 600; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.95rem;">Compra en tus tiendas favoritas y recibe en Nicaragua</p>
+            <div class="brands-carousel">
+                <div class="brands-track">
+                    <!-- Primera mitad -->
+                    <div class="brand-item"><i class="fab fa-amazon"></i> Amazon</div>
+                    <div class="brand-item"><i class="fab fa-ebay"></i> eBay</div>
+                    <div class="brand-item"><span style="font-weight: 900; font-family: sans-serif; letter-spacing: -1px;">SHEIN</span></div>
+                    <div class="brand-item"><span style="font-weight: 900; color: #ff6b00; font-family: sans-serif;">TEMU</span></div>
+                    <div class="brand-item"><i class="fas fa-shopping-bag"></i> Zara</div>
+                    <div class="brand-item"><i class="fab fa-apple"></i> Apple</div>
+                    <div class="brand-item"><span style="font-weight: 800; font-family: sans-serif; letter-spacing: -1px;">Zappos</span></div>
+                    <div class="brand-item"><i class="fas fa-tag"></i> Walmart</div>
+                    
+                    <!-- Segunda mitad duplicada para scroll infinito perfecto -->
+                    <div class="brand-item"><i class="fab fa-amazon"></i> Amazon</div>
+                    <div class="brand-item"><i class="fab fa-ebay"></i> eBay</div>
+                    <div class="brand-item"><span style="font-weight: 900; font-family: sans-serif; letter-spacing: -1px;">SHEIN</span></div>
+                    <div class="brand-item"><span style="font-weight: 900; color: #ff6b00; font-family: sans-serif;">TEMU</span></div>
+                    <div class="brand-item"><i class="fas fa-shopping-bag"></i> Zara</div>
+                    <div class="brand-item"><i class="fab fa-apple"></i> Apple</div>
+                    <div class="brand-item"><span style="font-weight: 800; font-family: sans-serif; letter-spacing: -1px;">Zappos</span></div>
+                    <div class="brand-item"><i class="fas fa-tag"></i> Walmart</div>
+                </div>
+            </div>
         </div>
     </section>
 
