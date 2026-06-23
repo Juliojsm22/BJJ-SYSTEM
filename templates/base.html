@@ -162,6 +162,7 @@
 </head>
 <body>
 
+    {% block header %}
     <header id="barrasuperior">
         <a href="{{ url_for('dashboard.index') }}">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo BJJ">
@@ -188,6 +189,7 @@
             </ul>
         </nav>
     </header>
+    {% endblock %}
 
     <main class="main">
         <div class="content">

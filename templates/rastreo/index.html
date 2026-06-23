@@ -426,6 +426,66 @@
         .footer-bottom { flex-direction: column; text-align: center; gap: 15px; }
     }
 
+    /* --- PUBLIC HEADER --- */
+    .public-header {
+        background-color: var(--bjj-surface);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--bjj-border);
+    }
+    .header-container {
+        max-width: 90%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .header-logo {
+        height: 60px;
+        width: auto;
+        object-fit: contain;
+    }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .btn-contact {
+        background-color: #25D366;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+    }
+    .btn-contact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
+        color: white;
+    }
+    .theme-btn {
+        background: none;
+        border: none;
+        color: var(--bjj-accent);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        padding: 0;
+    }
+    .theme-btn:hover {
+        transform: scale(1.1);
+    }
+
     /* --- FOOTER AWBOX STYLE --- */
     .bjj-footer {
         background-color: var(--bjj-surface);
@@ -557,6 +617,24 @@
         pointer-events: none;
     }
 </style>
+{% endblock %}
+
+{% block header %}
+<header class="public-header">
+    <div class="header-container">
+        <a href="{{ url_for('rastreo.index') }}">
+            <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Envíos BJJ Logo" class="header-logo">
+        </a>
+        <div class="header-actions">
+            <a href="https://wa.me/50586628557" target="_blank" class="btn-contact">
+                <i class="fab fa-whatsapp"></i> Escríbenos
+            </a>
+            <button id="theme-toggle" class="theme-btn" aria-label="Cambiar tema oscuro">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
 {% endblock %}
 
 {% block content %}
