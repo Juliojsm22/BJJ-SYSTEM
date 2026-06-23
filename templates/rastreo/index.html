@@ -428,13 +428,12 @@
 
     /* --- PUBLIC HEADER --- */
     .public-header {
-        background-color: var(--bjj-surface);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        background-color: var(--bjj-primary);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         position: sticky;
         top: 0;
         z-index: 1000;
         padding: 15px 0;
-        border-bottom: 1px solid var(--bjj-border);
     }
     .header-container {
         max-width: 90%;
@@ -476,7 +475,7 @@
     .theme-btn {
         background: none;
         border: none;
-        color: var(--bjj-accent);
+        color: #ffffff;
         font-size: 1.5rem;
         cursor: pointer;
         transition: all 0.3s;
@@ -569,7 +568,7 @@
     .footer-info p i {
         margin-top: 4px;
         font-size: 1.35rem;
-        color: rgba(255, 255, 255, 0.7);
+        color: #ffffff;
     }
     .footer-bottom {
         border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -622,7 +621,7 @@
 <header class="public-header">
     <div class="header-container">
         <a href="{{ url_for('rastreo.index') }}">
-            <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Envíos BJJ Logo" class="header-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Envíos BJJ Logo" class="header-logo">
         </a>
         <div class="header-actions">
             <a href="https://wa.me/50586628557" target="_blank" class="btn-contact">
@@ -642,7 +641,7 @@
     <!-- HERO SECTION -->
     <section class="hero-section">
         <div class="l-container">
-            <h1><span style="color: #ff6b00;">BJJ</span> ES TU MEJOR OPCIÓN</h1>
+            <h1><span style="color: #ffffff;">BJJ</span> ES TU MEJOR OPCIÓN</h1>
             <p style="color: rgba(255, 255, 255, 0.9);">Traemos tus compras en línea y encomiendas de EEUU a Nicaragua con total seguridad, rapidez y el mejor precio del mercado.</p>
         </div>
     </section>
