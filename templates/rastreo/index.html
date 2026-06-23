@@ -456,6 +456,53 @@
         }
     }
 
+    /* --- CTA SECTION --- */
+    .cta-section {
+        background: linear-gradient(135deg, #ff6b00 0%, #ff8c33 100%);
+        padding: 60px 40px;
+        border-radius: 24px;
+        text-align: center;
+        color: white;
+        margin: 40px auto 100px;
+        max-width: 1000px;
+        box-shadow: 0 15px 40px rgba(255, 107, 0, 0.3);
+        position: relative;
+        z-index: 5;
+    }
+    .cta-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .cta-section p {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        opacity: 0.9;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .btn-cta-whatsapp {
+        display: inline-block;
+        background: white;
+        color: #ff6b00;
+        padding: 15px 40px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .btn-cta-whatsapp:hover {
+        transform: translateY(-3px);
+        color: #ff6b00;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    @media (max-width: 768px) {
+        .cta-section { margin: 40px 20px 80px; padding: 40px 20px; }
+        .cta-section h2 { font-size: 2rem; }
+    }
+
     /* --- FLOATING WHATSAPP --- */
     .floating-whatsapp {
         position: fixed;
@@ -966,6 +1013,17 @@
     
 
     
+<!-- CTA SECTION -->
+    <div class="l-container">
+        <section class="cta-section">
+            <h2>¿Listo para empezar a comprar?</h2>
+            <p>Escríbenos por WhatsApp y te asignaremos tu casillero internacional totalmente GRATIS. Nuestro equipo está listo para ayudarte con tu primera compra.</p>
+            <a href="https://wa.me/50586628557" class="btn-cta-whatsapp" target="_blank">
+                <i class="fab fa-whatsapp"></i> Hablar con un Asesor
+            </a>
+        </section>
+    </div>
+
 </div>
 {% endblock %}
 
