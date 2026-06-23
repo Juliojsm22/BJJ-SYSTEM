@@ -421,6 +421,131 @@
         .step::after { display: none; }
         .step-icon { margin-bottom: 0; }
         .floating-whatsapp { width: 50px; height: 50px; font-size: 28px; bottom: 20px; right: 20px; }
+        .footer-grid { grid-template-columns: 1fr; }
+        .btn-subir { position: static; margin: 20px auto 0; }
+        .footer-bottom { flex-direction: column; text-align: center; gap: 15px; }
+    }
+
+    /* --- FOOTER AWBOX STYLE --- */
+    .bjj-footer {
+        background-color: var(--bjj-surface);
+        padding: 80px 0 30px;
+        position: relative;
+        overflow: hidden;
+        margin-top: 60px;
+        border-top: 1px solid var(--bjj-border);
+    }
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr 1fr;
+        gap: 40px;
+        position: relative;
+        z-index: 2;
+    }
+    @media (max-width: 992px) {
+        .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .footer-brand .footer-logo {
+        height: 80px;
+        width: auto;
+        object-fit: contain;
+        margin-bottom: 20px;
+    }
+    .footer-brand p {
+        color: var(--bjj-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .social-links {
+        display: flex;
+        gap: 10px;
+    }
+    .social-links a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        background: #f0f4f8;
+        color: var(--bjj-accent);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s;
+        font-size: 1.2rem;
+    }
+    .social-links a:hover {
+        background: var(--bjj-accent);
+        color: white;
+        transform: translateY(-3px);
+    }
+    .footer-info h4 {
+        color: var(--bjj-muted);
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        margin-top: 25px;
+    }
+    .footer-info h4:first-child {
+        margin-top: 0;
+    }
+    .footer-info p {
+        color: #0083B0; /* AWBOX style light blue */
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        line-height: 1.5;
+    }
+    .footer-info p i {
+        margin-top: 3px;
+        color: #0083B0;
+    }
+    .footer-bottom {
+        border-top: 1px solid var(--bjj-border);
+        margin-top: 50px;
+        padding-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--bjj-muted);
+        font-size: 0.9rem;
+        position: relative;
+        z-index: 2;
+    }
+    .btn-subir {
+        position: absolute;
+        right: 0;
+        top: 25px;
+        background: none;
+        border: none;
+        color: #e91e63;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.85rem;
+        gap: 5px;
+        transition: transform 0.3s;
+    }
+    .btn-subir i {
+        font-size: 1.5rem;
+    }
+    .btn-subir:hover {
+        transform: translateY(-5px);
+    }
+    .footer-plane {
+        position: absolute;
+        right: -80px;
+        bottom: -80px;
+        font-size: 400px;
+        color: rgba(61, 91, 160, 0.04);
+        transform: rotate(-15deg);
+        z-index: 0;
+        pointer-events: none;
     }
 </style>
 {% endblock %}
@@ -583,6 +708,63 @@
             </div>
         </div>
     </section>
+
+    <!-- FOOTER AWBOX STYLE -->
+    <footer class="bjj-footer">
+        <div class="l-container" style="position:relative;">
+            <div class="footer-grid">
+                <!-- Columna 1: Logo y Redes -->
+                <div class="footer-brand">
+                    <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Logo BJJ" class="footer-logo">
+                    <p>Traemos tus compras en línea y encomiendas de EEUU a Nicaragua, con seguridad y al mejor precio.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <!-- Columna 2: Horarios y Dirección Nicaragua -->
+                <div class="footer-info">
+                    <h4>Horarios de atención Managua</h4>
+                    <p>Lunes a viernes 8:00am - 5:00pm</p>
+                    <p>Sábados de 8:00am a 12:00md</p>
+                    
+                    <h4><i class="fas fa-map-marker-alt" style="color:var(--bjj-muted);"></i> Dirección Nicaragua</h4>
+                    <p>Villa Flore Norte, Iglesia Católica, 3C N, 10VRS E.<br>Managua, Nicaragua.</p>
+                </div>
+
+                <!-- Columna 3: Contacto Nicaragua -->
+                <div class="footer-info">
+                    <h4>Contacto:</h4>
+                    <p><i class="fas fa-envelope"></i> info@enviosbjj.com</p>
+                    <p><i class="fas fa-phone-alt"></i> +505 8662 8557</p>
+                    <p><i class="fab fa-whatsapp"></i> +505 8662 8557</p>
+                </div>
+
+                <!-- Columna 4: Contacto Miami -->
+                <div class="footer-info">
+                    <h4>Contacto Miami:</h4>
+                    <p><i class="fas fa-building"></i> 8611 NW 72ND ST. STE 8<br>Doral. Florida.</p>
+                    <p><i class="fas fa-phone-alt"></i> (786) 123 4567</p>
+                    <p><i class="far fa-clock"></i> Lun - Vie 8:30 - 17:30<br>Sab - Dom / Cerrado</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024, ENVÍOS BJJ Todos los derechos reservados.</p>
+                
+                <!-- Botón Subir -->
+                <button class="btn-subir" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>SUBIR</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Avión decorativo en el fondo -->
+        <i class="fas fa-plane footer-plane"></i>
+    </footer>
 
     <!-- BOTÓN FLOTANTE WHATSAPP -->
     <a href="https://wa.me/50586628557" class="floating-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="Escríbenos por WhatsApp">
