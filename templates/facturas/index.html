@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Facturas{% endblock %}
 {% block page_title %}Facturas{% endblock %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<style>
+/* Personalización de simple-datatables */
+.dataTable-table { border-collapse: collapse; }
+.dataTable-table th { padding: 12px 16px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--border) !important; }
+.dataTable-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); }
+.dataTable-top, .dataTable-bottom { padding: 16px 24px; font-size: 14px; color: var(--text-muted); }
+.dataTable-selector { padding: 6px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-family: 'Outfit', sans-serif; }
+.dataTable-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; outline: none; width: 250px; font-family: 'Outfit', sans-serif; }
+.dataTable-pagination li a { border-radius: 6px; margin: 0 2px; color: var(--text); border: 1px solid transparent; }
+.dataTable-pagination li a:hover { background: var(--surface2); }
+.dataTable-pagination li.active a { background: var(--accent); color: white; }
+</style>
+{% endblock %}
 
 {% block topbar_actions %}
 <a href="{{ url_for('facturas.nueva') }}" class="btn btn-primary">
@@ -25,7 +40,7 @@
 <div class="card">
     <div class="table-wrap">
         {% if facturas %}
-        <table>
+        <table id="tablaFacturas">
             <thead>
                 <tr><th>Número</th><th>Cliente</th><th>Fecha</th><th>Paquetes</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
@@ -97,7 +112,24 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const table = document.getElementById("tablaFacturas");
+    if (table) {
+        new simpleDatatables.DataTable(table, {
+            searchable: true,
+            perPage: 15,
+            perPageSelect: [10, 15, 25, 50, 100],
+            labels: {
+                placeholder: "Buscar en los resultados...",
+                perPage: "facturas por página",
+                noRows: "No se encontraron facturas",
+                info: "Mostrando {start} a {end} de {rows} facturas"
+            }
+        });
+    }
+});
 function abrirExportModal() {
     document.getElementById('exportModal').style.display = 'flex';
 }
