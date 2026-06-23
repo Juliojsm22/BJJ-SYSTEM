@@ -424,6 +424,11 @@
         .footer-grid { grid-template-columns: 1fr; }
         .btn-subir { position: static; margin: 20px auto 0; }
         .footer-bottom { flex-direction: column; text-align: center; gap: 15px; }
+        
+        .header-container { flex-direction: column; gap: 15px; padding-bottom: 15px; }
+        .header-logo { height: 70px; }
+        .header-actions { flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .btn-contact { padding: 8px 16px; font-size: 0.95rem; }
     }
 
     /* --- PUBLIC HEADER --- */
@@ -454,7 +459,6 @@
         gap: 20px;
     }
     .btn-contact {
-        background-color: #25D366;
         color: white;
         padding: 10px 24px;
         border-radius: 30px;
@@ -465,13 +469,28 @@
         align-items: center;
         gap: 10px;
         transition: all 0.3s;
-        box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
     }
     .btn-contact:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
         color: white;
     }
+    .btn-wa {
+        background-color: #25D366;
+        box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+    }
+    .btn-wa:hover { box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4); }
+    
+    .btn-fb {
+        background-color: #1877F2;
+        box-shadow: 0 4px 10px rgba(24, 119, 242, 0.3);
+    }
+    .btn-fb:hover { box-shadow: 0 6px 15px rgba(24, 119, 242, 0.4); }
+    
+    .btn-ig {
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        box-shadow: 0 4px 10px rgba(220, 39, 67, 0.3);
+    }
+    .btn-ig:hover { box-shadow: 0 6px 15px rgba(220, 39, 67, 0.4); }
 
     /* --- FOOTER AWBOX STYLE --- */
     .bjj-footer {
@@ -576,7 +595,7 @@
         top: 25px;
         background: none;
         border: none;
-        color: #e91e63;
+        color: #ffffff;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -612,8 +631,14 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Envíos BJJ Logo" class="header-logo">
         </a>
         <div class="header-actions">
-            <a href="https://wa.me/50586628557" target="_blank" class="btn-contact">
-                <i class="fab fa-whatsapp"></i> Escríbenos
+            <a href="https://www.facebook.com/share/1CwWSP9ogH/" target="_blank" class="btn-contact btn-fb">
+                <i class="fab fa-facebook-f"></i> Facebook
+            </a>
+            <a href="https://www.instagram.com/enviosbjj.nic?igsh=NG1saGVvOXdkajFx" target="_blank" class="btn-contact btn-ig">
+                <i class="fab fa-instagram"></i> Instagram
+            </a>
+            <a href="https://wa.me/50586628557" target="_blank" class="btn-contact btn-wa">
+                <i class="fab fa-whatsapp"></i> WhatsApp
             </a>
         </div>
     </div>
@@ -800,11 +825,11 @@
 
                 <!-- Columna 2: Horarios y Dirección Nicaragua -->
                 <div class="footer-info">
-                    <h4>Horarios de atención Managua</h4>
+                    <h4><i class="far fa-clock" style="color: white; margin-right: 8px;"></i> Horarios de atención Managua</h4>
                     <p>Lunes a Viernes 8:00am - 5:00pm</p>
                     <p>Sábados de 8:00am a 12:00md</p>
                     
-                    <h4><i class="fas fa-map-marker-alt" style="color:var(--bjj-muted);"></i> Dirección Nicaragua</h4>
+                    <h4><i class="fas fa-map-marker-alt" style="color: white; margin-right: 8px;"></i> Dirección Nicaragua</h4>
                     <p>Villa Flore Norte, Iglesia Católica, 3C N, 10VRS E.<br>Managua, Nicaragua.</p>
                 </div>
 
@@ -812,7 +837,7 @@
                 <div class="footer-info">
                     <h4>Contacto:</h4>
                     <p><i class="fas fa-envelope"></i> enviosbjjexpress@gmail.com</p>
-                    <p><i class="fas fa-phone-alt"></i> +505 8662 8557</p>
+                    <p><i class="fas fa-phone-alt" style="transform: scaleX(-1); display: inline-block;"></i> +505 8662 8557</p>
                     <p><i class="fab fa-whatsapp"></i> +505 8662 8557</p>
                 </div>
             
