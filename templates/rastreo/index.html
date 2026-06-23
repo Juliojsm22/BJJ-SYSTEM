@@ -392,6 +392,70 @@
         color: #94a3b8;
     }
 
+    /* --- HOW IT WORKS SECTION --- */
+    .how-it-works {
+        padding: 80px 0;
+        background-color: var(--bjj-bg);
+    }
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+        position: relative;
+    }
+    .step-card-hw {
+        text-align: center;
+        background: white;
+        padding: 40px 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        position: relative;
+        z-index: 2;
+        border: 1px solid var(--bjj-border);
+    }
+    .step-number-hw {
+        width: 60px;
+        height: 60px;
+        background: var(--bjj-primary);
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: -70px auto 20px;
+        border: 5px solid var(--bjj-bg);
+        box-shadow: 0 4px 10px rgba(61, 91, 160, 0.3);
+    }
+    .step-card-hw i {
+        font-size: 3rem;
+        color: var(--bjj-accent);
+        margin-bottom: 20px;
+    }
+    .step-card-hw h3 {
+        color: var(--bjj-primary);
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    .step-card-hw p {
+        color: var(--bjj-muted);
+        line-height: 1.6;
+    }
+    /* Connecting line for desktop */
+    @media (min-width: 992px) {
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 60px;
+            left: 10%;
+            right: 10%;
+            border-top: 3px dashed var(--bjj-border);
+            z-index: 1;
+        }
+    }
+
     /* --- FLOATING WHATSAPP --- */
     .floating-whatsapp {
         position: fixed;
@@ -763,6 +827,40 @@
                     <i class="fas fa-shield-alt"></i>
                     <h3>100%</h3>
                     <p>Seguro Garantizado</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works">
+        <div class="l-container">
+            <div class="section-title">
+                <h2>¿Cómo Funciona?</h2>
+                <p>Traer tus paquetes a Nicaragua es fácil, rápido y seguro</p>
+            </div>
+            
+            <div class="steps-grid">
+                <!-- Step 1 -->
+                <div class="step-card-hw">
+                    <div class="step-number-hw">1</div>
+                    <i class="fas fa-shopping-bag"></i>
+                    <h3>Compra Online</h3>
+                    <p>Compra en tus tiendas favoritas (Amazon, Shein, eBay, etc.) y coloca la dirección de nuestras bodegas en Miami, LA, Panamá o España al finalizar tu pago.</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="step-card-hw">
+                    <div class="step-number-hw">2</div>
+                    <i class="fas fa-file-invoice"></i>
+                    <h3>Pre-Alerta</h3>
+                    <p>Envíanos el número de tracking de tu paquete y la factura de tu compra a nuestro WhatsApp para que podamos identificarlo en cuanto llegue a la bodega.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="step-card-hw">
+                    <div class="step-number-hw">3</div>
+                    <i class="fas fa-home"></i>
+                    <h3>Recibe en Nicaragua</h3>
+                    <p>¡Listo! Nosotros nos encargamos de los trámites aduanales y el transporte. Te avisaremos para que pases a retirar o te lo entregamos en la puerta de tu casa.</p>
                 </div>
             </div>
         </div>
