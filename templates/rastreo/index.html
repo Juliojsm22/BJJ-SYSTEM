@@ -436,6 +436,12 @@
         border-top: 1px solid var(--bjj-border);
         text-align: left; /* Fix inherited center alignment */
     }
+    .footer-container {
+        max-width: 90%;
+        margin: 0 auto;
+        padding: 0 20px;
+        position: relative;
+    }
     .footer-grid {
         display: grid;
         grid-template-columns: 1.5fr 1fr 1fr;
@@ -447,8 +453,9 @@
         .footer-grid { grid-template-columns: 1fr 1fr; }
     }
     .footer-brand .footer-logo {
-        height: 80px;
+        height: 150px;
         width: auto;
+        max-width: 100%;
         object-fit: contain;
         margin-bottom: 20px;
     }
@@ -718,7 +725,7 @@
 {% block footer %}
     <!-- FOOTER AWBOX STYLE -->
     <footer class="bjj-footer">
-        <div class="l-container" style="position:relative;">
+        <div class="footer-container">
             <div class="footer-grid">
                 <!-- Columna 1: Logo y Redes -->
                 <div class="footer-brand">
