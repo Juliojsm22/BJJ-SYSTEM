@@ -83,6 +83,53 @@
         font-weight: 600;
         text-transform: uppercase;
     }
+    
+    /* Tabs Styles */
+    .tabs-header {
+        display: flex;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+    .tab-btn {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 700;
+        font-size: 15px;
+        color: #64748b;
+        cursor: pointer;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .tab-btn:hover { color: #3d5ba0; }
+    .tab-btn.active {
+        color: #3d5ba0;
+        border-bottom-color: #3d5ba0;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    
+    .scrollable-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .scrollable-table table {
+        border-collapse: separate; /* Required for sticky header borders */
+        border-spacing: 0;
+    }
+    .scrollable-table thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        border-bottom: 2px solid #e2e8f0;
+    }
 </style>
 {% endblock %}
 
@@ -151,64 +198,157 @@
     </div>
 </div>
 
-<!-- Paquetes Registrados -->
-<div class="detalle-card" style="margin-bottom: 40px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #e2e8f0; padding-bottom:16px;">
-        <h3 style="color:#1e293b; font-size:18px;">Paquetes Registrados</h3>
-        {% if cliente.paquetes_sin_facturar %}
-        <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white;">
-            <i class="fas fa-file-invoice"></i> Generar factura
-        </a>
+<!-- Tabs Container -->
+<div class="detalle-card" style="margin-bottom: 40px; padding-top: 10px;">
+    
+    <div class="tabs-header">
+        <button class="tab-btn active" onclick="openTab(event, 'tab-paquetes')">
+            <i class="fas fa-box"></i> Paquetes ({{ cliente.paquetes|length }})
+        </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-facturas')">
+            <i class="fas fa-file-invoice"></i> Facturas ({{ cliente.facturas|length }})
+        </button>
+    </div>
+
+    <!-- Tab Paquetes -->
+    <div id="tab-paquetes" class="tab-pane active">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="color:#1e293b; font-size:16px;">Historial de Paquetes</h3>
+            {% if cliente.paquetes_sin_facturar %}
+            <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white; font-size:13px; padding:6px 12px;">
+                <i class="fas fa-file-invoice"></i> Generar factura
+            </a>
+            {% endif %}
+        </div>
+        
+        {% if cliente.paquetes %}
+        <div class="table-wrap scrollable-table">
+            <table style="width:100%; text-align:left;">
+                <thead>
+                    <tr style="color:#64748b;">
+                        <th style="padding:12px;">Paquete</th>
+                        <th style="padding:12px;">Rastreo</th>
+                        <th style="padding:12px;">Tipo</th>
+                        <th style="padding:12px;">Peso</th>
+                        <th style="padding:12px;">Costo</th>
+                        <th style="padding:12px;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in cliente.paquetes %}
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:12px;"><strong>{{ p.nombre }}</strong></td>
+                        <td style="padding:12px; color:#64748b;">
+                            <div>{{ p.tracking_number or '—' }}</div>
+                            {% if p.numero_seguimiento %}
+                            <div style="font-size:11px; margin-top:2px; color:#94a3b8;"><i class="fas fa-barcode"></i> {{ p.numero_seguimiento }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding:12px;">
+                            <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">
+                                {{ '✈️ Aéreo' if p.tipo_envio == 'aereo' else '🚢 Marítimo' }}
+                            </span>
+                        </td>
+                        <td style="padding:12px;">{{ "%.2f"|format(p.peso) }} lb</td>
+                        <td style="padding:12px; font-weight:700; color:#10b981;">${{ "%.2f"|format(p.costo) }}</td>
+                        <td style="padding:12px;">
+                            {% if p.factura_id %}
+                            <span class="badge badge-finalizada" style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Facturado</span>
+                            {% else %}
+                            <span class="badge badge-borrador" style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:40px; color:#94a3b8;">
+            <i class="fas fa-box-open" style="font-size:40px; margin-bottom:12px;"></i>
+            <p>No hay paquetes registrados para este cliente.</p>
+        </div>
         {% endif %}
     </div>
-    
-    {% if cliente.paquetes %}
-    <div class="table-wrap">
-        <table style="width:100%; text-align:left; border-collapse:collapse;">
-            <thead>
-                <tr style="border-bottom:2px solid #e2e8f0; color:#64748b;">
-                    <th style="padding:12px;">Paquete</th>
-                    <th style="padding:12px;">Rastreo</th>
-                    <th style="padding:12px;">Tipo</th>
-                    <th style="padding:12px;">Peso</th>
-                    <th style="padding:12px;">Costo</th>
-                    <th style="padding:12px;">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in cliente.paquetes %}
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:12px;"><strong>{{ p.nombre }}</strong></td>
-                    <td style="padding:12px; color:#64748b;">
-                        <div>{{ p.tracking_number or '—' }}</div>
-                        {% if p.numero_seguimiento %}
-                        <div style="font-size:11px; margin-top:2px; color:#94a3b8;"><i class="fas fa-barcode"></i> {{ p.numero_seguimiento }}</div>
-                        {% endif %}
-                    </td>
-                    <td style="padding:12px;">
-                        <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">
-                            {{ '✈️ Aéreo' if p.tipo_envio == 'aereo' else '🚢 Marítimo' }}
-                        </span>
-                    </td>
-                    <td style="padding:12px;">{{ "%.2f"|format(p.peso) }} lb</td>
-                    <td style="padding:12px; font-weight:700; color:#10b981;">${{ "%.2f"|format(p.costo) }}</td>
-                    <td style="padding:12px;">
-                        {% if p.factura_id %}
-                        <span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Facturado</span>
-                        {% else %}
-                        <span style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Pendiente</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- Tab Facturas -->
+    <div id="tab-facturas" class="tab-pane">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="color:#1e293b; font-size:16px;">Historial de Facturas</h3>
+        </div>
+        
+        {% if cliente.facturas %}
+        <div class="table-wrap scrollable-table">
+            <table style="width:100%; text-align:left;">
+                <thead>
+                    <tr style="color:#64748b;">
+                        <th style="padding:12px;">Número</th>
+                        <th style="padding:12px;">Fecha</th>
+                        <th style="padding:12px;">Total</th>
+                        <th style="padding:12px;">Estado</th>
+                        <th style="padding:12px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in cliente.facturas|sort(attribute='fecha_emision', reverse=True) %}
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:12px;"><strong>{{ f.numero }}</strong></td>
+                        <td style="padding:12px;">{{ f.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                        <td style="padding:12px; font-weight:700; color:#3d5ba0;">${{ "%.2f"|format(f.total) }}</td>
+                        <td style="padding:12px;">
+                            {% if f.estado == 'pagada' %}
+                            <span class="badge badge-pagada">Pagada</span>
+                            {% elif f.estado == 'finalizada' %}
+                            <span class="badge badge-finalizada">Finalizada</span>
+                            {% else %}
+                            <span class="badge badge-borrador">Borrador</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:12px;">
+                            <a href="{{ url_for('facturas.detalle', id=f.id) }}" class="btn btn-sm btn-secondary" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:40px; color:#94a3b8;">
+            <i class="fas fa-file-invoice" style="font-size:40px; margin-bottom:12px;"></i>
+            <p>No hay facturas registradas para este cliente.</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div style="text-align:center; padding:40px; color:#94a3b8;">
-        <i class="fas fa-box-open" style="font-size:40px; margin-bottom:12px;"></i>
-        <p>No hay paquetes registrados para este cliente.</p>
-    </div>
-    {% endif %}
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTab(evt, tabId) {
+    // Ocultar todos los tab panes
+    var tabPanes = document.getElementsByClassName("tab-pane");
+    for (var i = 0; i < tabPanes.length; i++) {
+        tabPanes[i].style.display = "none";
+        tabPanes[i].classList.remove("active");
+    }
+    
+    // Remover clase active de todos los botones
+    var tabBtns = document.getElementsByClassName("tab-btn");
+    for (var i = 0; i < tabBtns.length; i++) {
+        tabBtns[i].classList.remove("active");
+    }
+    
+    // Mostrar el tab seleccionado
+    document.getElementById(tabId).style.display = "block";
+    
+    // Añadir active class
+    setTimeout(() => {
+        document.getElementById(tabId).classList.add("active");
+    }, 10);
+    evt.currentTarget.classList.add("active");
+}
+</script>
 {% endblock %}
