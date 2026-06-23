@@ -105,26 +105,27 @@
         transition: all 0.3s;
     }
     .search-input:focus {
-        border-color: var(--bjj-secondary);
-        box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
+        border-color: var(--bjj-accent);
+        box-shadow: 0 0 0 4px rgba(61, 91, 160, 0.1);
     }
     .search-btn {
         width: 100%;
         max-width: 300px;
         padding: 16px;
         border-radius: 50px;
-        background: var(--bjj-secondary);
+        background: var(--bjj-accent);
         color: white;
         border: none;
         font-size: 1.1rem;
         font-weight: 700;
         cursor: pointer;
         transition: transform 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(61, 91, 160, 0.3);
     }
     .search-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4);
+        background: var(--bjj-primary);
+        box-shadow: 0 8px 25px rgba(61, 91, 160, 0.4);
     }
 
     /* --- ALERTS --- */
@@ -438,7 +439,7 @@
     <section class="tracking-card-container">
         <div class="tracking-card">
             <h2>
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo BJJ" style="height: 60px; vertical-align: middle; margin-bottom: 10px;">
+                <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Logo BJJ" style="height: 60px; vertical-align: middle; margin-bottom: 10px;">
                 <br>
                 Rastreo BJJ
             </h2>
@@ -536,7 +537,7 @@
         <div class="l-container">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <i class="fas fa-box-check"></i>
+                    <i class="fas fa-box"></i>
                     <h3>10K+</h3>
                     <p>Paquetes Entregados</p>
                 </div>
