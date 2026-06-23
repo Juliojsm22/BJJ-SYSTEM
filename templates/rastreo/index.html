@@ -5,15 +5,15 @@
 <style>
     /* ===== MODERN LANDING PAGE & TRACKING ===== */
     :root {
-        --bjj-primary: #1e2d50;
-        --bjj-secondary: #ff6b00;
-        --bjj-accent: #3d5ba0;
-        --bjj-bg: #f4f6f9;
-        --bjj-surface: #ffffff;
-        --bjj-text: #333333;
-        --bjj-muted: #666666;
-        --bjj-border: #e0e0e0;
-        --bjj-success: #10b981;
+        --bjj-primary: var(--accent, #3d5ba0);
+        --bjj-secondary: var(--surface, #fff);
+        --bjj-accent: var(--accent, #3d5ba0);
+        --bjj-bg: var(--bg, #f4f6f9);
+        --bjj-surface: var(--surface, #ffffff);
+        --bjj-text: var(--text, #333333);
+        --bjj-muted: var(--text-muted, #666666);
+        --bjj-border: var(--border, #e0e0e0);
+        --bjj-success: var(--success, #10b981);
     }
 
     body {
@@ -124,7 +124,8 @@
     }
     .search-btn:hover {
         transform: translateY(-2px);
-        background: var(--bjj-primary);
+        background: var(--bjj-accent);
+        filter: brightness(0.9);
         box-shadow: 0 8px 25px rgba(61, 91, 160, 0.4);
     }
 
@@ -439,7 +440,7 @@
     <section class="tracking-card-container">
         <div class="tracking-card">
             <h2>
-                <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Logo BJJ" style="height: 60px; vertical-align: middle; margin-bottom: 10px;">
+                <img src="{{ url_for('static', filename='logoazul.PNG') }}" alt="Logo BJJ" style="width: 200px; height: 60px; vertical-align: middle; margin-bottom: 10px;">
                 <br>
                 Rastreo BJJ
             </h2>
