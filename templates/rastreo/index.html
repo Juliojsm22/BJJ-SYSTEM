@@ -3,469 +3,586 @@
 
 {% block extra_css %}
 <style>
-    /* ===== RASTREO PAGE ===== */
-    .rastreo-wrapper {
-        max-width: 900px;
-        margin: 20px auto;
-        padding: 0 20px 60px;
+    /* ===== MODERN LANDING PAGE & TRACKING ===== */
+    :root {
+        --bjj-primary: #0a192f;
+        --bjj-secondary: #00d2ff;
+        --bjj-accent: #3a7bd5;
+        --bjj-bg: #f8fafc;
+        --bjj-surface: #ffffff;
+        --bjj-text: #1e293b;
+        --bjj-muted: #64748b;
+        --bjj-border: #e2e8f0;
+        --bjj-success: #10b981;
     }
 
-    /* Hero Header */
-    .rastreo-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    .rastreo-header h1 {
-        font-family: 'Syne', sans-serif;
-        font-size: 36px;
-        color: var(--text);
-        margin-bottom: 12px;
-        font-weight: 800;
-    }
-    .rastreo-header p {
-        color: var(--text-muted);
-        font-size: 16px;
-        max-width: 500px;
-        margin: 0 auto;
+    body {
+        background-color: var(--bjj-bg);
+        margin: 0;
+        font-family: 'Outfit', 'Syne', sans-serif;
+        color: var(--bjj-text);
     }
 
-    /* Agency Banner */
-    .agency-banner {
-        background: linear-gradient(135deg, var(--accent) 0%, #1e2d50 100%);
-        color: white;
-        border-radius: 16px;
-        padding: 30px 40px;
-        margin-bottom: 50px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 10px 25px rgba(61,91,160,0.2);
-        position: relative;
-        overflow: hidden;
-    }
-    .agency-banner::after {
-        content: '\f48b'; /* fa-shipping-fast icon */
-        font-family: 'Font Awesome 6 Free';
-        font-weight: 900;
-        position: absolute;
-        right: -20px;
-        bottom: -40px;
-        font-size: 150px;
-        color: rgba(255,255,255,0.05);
-        pointer-events: none;
-    }
-    .agency-details h3 {
-        font-family: 'Syne', sans-serif;
-        font-size: 26px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 700;
-        color: white;
-    }
-    .agency-details p {
-        font-size: 15px;
-        margin-bottom: 10px;
-        opacity: 0.9;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .agency-details p i {
-        width: 16px;
-        text-align: center;
-        color: #8da6e3;
-    }
-    .btn-whatsapp {
-        background: #25D366;
-        color: white;
-        padding: 14px 28px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 16px;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        transition: transform 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-        z-index: 2;
-    }
-    .btn-whatsapp:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
-        color: white;
-    }
-
-    /* Search Bar */
-    .rastreo-search-container {
-        background: white;
-        padding: 35px 30px;
-        border-radius: 16px;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.05);
-        border: 1px solid var(--border);
-        margin-bottom: 40px;
-    }
-    .rastreo-search {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .rastreo-search-label {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    /* Reset Wrapper */
+    .landing-wrapper {
         width: 100%;
+        overflow-x: hidden;
+    }
+
+    .l-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* --- HERO SECTION --- */
+    .hero-section {
+        position: relative;
+        padding: 100px 0 150px;
+        background: linear-gradient(135deg, var(--bjj-primary), var(--bjj-accent));
+        color: white;
         text-align: center;
-        margin-bottom: 16px;
+        border-radius: 0 0 40px 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: -80px; /* Overlap for the tracking card */
+        z-index: 1;
     }
-    .rastreo-search input {
-        padding: 15px 22px;
-        border: 2px solid var(--border);
-        border-radius: 12px;
-        font-size: 16px;
-        font-family: 'Outfit', sans-serif;
-        outline: none;
-        color: var(--text);
-        background: var(--bg);
-        width: 360px;
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+    .hero-section h1 span {
+        color: var(--bjj-secondary);
+    }
+    .hero-section p {
+        font-size: 1.2rem;
+        color: #e2e8f0;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+
+    /* --- TRACKING CARD (Search) --- */
+    .tracking-card-container {
+        position: relative;
+        z-index: 10;
+        max-width: 800px;
+        margin: 0 auto 60px;
+    }
+    .tracking-card {
+        background: var(--bjj-surface);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 40px -10px rgba(0, 210, 255, 0.2);
+        border: 1px solid rgba(0, 210, 255, 0.1);
+        text-align: center;
+    }
+    .tracking-card h2 {
+        color: var(--bjj-primary);
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+    .tracking-card p {
+        color: var(--bjj-muted);
+        margin-bottom: 25px;
+    }
+    .search-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    .search-input {
+        width: 100%;
+        max-width: 500px;
+        padding: 18px 25px;
+        border-radius: 50px;
+        border: 2px solid var(--bjj-border);
+        font-size: 1.1rem;
+        text-align: center;
         text-transform: uppercase;
-        transition: all 0.3s ease;
+        outline: none;
+        transition: all 0.3s;
     }
-    .rastreo-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(61,91,160,0.1); background: white; }
-    .rastreo-search button {
-        background: var(--accent);
+    .search-input:focus {
+        border-color: var(--bjj-secondary);
+        box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
+    }
+    .search-btn {
+        width: 100%;
+        max-width: 300px;
+        padding: 16px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, var(--bjj-secondary), var(--bjj-accent));
         color: white;
         border: none;
-        padding: 15px 36px;
-        border-radius: 12px;
-        font-size: 16px;
+        font-size: 1.1rem;
         font-weight: 700;
-        font-family: 'Outfit', sans-serif;
         cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        box-shadow: 0 4px 15px rgba(58, 123, 213, 0.3);
     }
-    .rastreo-search button:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(58, 123, 213, 0.4);
+    }
 
-    /* Alert */
-    .rastreo-alert {
+    /* --- ALERTS --- */
+    .alert-box {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 12px;
         background: #fdecea;
         color: #a52a1a;
+        font-weight: 600;
         border: 1px solid #f5c6cb;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 15px;
-        font-weight: 500;
     }
 
-    /* Info Grid */
+    /* --- RESULTS (Timeline & Details) --- */
+    .results-container {
+        margin-top: 40px;
+        text-align: left;
+        border-top: 1px solid var(--bjj-border);
+        padding-top: 30px;
+        animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
     .info-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 36px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
     }
     .info-item {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
+        background: var(--bjj-bg);
         padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        transition: transform 0.3s;
+        border-radius: 16px;
     }
-    .info-item:hover { transform: translateY(-3px); }
-    .info-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--text-muted);
+    .info-item span {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--bjj-muted);
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        margin-bottom: 8px;
-    }
-    .info-value {
-        font-size: 16px;
+        margin-bottom: 5px;
         font-weight: 700;
-        color: var(--accent);
     }
-    .info-value.muted { color: var(--text); font-weight: 600; }
+    .info-item strong {
+        font-size: 1.1rem;
+        color: var(--bjj-primary);
+    }
 
     /* Stepper */
-    .stepper-container {
+    .stepper {
         display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        margin-bottom: 36px;
+        justify-content: space-between;
         position: relative;
-        padding: 40px 40px;
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        margin-bottom: 40px;
+        padding: 0 20px;
     }
     .step {
-        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         position: relative;
         z-index: 2;
+        flex: 1;
     }
     .step::after {
         content: '';
         position: absolute;
-        top: 30px;
+        top: 25px;
         left: 50%;
         width: 100%;
         height: 4px;
-        background: var(--surface2);
+        background: var(--bjj-border);
         z-index: -1;
     }
     .step:last-child::after { display: none; }
-    .step.done::after { background: var(--accent); }
-
+    .step.done::after { background: var(--bjj-success); }
+    
     .step-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
+        width: 50px;
+        height: 50px;
         background: white;
-        border: 4px solid var(--surface2);
+        border: 4px solid var(--bjj-border);
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 18px;
         color: #ccc;
-        margin-bottom: 16px;
-        transition: all 0.3s ease;
+        margin-bottom: 10px;
+        transition: all 0.3s;
     }
     .step.done .step-icon {
-        border-color: var(--accent);
-        background: var(--accent);
+        border-color: var(--bjj-success);
+        background: var(--bjj-success);
         color: white;
-        box-shadow: 0 0 0 6px rgba(61,91,160,0.15);
-    }
-    .step.active .step-icon {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: white;
-        box-shadow: 0 0 0 8px rgba(61,91,160,0.25);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
     }
     .step-label {
-        font-size: 14px;
-        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--bjj-muted);
         text-align: center;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
-    .step.done .step-label,
-    .step.active .step-label { color: var(--accent); }
+    .step.done .step-label { color: var(--bjj-primary); }
 
-    /* Details card */
-    .detail-card {
+    /* History List */
+    .history-card {
         background: white;
-        border: 1px solid var(--border);
+        border: 1px solid var(--bjj-border);
         border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        padding: 25px;
     }
-    .detail-card-header {
-        padding: 20px 28px;
-        font-size: 15px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--text);
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: rgba(0,0,0,0.01);
+    .history-card h3 {
+        margin-top: 0;
+        color: var(--bjj-primary);
+        border-bottom: 1px solid var(--bjj-border);
+        padding-bottom: 15px;
+        margin-bottom: 20px;
     }
-    .detail-card-body {
-        padding: 28px;
-    }
-    .detail-list {
+    .history-list {
         list-style: none;
+        padding: 0;
+        margin: 0;
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 15px;
     }
-    .detail-list li {
+    .history-item {
         display: flex;
-        gap: 20px;
+        gap: 15px;
         align-items: flex-start;
     }
-    .detail-list .d-icon {
-        width: 42px;
-        height: 42px;
+    .history-item i {
+        background: rgba(58, 123, 213, 0.1);
+        color: var(--bjj-accent);
+        width: 35px;
+        height: 35px;
         border-radius: 50%;
-        background: rgba(61,91,160,0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--accent);
         flex-shrink: 0;
-        font-size: 18px;
     }
-    .detail-list .d-text strong {
-        font-size: 15px;
-        color: var(--text);
+    .history-content strong {
         display: block;
-        margin-bottom: 4px;
-        font-weight: 700;
+        color: var(--bjj-text);
+        margin-bottom: 3px;
     }
-    .detail-list .d-text span {
-        font-size: 13px;
-        color: var(--text-muted);
+    .history-content small {
+        color: var(--bjj-muted);
+    }
+
+    /* --- STATS SECTION --- */
+    .stats-section {
+        padding: 60px 0;
+        background: white;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+    }
+    .stat-card {
+        text-align: center;
+        padding: 30px;
+        background: var(--bjj-bg);
+        border-radius: 20px;
+        transition: transform 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-card i {
+        font-size: 40px;
+        color: var(--bjj-secondary);
+        margin-bottom: 15px;
+    }
+    .stat-card h3 {
+        font-size: 2.5rem;
+        color: var(--bjj-primary);
+        margin: 0 0 10px;
+    }
+    .stat-card p {
+        color: var(--bjj-muted);
+        font-weight: 600;
+        margin: 0;
+    }
+
+    /* --- SERVICES SECTION --- */
+    .services-section {
+        padding: 80px 0;
+    }
+    .section-title {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    .section-title h2 {
+        font-size: 2.5rem;
+        color: var(--bjj-primary);
+        margin-bottom: 10px;
+    }
+    .section-title p {
+        color: var(--bjj-muted);
+        font-size: 1.1rem;
+    }
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+    .service-card {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid var(--bjj-border);
+    }
+    .service-card i {
+        font-size: 40px;
+        color: var(--bjj-accent);
+        margin-bottom: 20px;
+    }
+    .service-card h3 {
+        color: var(--bjj-primary);
+        margin-top: 0;
+    }
+    .service-card p {
+        color: var(--bjj-muted);
+        line-height: 1.6;
+    }
+
+    /* --- CONTACT FOOTER --- */
+    .landing-footer {
+        background: var(--bjj-primary);
+        color: white;
+        padding: 60px 0 30px;
+        margin-top: 60px;
+    }
+    .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+    .footer-col h3 {
+        color: var(--bjj-secondary);
+        margin-bottom: 20px;
+    }
+    .footer-col p {
+        color: #cbd5e1;
+        line-height: 1.6;
+        margin-bottom: 10px;
+    }
+    .footer-col i {
+        width: 25px;
+        color: var(--bjj-secondary);
+    }
+    .footer-bottom {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
     }
 
     @media (max-width: 768px) {
-        .agency-banner { flex-direction: column; text-align: center; gap: 24px; padding: 24px; }
-        .agency-details p { justify-content: center; }
-        .info-grid { grid-template-columns: 1fr 1fr; }
-        .rastreo-search { flex-direction: column; }
-        .rastreo-search input { width: 100%; }
-        .rastreo-search button { width: 100%; justify-content: center; }
-        .stepper-container { flex-direction: column; gap: 30px; align-items: flex-start; padding: 24px; }
-        .step { flex-direction: row; gap: 16px; width: 100%; }
+        .hero-section h1 { font-size: 2.5rem; }
+        .stepper { flex-direction: column; gap: 30px; align-items: flex-start; }
+        .step { flex-direction: row; gap: 20px; width: 100%; }
         .step::after { display: none; }
-        .step-icon { margin-bottom: 0; width: 50px; height: 50px; font-size: 20px; }
-        .step-label { text-align: left; }
+        .step-icon { margin-bottom: 0; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="rastreo-wrapper">
+<div class="landing-wrapper">
 
-    <!-- Agency Banner -->
-    <div class="agency-banner">
-        <div class="agency-details">
-            <h3><i class="fas fa-box-open"></i> ENVÍOS BJJ</h3>
-            <p><i class="fas fa-map-marker-alt"></i> Villa Flore Norte, Iglesia Catolica, 3C N, 10VRS E</p>
-            <p><i class="fas fa-clock"></i> Lunes a Sábados de 8:00 AM a 5:00 PM</p>
-            <p><i class="fab fa-instagram"></i> @enviosbjj.nic</p>
-            <p><i class="fa-brands fa-facebook"></i>Envios BJJ</p>
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+        <div class="l-container">
+            <h1>Soluciones Logísticas <span>Confiables</span></h1>
+            <p>Traemos tus compras en línea y encomiendas de EEUU a Nicaragua con total seguridad, rapidez y el mejor precio del mercado.</p>
         </div>
-        <div class="agency-actions">
-            <!-- Coloca tu número de WhatsApp aquí -->
-            <a href="https://wa.me/50586628557" target="_blank" class="btn-whatsapp">
-                <i class="fab fa-whatsapp"></i> Contáctanos
-            </a>
+    </section>
+
+    <!-- TRACKING SEARCH CARD -->
+    <section class="tracking-card-container">
+        <div class="tracking-card">
+            <h2><i class="fas fa-box-open"></i> Rastreo BJJ</h2>
+            <p>Ingresa tu número de guía para conocer el estado actual de tu paquete en tiempo real.</p>
+            
+            <form method="GET" class="search-form">
+                <input type="text" name="codigo" value="{{ codigo }}" class="search-input" placeholder="Ej. BJJ-A-00001" required>
+                <button type="submit" class="search-btn"><i class="fas fa-search"></i> BUSCAR PAQUETE</button>
+            </form>
+
+            {% if error %}
+            <div class="alert-box">
+                <i class="fas fa-exclamation-triangle"></i> {{ error }}
+            </div>
+            {% endif %}
+
+            {% if paquete %}
+            <!-- RESULTADOS -->
+            <div class="results-container">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span>Estado Actual</span>
+                        <strong>{{ paquete.estado_rastreo }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Cliente</span>
+                        <strong>{{ paquete.cliente.nombre_completo }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Tipo de Envío</span>
+                        <strong>{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Descripción</span>
+                        <strong>{{ paquete.descripcion or paquete.nombre }}</strong>
+                    </div>
+                </div>
+
+                <!-- Línea de Tiempo (Stepper) -->
+                <div class="stepper">
+                    <div class="step done">
+                        <div class="step-icon"><i class="fas fa-warehouse"></i></div>
+                        <div class="step-label">Recepción<br>Miami</div>
+                    </div>
+                    <div class="step {% if paquete.estado_rastreo in ['en_transito', 'listo_para_retirar', 'En Tránsito (Aéreo)', 'En Tránsito (Marítimo)', 'En Aduana', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
+                        <div class="step-icon"><i class="fas fa-{% if paquete.tipo_envio == 'aereo' %}plane{% else %}ship{% endif %}"></i></div>
+                        <div class="step-label">En<br>Tránsito</div>
+                    </div>
+                    <div class="step {% if paquete.estado_rastreo in ['listo_para_retirar', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
+                        <div class="step-icon"><i class="fas fa-box-open"></i></div>
+                        <div class="step-label">Listo para<br>Retirar</div>
+                    </div>
+                    <div class="step {% if paquete.estado_rastreo == 'Entregado' %}done{% endif %}">
+                        <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="step-label">Paquete<br>Entregado</div>
+                    </div>
+                </div>
+
+                <!-- Historial -->
+                <div class="history-card">
+                    <h3>Historial de Movimientos</h3>
+                    <ul class="history-list">
+                        {% for h in paquete.historial|sort(attribute='creado_en', reverse=True) %}
+                        <li class="history-item">
+                            <i class="fas fa-check"></i>
+                            <div class="history-content">
+                                <strong>{{ h.estado }}</strong>
+                                <small>
+                                    {{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }}
+                                    {% if h.ubicacion %} - {{ h.ubicacion }}{% endif %}
+                                </small>
+                                {% if h.comentarios %}
+                                <p style="margin: 5px 0 0; color: #666; font-style: italic;">{{ h.comentarios }}</p>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="history-item">
+                            <i class="fas fa-info"></i>
+                            <div class="history-content">
+                                <strong>Sin movimientos</strong>
+                                <small>Aún no hay actualizaciones para este paquete.</small>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
         </div>
-    </div>
+    </section>
 
-    <!-- Header -->
-    <div class="rastreo-header">
-        <h1>Rastreo de Paquetes</h1>
-        <p>Mantente informado sobre la ubicación y estado actual de tu envío ingresando el código de rastreo.</p>
-    </div>
-
-    <!-- Search -->
-    <div class="rastreo-search-container">
-        <form method="GET" class="rastreo-search">
-            <div class="rastreo-search-label">Número de Guía o Seguimiento</div>
-            <input type="text" name="codigo" value="{{ codigo }}" placeholder="Ej. BJJ-A-00001" required>
-            <button type="submit"><i class="fas fa-search"></i> Buscar</button>
-        </form>
-    </div>
-
-    <!-- Error -->
-    {% if error %}
-    <div class="rastreo-alert">
-        <i class="fas fa-exclamation-circle"></i> {{ error }}
-    </div>
-    {% endif %}
-
-    {% if paquete %}
-    <!-- Info Grid -->
-    <div class="info-grid">
-        <div class="info-item">
-            <div class="info-label">Situación</div>
-            <div class="info-value">
-                {{ paquete.estado_rastreo }}
+    <!-- STATS SECTION -->
+    <section class="stats-section">
+        <div class="l-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-box-check"></i>
+                    <h3>200K+</h3>
+                    <p>Paquetes Entregados</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-stopwatch"></i>
+                    <h3>72H</h3>
+                    <p>Tiempo Promedio (Aéreo)</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <h3>15K+</h3>
+                    <p>Clientes Satisfechos</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>100%</h3>
+                    <p>Seguro Garantizado</p>
+                </div>
             </div>
         </div>
-        <div class="info-item">
-            <div class="info-label">Cliente</div>
-            <div class="info-value muted">{{ paquete.cliente.nombre_completo }}</div>
-        </div>
-        <div class="info-item">
-            <div class="info-label">Tipo de envío</div>
-            <div class="info-value muted">{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</div>
-        </div>
-        <div class="info-item">
-            <div class="info-label">Descripción</div>
-            <div class="info-value muted">{{ paquete.descripcion or paquete.nombre }}</div>
-        </div>
-    </div>
+    </section>
 
-    <!-- Stepper -->
-    <div class="stepper-container">
-        <div class="step done">
-            <div class="step-icon"><i class="fas fa-warehouse"></i></div>
-            <div class="step-label">Recepción<br>Miami</div>
+    <!-- SERVICES SECTION -->
+    <section class="services-section">
+        <div class="l-container">
+            <div class="section-title">
+                <h2>Nuestros Servicios</h2>
+                <p>Las mejores opciones para traer tus compras a Nicaragua</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <i class="fas fa-plane"></i>
+                    <h3>Carga Aérea</h3>
+                    <p>Ideal para compras urgentes. Recibe tus paquetes de forma rápida y segura en un tiempo estimado de 72 horas con vuelos constantes todas las semanas.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-ship"></i>
+                    <h3>Carga Marítima</h3>
+                    <p>La opción más económica para compras de alto volumen o peso pesado. Consolidamos tus paquetes y los entregamos entre 12 a 15 días.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Paquetería Comercial</h3>
+                    <p>Soluciones logísticas B2B para tu negocio. Nos encargamos de los trámites aduanales para que importes tu mercancía sin preocupaciones.</p>
+                </div>
+            </div>
         </div>
-        <div class="step {% if paquete.estado_rastreo in ['en_transito', 'listo_para_retirar', 'En Tránsito (Aéreo)', 'En Tránsito (Marítimo)', 'En Aduana', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
-            <div class="step-icon"><i class="fas fa-{% if paquete.tipo_envio == 'aereo' %}plane{% else %}ship{% endif %}"></i></div>
-            <div class="step-label">En<br>Tránsito</div>
-        </div>
-        <div class="step {% if paquete.estado_rastreo in ['listo_para_retirar', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
-            <div class="step-icon"><i class="fas fa-box-open"></i></div>
-            <div class="step-label">Listo para<br>Retirar</div>
-        </div>
-    </div>
+    </section>
 
-    <!-- Details -->
-    <div class="detail-card">
-        <div class="detail-card-header">
-            Historial de Movimientos
-            <i class="fas fa-history" style="color:#3d5ba0"></i>
+    <!-- FOOTER / CONTACT -->
+    <footer class="landing-footer">
+        <div class="l-container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3><i class="fas fa-box-open"></i> ENVÍOS BJJ</h3>
+                    <p>Tu aliado estratégico para compras internacionales. Seguridad, transparencia y rapidez en cada entrega.</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Villa Flore Norte, Iglesia Católica, 3C N, 10VRS E. Managua, Nicaragua.</p>
+                    <p><i class="fas fa-phone-alt"></i> +505 8662-8557</p>
+                    <p><i class="fas fa-envelope"></i> info@enviosbjj.com</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Síguenos</h3>
+                    <p><a href="#" style="color:white; text-decoration:none;"><i class="fab fa-facebook"></i> Envios BJJ</a></p>
+                    <p><a href="#" style="color:white; text-decoration:none;"><i class="fab fa-instagram"></i> @enviosbjj.nic</a></p>
+                    <p><a href="https://wa.me/50586628557" style="color:white; text-decoration:none;" target="_blank"><i class="fab fa-whatsapp"></i> Chat en WhatsApp</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; {{ range(2023, 2027) | random }} Envíos BJJ. Todos los derechos reservados.
+            </div>
         </div>
-        <div class="detail-card-body">
-            <ul class="detail-list">
-                {% for h in paquete.historial|sort(attribute='creado_en', reverse=True) %}
-                <li>
-                    <div class="d-icon"><i class="fas fa-check"></i></div>
-                    <div class="d-text">
-                        <strong>{{ h.estado }}</strong>
-                        <span style="display:block; margin-top: 4px; font-size: 11px;">
-                            {{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }}
-                            {% if h.ubicacion %} - {{ h.ubicacion }}{% endif %}
-                        </span>
-                        {% if h.comentarios %}
-                        <span style="display:block; margin-top: 4px; color: #666; font-style: italic;">
-                            {{ h.comentarios }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </li>
-                {% else %}
-                <li>
-                    <div class="d-icon"><i class="fas fa-info"></i></div>
-                    <div class="d-text">
-                        <strong>Sin movimientos</strong>
-                        <span>Aún no hay actualizaciones para este paquete.</span>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    {% endif %}
+    </footer>
 
 </div>
 {% endblock %}
