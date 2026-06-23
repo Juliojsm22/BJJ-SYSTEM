@@ -38,13 +38,11 @@
     /* --- HERO SECTION --- */
     .hero-section {
         position: relative;
-        padding: 100px 0 150px;
-        background: linear-gradient(135deg, var(--bjj-primary), var(--bjj-accent));
-        color: white;
+        padding: 60px 0 120px;
+        background: transparent;
+        color: var(--bjj-primary);
         text-align: center;
-        border-radius: 0 0 40px 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin-bottom: -80px; /* Overlap for the tracking card */
+        margin-bottom: -80px; 
         z-index: 1;
     }
     .hero-section h1 {
@@ -58,7 +56,7 @@
     }
     .hero-section p {
         font-size: 1.2rem;
-        color: #e2e8f0;
+        color: var(--bjj-muted);
         max-width: 600px;
         margin: 0 auto 30px;
     }
@@ -388,12 +386,39 @@
         color: #94a3b8;
     }
 
+    /* --- FLOATING WHATSAPP --- */
+    .floating-whatsapp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 30px;
+        right: 30px;
+        background-color: #25d366;
+        color: #FFF;
+        border-radius: 50px;
+        text-align: center;
+        font-size: 35px;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease, background-color 0.3s ease;
+        text-decoration: none;
+    }
+    .floating-whatsapp:hover {
+        transform: scale(1.1);
+        background-color: #1ebe57;
+        color: white;
+    }
+
     @media (max-width: 768px) {
         .hero-section h1 { font-size: 2.5rem; }
         .stepper { flex-direction: column; gap: 30px; align-items: flex-start; }
         .step { flex-direction: row; gap: 20px; width: 100%; }
         .step::after { display: none; }
         .step-icon { margin-bottom: 0; }
+        .floating-whatsapp { width: 50px; height: 50px; font-size: 28px; bottom: 20px; right: 20px; }
     }
 </style>
 {% endblock %}
@@ -412,7 +437,11 @@
     <!-- TRACKING SEARCH CARD -->
     <section class="tracking-card-container">
         <div class="tracking-card">
-            <h2><i class="fas fa-box-open"></i> Rastreo BJJ</h2>
+            <h2>
+                <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo BJJ" style="height: 60px; vertical-align: middle; margin-bottom: 10px;">
+                <br>
+                Rastreo BJJ
+            </h2>
             <p>Ingresa tu número de guía para conocer el estado actual de tu paquete en tiempo real.</p>
             
             <form method="GET" class="search-form">
@@ -508,17 +537,18 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <i class="fas fa-box-check"></i>
-                    <h3>200K+</h3>
+                    <h3>10K+</h3>
                     <p>Paquetes Entregados</p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-stopwatch"></i>
                     <h3>72H</h3>
+                    <h4>2 a 4 dias habiles</h4>
                     <p>Tiempo Promedio (Aéreo)</p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-users"></i>
-                    <h3>15K+</h3>
+                    <h3>5K+</h3>
                     <p>Clientes Satisfechos</p>
                 </div>
                 <div class="stat-card">
@@ -548,41 +578,14 @@
                     <h3>Carga Marítima</h3>
                     <p>La opción más económica para compras de alto volumen o peso pesado. Consolidamos tus paquetes y los entregamos entre 12 a 15 días.</p>
                 </div>
-                <div class="service-card">
-                    <i class="fas fa-briefcase"></i>
-                    <h3>Paquetería Comercial</h3>
-                    <p>Soluciones logísticas B2B para tu negocio. Nos encargamos de los trámites aduanales para que importes tu mercancía sin preocupaciones.</p>
-                </div>
             </div>
         </div>
     </section>
 
-    <!-- FOOTER / CONTACT -->
-    <footer class="landing-footer">
-        <div class="l-container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h3><i class="fas fa-box-open"></i> ENVÍOS BJJ</h3>
-                    <p>Tu aliado estratégico para compras internacionales. Seguridad, transparencia y rapidez en cada entrega.</p>
-                </div>
-                <div class="footer-col">
-                    <h3>Contacto</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> Villa Flore Norte, Iglesia Católica, 3C N, 10VRS E. Managua, Nicaragua.</p>
-                    <p><i class="fas fa-phone-alt"></i> +505 8662-8557</p>
-                    <p><i class="fas fa-envelope"></i> info@enviosbjj.com</p>
-                </div>
-                <div class="footer-col">
-                    <h3>Síguenos</h3>
-                    <p><a href="#" style="color:white; text-decoration:none;"><i class="fab fa-facebook"></i> Envios BJJ</a></p>
-                    <p><a href="#" style="color:white; text-decoration:none;"><i class="fab fa-instagram"></i> @enviosbjj.nic</a></p>
-                    <p><a href="https://wa.me/50586628557" style="color:white; text-decoration:none;" target="_blank"><i class="fab fa-whatsapp"></i> Chat en WhatsApp</a></p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                &copy; {{ range(2023, 2027) | random }} Envíos BJJ. Todos los derechos reservados.
-            </div>
-        </div>
-    </footer>
+    <!-- BOTÓN FLOTANTE WHATSAPP -->
+    <a href="https://wa.me/50586628557" class="floating-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="Escríbenos por WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
 </div>
 {% endblock %}
