@@ -42,7 +42,7 @@
         background: linear-gradient(135deg, var(--bjj-primary) 0%, var(--bjj-accent) 100%);
         color: white;
         text-align: center;
-        margin-bottom: -80px; 
+        margin-bottom: 0; 
         z-index: 1;
     }
     .hero-section h1 {
@@ -652,12 +652,71 @@
     <section class="hero-section">
         <div class="l-container">
             <h1><span style="color: #ffffff;">BJJ</span> ES TU MEJOR OPCIÓN</h1>
-            <p style="color: rgba(255, 255, 255, 0.9);">Traemos tus compras en línea y encomiendas de EEUU a Nicaragua con total seguridad, rapidez y el mejor precio del mercado.</p>
+            <p style="color: rgba(255, 255, 255, 0.9); max-width: 800px; margin: 0 auto 30px; font-size: 1.2rem; line-height: 1.6;">
+                <strong>Somos ENVÍOS BJJ</strong>, tu agencia de paquetería de confianza. Traemos tus compras en línea y encomiendas de EEUU a Nicaragua con total seguridad, rapidez y el mejor precio del mercado. Contamos con años de experiencia garantizando que tus paquetes lleguen intactos y a tiempo.
+            </p>
+            <a href="#seccion-rastreo" style="display: inline-block; padding: 15px 40px; background: #ff6b00; color: white; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4); transition: transform 0.3s;">
+                <i class="fas fa-search-location"></i> Rastrear Mi Paquete
+            </a>
         </div>
     </section>
 
-    <!-- TRACKING SEARCH CARD -->
-    <section class="tracking-card-container">
+<!-- SERVICES SECTION -->
+    <section class="services-section">
+        <div class="l-container">
+            <div class="section-title">
+                <h2>Nuestros Servicios</h2>
+                <p>Las mejores opciones para traer tus compras a Nicaragua</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <i class="fas fa-plane"></i>
+                    <h3>Carga Aérea</h3>
+                    <p>Ideal para compras urgentes. Recibe tus paquetes de forma rápida y segura en un tiempo estimado de 72 horas con vuelos constantes todas las semanas.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-ship"></i>
+                    <h3>Carga Marítima</h3>
+                    <p>La opción más económica para compras de alto volumen o peso pesado. Consolidamos tus paquetes y los entregamos entre 12 a 15 días.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+<!-- STATS SECTION -->
+    <section class="stats-section">
+        <div class="l-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-box"></i>
+                    <h3>10K+</h3>
+                    <p>Paquetes Entregados</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-stopwatch"></i>
+                    <h3>72H</h3>
+                    <h4>2 a 4 dias habiles</h4>
+                    <p>Tiempo Promedio (Aéreo)</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <h3>5K+</h3>
+                    <p>Clientes Satisfechos</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>100%</h3>
+                    <p>Seguro Garantizado</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+<!-- TRACKING SEARCH CARD -->
+    <section id="seccion-rastreo" class="tracking-card-container" style="margin-top: 60px; margin-bottom: 80px;">
         <div class="tracking-card">
             <h2 style="margin-bottom: 20px;">
                 <i class="fas fa-search-location" style="color: var(--bjj-primary); font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
@@ -752,59 +811,9 @@
         </div>
     </section>
 
-    <!-- STATS SECTION -->
-    <section class="stats-section">
-        <div class="l-container">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <i class="fas fa-box"></i>
-                    <h3>10K+</h3>
-                    <p>Paquetes Entregados</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-stopwatch"></i>
-                    <h3>72H</h3>
-                    <h4>2 a 4 dias habiles</h4>
-                    <p>Tiempo Promedio (Aéreo)</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-users"></i>
-                    <h3>5K+</h3>
-                    <p>Clientes Satisfechos</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-shield-alt"></i>
-                    <h3>100%</h3>
-                    <p>Seguro Garantizado</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    
 
-    <!-- SERVICES SECTION -->
-    <section class="services-section">
-        <div class="l-container">
-            <div class="section-title">
-                <h2>Nuestros Servicios</h2>
-                <p>Las mejores opciones para traer tus compras a Nicaragua</p>
-            </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <i class="fas fa-plane"></i>
-                    <h3>Carga Aérea</h3>
-                    <p>Ideal para compras urgentes. Recibe tus paquetes de forma rápida y segura en un tiempo estimado de 72 horas con vuelos constantes todas las semanas.</p>
-                </div>
-                <div class="service-card">
-                    <i class="fas fa-ship"></i>
-                    <h3>Carga Marítima</h3>
-                    <p>La opción más económica para compras de alto volumen o peso pesado. Consolidamos tus paquetes y los entregamos entre 12 a 15 días.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-
+    
 </div>
 {% endblock %}
 
