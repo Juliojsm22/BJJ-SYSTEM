@@ -1,0 +1,9 @@
+Copyright (c) 2026 Julio. Todos los derechos reservados.
+
+Este código fuente y los archivos asociados a este proyecto ("agencia_paqueteria") son propiedad exclusiva del autor. 
+
+Este material se entrega EXCLUSIVAMENTE para propósitos de revisión y evaluación académica. 
+
+Queda estrictamente prohibida la copia, reproducción, distribución, modificación, publicación o uso comercial y/o personal de este código por parte de terceros sin el consentimiento previo, explícito y por escrito del autor.
+
+Cualquier uso no autorizado de este código se considerará una violación a los derechos de autor intelectual.
