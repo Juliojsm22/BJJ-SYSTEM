@@ -60,6 +60,16 @@ def create_app():
         crear_usuario_admin()
 
 
+    from flask import session
+    from datetime import timedelta
+    
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+
+    @app.before_request
+    def make_session_permanent():
+        session.permanent = True
+        session.modified = True
+
     return app
 
 def crear_usuario_admin():
