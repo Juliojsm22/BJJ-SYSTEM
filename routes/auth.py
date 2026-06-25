@@ -21,7 +21,7 @@ def login():
         usuario = Usuario.query.filter_by(username=username, activo=True).first()
         
         if usuario and usuario.check_password(password):
-            login_user(usuario, remember=True)
+            login_user(usuario, remember=False)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('dashboard.index'))
         else:
