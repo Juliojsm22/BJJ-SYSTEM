@@ -1105,7 +1105,19 @@
                         <li class="history-item">
                             <i class="fas fa-check"></i>
                             <div class="history-content">
-                                <strong>{{ h.estado }}</strong>
+                                <strong>
+                                    {% if h.estado == 'bodega_miami' %}
+                                        En bodega Miami
+                                    {% elif h.estado == 'en_transito' %}
+                                        En tránsito
+                                    {% elif h.estado == 'listo_para_retirar' %}
+                                        Listo para retirar
+                                    {% elif h.estado == 'entregado' %}
+                                        Entregado
+                                    {% else %}
+                                        {{ h.estado|replace('_', ' ')|title }}
+                                    {% endif %}
+                                </strong>
                                 <small>
                                     {{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }}
                                     {% if h.ubicacion %} - {{ h.ubicacion }}{% endif %}
