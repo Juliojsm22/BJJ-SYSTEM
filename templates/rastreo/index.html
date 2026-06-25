@@ -490,10 +490,11 @@
 
     @media (max-width: 768px) {
         /* Encabezado */
-        .header-container { flex-direction: column; gap: 15px; padding-bottom: 15px; }
-        .header-logo { height: 70px; }
-        .header-actions { flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
-        .btn-contact { padding: 10px 15px; font-size: 0.95rem; flex: 1 1 auto; justify-content: center; text-align: center; }
+        .public-header { position: relative; }
+        .header-container { flex-direction: column; gap: 10px; padding-bottom: 10px; }
+        .header-logo { height: 50px; }
+        .header-actions { flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; }
+        .btn-contact { padding: 8px 12px; font-size: 0.85rem; flex: 1 1 auto; justify-content: center; text-align: center; }
         
         /* Hero Section */
         .hero-section { padding: 40px 0 80px; }
@@ -538,7 +539,7 @@
     @media (max-width: 480px) {
         .stats-grid { grid-template-columns: 1fr; }
         .hero-section h1 { font-size: 1.8rem; }
-        .btn-contact { flex: 1 1 100%; } /* Botones ocupan toda la línea en celulares muy pequeños */
+        .btn-contact { flex: 1 1 auto; font-size: 0.8rem; padding: 6px 10px; } /* Botones más pequeños y en fila si es posible */
         .brand-item { font-size: 1.4rem; }
     }
 
