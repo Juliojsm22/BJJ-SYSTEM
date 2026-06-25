@@ -1118,6 +1118,16 @@
             {% endif %}
         </div>
     </section>
+    {% if codigo or error %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var el = document.getElementById('seccion-rastreo');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+    {% endif %}
 
     
 

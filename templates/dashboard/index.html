@@ -87,13 +87,13 @@
     </div>
 </section>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+<div id="estadisticas-sistema" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
     <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin: 0;">Estadísticas del Sistema</h3>
     <div style="display: flex; align-items: center; gap: 15px;">
         <div class="filter-group" style="display: flex; background: var(--surface2); border-radius: 8px; padding: 4px;">
-            <a href="{{ url_for('dashboard.index', periodo='dia') }}" class="btn {% if periodo == 'dia' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Día</a>
-            <a href="{{ url_for('dashboard.index', periodo='semana') }}" class="btn {% if periodo == 'semana' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Semana</a>
-            <a href="{{ url_for('dashboard.index', periodo='mes') }}" class="btn {% if periodo == 'mes' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Mes</a>
+            <a href="{{ url_for('dashboard.index', periodo='dia') }}#estadisticas-sistema" class="btn {% if periodo == 'dia' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Día</a>
+            <a href="{{ url_for('dashboard.index', periodo='semana') }}#estadisticas-sistema" class="btn {% if periodo == 'semana' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Semana</a>
+            <a href="{{ url_for('dashboard.index', periodo='mes') }}#estadisticas-sistema" class="btn {% if periodo == 'mes' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Mes</a>
         </div>
         <a href="{{ url_for('dashboard.pdf_reporte', periodo=periodo) }}" target="_blank" class="btn btn-primary" style="background-color: var(--accent); padding: 10px 16px;">
             <i class="fas fa-file-pdf"></i> Descargar Reporte
