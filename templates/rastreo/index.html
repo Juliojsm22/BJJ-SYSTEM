@@ -1049,7 +1049,19 @@
                 <div class="info-grid">
                     <div class="info-item">
                         <span>Estado Actual</span>
-                        <strong>{{ paquete.estado_rastreo }}</strong>
+                        <strong>
+                            {% if paquete.estado_rastreo == 'bodega_miami' %}
+                                En bodega Miami
+                            {% elif paquete.estado_rastreo == 'en_transito' %}
+                                En tránsito
+                            {% elif paquete.estado_rastreo == 'listo_para_retirar' %}
+                                Listo para retirar
+                            {% elif paquete.estado_rastreo == 'entregado' %}
+                                Entregado
+                            {% else %}
+                                {{ paquete.estado_rastreo|replace('_', ' ')|title }}
+                            {% endif %}
+                        </strong>
                     </div>
                     <div class="info-item">
                         <span>Cliente</span>

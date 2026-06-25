@@ -23,7 +23,19 @@
         </div>
         <div style="text-align: right; margin-top: 10px;">
             <span class="badge badge-{{ paquete.tipo_envio }}" style="font-size: 0.9rem;">{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</span>
-            <div style="margin-top: 8px; font-weight: bold; color: var(--primary); font-size: 1.1rem;">Estado Actual: {{ paquete.estado_rastreo }}</div>
+            <div style="margin-top: 8px; font-weight: bold; color: var(--primary); font-size: 1.1rem;">Estado Actual: 
+                {% if paquete.estado_rastreo == 'bodega_miami' %}
+                    En bodega Miami
+                {% elif paquete.estado_rastreo == 'en_transito' %}
+                    En tránsito
+                {% elif paquete.estado_rastreo == 'listo_para_retirar' %}
+                    Listo para retirar
+                {% elif paquete.estado_rastreo == 'entregado' %}
+                    Entregado
+                {% else %}
+                    {{ paquete.estado_rastreo|replace('_', ' ')|title }}
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
