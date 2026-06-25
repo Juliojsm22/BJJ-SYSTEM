@@ -395,7 +395,7 @@ def exportar():
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
-                    max_length = len(cell.value)
+                    max_length = len(str(cell.value))
             except:
                 pass
         ws.column_dimensions[column].width = (max_length + 2)
@@ -404,6 +404,7 @@ def exportar():
     wb.save(buffer)
     buffer.seek(0)
 
+    from datetime import datetime
     filename = f"Facturas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     response = make_response(buffer.getvalue())

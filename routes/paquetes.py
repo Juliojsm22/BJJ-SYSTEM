@@ -390,7 +390,7 @@ def exportar():
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
-                    max_length = len(cell.value)
+                    max_length = len(str(cell.value))
             except:
                 pass
         ws.column_dimensions[column].width = (max_length + 2)
