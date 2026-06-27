@@ -59,6 +59,36 @@ def create_app():
         
         crear_usuario_admin()
 
+        # LIMPIEZA AUTOMATICA: Marcar facturas antes de esta semana como pagadas
+        try:
+            from models import Factura, Pago
+            from datetime import timedelta
+            today = datetime.now()
+            start_of_week = today - timedelta(days=today.weekday())
+            start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            facturas_pendientes = Factura.query.filter(
+                Factura.fecha_emision < start_of_week,
+                Factura.estado != 'pagada'
+            ).all()
+            
+            if facturas_pendientes:
+                for f in facturas_pendientes:
+                    f.estado = 'pagada'
+                    pago = Pago(
+                        factura_id=f.id,
+                        monto=f.total,
+                        metodo_pago='Ajuste de Sistema',
+                        referencia='Limpieza Automática',
+                        registrado_por=1
+                    )
+                    db.session.add(pago)
+                db.session.commit()
+                print(f"Limpieza Automática: {len(facturas_pendientes)} facturas antiguas marcadas como pagadas.")
+        except Exception as e:
+            db.session.rollback()
+            print("Error en limpieza automatica:", e)
+
 
     from flask import session
     from datetime import timedelta
