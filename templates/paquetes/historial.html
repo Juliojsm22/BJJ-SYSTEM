@@ -23,7 +23,19 @@
         </div>
         <div style="text-align: right; margin-top: 10px;">
             <span class="badge badge-{{ paquete.tipo_envio }}" style="font-size: 0.9rem;">{{ 'Aéreo' if paquete.tipo_envio == 'aereo' else 'Marítimo' }}</span>
-            <div style="margin-top: 8px; font-weight: bold; color: var(--primary); font-size: 1.1rem;">Estado Actual: {{ paquete.estado_rastreo }}</div>
+            <div style="margin-top: 8px; font-weight: bold; color: var(--primary); font-size: 1.1rem;">Estado Actual: 
+                {% if paquete.estado_rastreo == 'bodega_miami' %}
+                    En bodega Miami
+                {% elif paquete.estado_rastreo == 'en_transito' %}
+                    En tránsito
+                {% elif paquete.estado_rastreo == 'listo_para_retirar' %}
+                    Listo para retirar
+                {% elif paquete.estado_rastreo == 'entregado' %}
+                    Entregado
+                {% else %}
+                    {{ paquete.estado_rastreo|replace('_', ' ')|title }}
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -75,7 +87,17 @@
                 <div style="position: absolute; left: -27px; top: 2px; width: 14px; height: 14px; background: {% if loop.first %}var(--primary){% else %}#a0b0d0{% endif %}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px {% if loop.first %}rgba(61,91,160,0.2){% else %}transparent{% endif %};"></div>
                 
                 <div style="font-weight: 600; color: {% if loop.first %}var(--primary){% else %}var(--text){% endif %}; font-size: 1.05rem;">
-                    {{ h.estado }}
+                    {% if h.estado == 'bodega_miami' %}
+                        En bodega Miami
+                    {% elif h.estado == 'en_transito' %}
+                        En tránsito
+                    {% elif h.estado == 'listo_para_retirar' %}
+                        Listo para retirar
+                    {% elif h.estado == 'entregado' %}
+                        Entregado
+                    {% else %}
+                        {{ h.estado|replace('_', ' ')|title }}
+                    {% endif %}
                 </div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
                     <i class="far fa-clock"></i> {{ h.creado_en.strftime('%d/%m/%Y %I:%M %p') }} 
