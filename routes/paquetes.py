@@ -104,13 +104,21 @@ def nuevo():
             from models import registrar_actividad
             registrar_actividad(current_user.id, 'Registró Paquetes', f'Registró {len(paquetes_creados)} paquete(s) para {cliente.nombre_completo}')
             
-            paquetes_miami = [p for p in paquetes_creados if p.estado_rastreo == 'bodega_miami']
-            if paquetes_miami and cliente.telefono:
+            if paquetes_creados and cliente.telefono:
                 import urllib.parse
-                mensaje = f"👋 *Hola {cliente.nombre_completo}*,\n\nTe informamos que hemos recibido tu(s) paquete(s) en nuestra *Bodega de Miami* 🏢🇺🇸.\n\n📦 *Detalles:*\n"
-                for p in paquetes_miami:
+                mensaje = f"👋 *Hola {cliente.nombre_completo}*,\n\nTe informamos sobre el registro de tu(s) paquete(s) en *BJJ SYSTEM*.\n\n📦 *Detalles:*\n"
+                for p in paquetes_creados:
+                    if p.estado_rastreo == 'bodega_miami':
+                        estado_str = "🏢🇺🇸 Bodega Miami"
+                    elif p.estado_rastreo == 'en_transito':
+                        estado_str = "🚢/✈️ En tránsito"
+                    elif p.estado_rastreo == 'listo_para_retirar':
+                        estado_str = "✅ Listo para retirar"
+                    else:
+                        estado_str = p.estado_rastreo.replace('_', ' ').title()
+                    
                     track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
-                    mensaje += f"🔸 *{p.nombre}*\nTracking: {p.tracking_number}\n🔗 Rastreo: {track_url}\n\n"
+                    mensaje += f"🔸 *{p.nombre}* ({estado_str})\nTracking: {p.tracking_number}\n🔗 Rastreo: {track_url}\n\n"
                 mensaje += "¡Gracias por preferir *BJJ SYSTEM*! 🚀"
                 
                 telefono_limpio = ''.join(filter(str.isdigit, str(cliente.telefono)))
