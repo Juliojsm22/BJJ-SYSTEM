@@ -299,3 +299,46 @@ def pdf_reporte():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=reporte-financiero-{hoy.strftime("%Y%m%d")}.pdf'
     return response
+
+@dashboard_bp.route('/fix-timezones')
+@login_required
+def fix_timezones():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    from models import Pago, HistorialRastreo, RegistroActividad
+    
+    # Bandera para saber si ya se corrigió
+    ya_corregido = Factura.query.filter(Factura.fecha_emision < datetime(2025, 1, 1)).first()
+    if ya_corregido:
+        flash('Las fechas ya fueron corregidas anteriormente.', 'info')
+        return redirect(url_for('dashboard.index'))
+    
+    # Restar 6 horas a todos los registros
+    for c in Cliente.query.all():
+        if c.creado_en: c.creado_en -= timedelta(hours=6)
+    
+    for p in Paquete.query.all():
+        if p.registrado_en: p.registrado_en -= timedelta(hours=6)
+        
+    for f in Factura.query.all():
+        if f.fecha_emision: f.fecha_emision -= timedelta(hours=6)
+        
+    for p in Pago.query.all():
+        if p.fecha_pago: p.fecha_pago -= timedelta(hours=6)
+        
+    for h in HistorialRastreo.query.all():
+        if h.creado_en: h.creado_en -= timedelta(hours=6)
+        
+    for r in RegistroActividad.query.all():
+        if r.fecha: r.fecha -= timedelta(hours=6)
+        
+    # Crear un registro viejo falso para marcar que ya se corrigió y evitar doble resta
+    falso = Factura(numero='FIX-TZ', cliente_id=1, fecha_emision=datetime(2020, 1, 1))
+    db.session.add(falso)
+    
+    db.session.commit()
+    flash('Se han corregido las horas de todos los registros antiguos exitosamente.', 'success')
+    return redirect(url_for('facturas.index'))
+
