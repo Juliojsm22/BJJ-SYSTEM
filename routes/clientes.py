@@ -255,8 +255,8 @@ def exportar():
     wb.save(buffer)
     buffer.seek(0)
 
-    from datetime import datetime
-    filename = f"Clientes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    from models import get_local_now
+    filename = f"Clientes_{get_local_now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

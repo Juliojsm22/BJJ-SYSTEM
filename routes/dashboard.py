@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import Cliente, Paquete, Factura, db
+from models import Cliente, Paquete, Factura, db, get_local_now
 from datetime import datetime, timedelta
 from sqlalchemy import func, case
 
@@ -15,7 +15,7 @@ def index():
         return redirect(url_for('paquetes.index'))
         
     periodo = request.args.get('periodo', 'mes')
-    hoy = datetime.now()
+    hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
@@ -160,7 +160,7 @@ def index():
 @dashboard_bp.route('/api/stats')
 @login_required
 def api_stats():
-    hoy = datetime.now()
+    hoy = get_local_now()
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ganancia_expr = case(
         (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
@@ -192,7 +192,7 @@ def pdf_reporte():
     import os
 
     periodo = request.args.get('periodo', 'mes')
-    hoy = datetime.now()
+    hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     
     ganancia_expr = case(

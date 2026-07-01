@@ -1,7 +1,10 @@
 from extensions import db, login_manager
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from werkzeug.security import check_password_hash
+
+def get_local_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=6)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -17,7 +20,7 @@ class Usuario(UserMixin, db.Model):
     telefono = db.Column(db.String(20))
     rol = db.Column(db.String(20), default='empleado')  # admin, empleado
     activo = db.Column(db.Boolean, default=True)
-    creado_en = db.Column(db.DateTime, default=datetime.now)
+    creado_en = db.Column(db.DateTime, default=get_local_now)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
@@ -29,7 +32,7 @@ class Cliente(db.Model):
     cedula = db.Column(db.String(30), unique=True, nullable=False)
     telefono = db.Column(db.String(20))
     email = db.Column(db.String(120))
-    creado_en = db.Column(db.DateTime, default=datetime.now)
+    creado_en = db.Column(db.DateTime, default=get_local_now)
     activo = db.Column(db.Boolean, default=True)
 
     paquetes = db.relationship('Paquete', backref='cliente', lazy=True)
@@ -56,7 +59,7 @@ class Paquete(db.Model):
     estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
-    registrado_en = db.Column(db.DateTime, default=datetime.now)
+    registrado_en = db.Column(db.DateTime, default=get_local_now)
     registrado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
 
     historial = db.relationship('HistorialRastreo', backref='paquete', lazy=True, cascade='all, delete-orphan')
@@ -92,7 +95,7 @@ class Paquete(db.Model):
             ultimo = Paquete.query.order_by(Paquete.id.desc()).first()
             num = (ultimo.id + 1) if ultimo else 1
             prefijo = 'A' if self.tipo_envio == 'aereo' else 'M'
-            self.tracking_number = f'BJJ-{prefijo}-{datetime.now().year}-{num:05d}'
+            self.tracking_number = f'BJJ-{prefijo}-{get_local_now().year}-{num:05d}'
         db.session.add(self)
         db.session.commit()
 
@@ -101,7 +104,7 @@ class Factura(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     numero = db.Column(db.String(20), unique=True, nullable=False)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
-    fecha_emision = db.Column(db.DateTime, default=datetime.now, index=True)
+    fecha_emision = db.Column(db.DateTime, default=get_local_now, index=True)
     estado = db.Column(db.String(20), default='borrador', index=True)  # borrador, finalizada, pagada
     total = db.Column(db.Float, default=0.0)
     notas = db.Column(db.Text)
@@ -122,7 +125,7 @@ class Factura(db.Model):
     def generar_numero():
         ultimo = Factura.query.order_by(Factura.id.desc()).first()
         num = (ultimo.id + 1) if ultimo else 1
-        return f'FAC-{datetime.now().year}-{num:05d}'
+        return f'FAC-{get_local_now().year}-{num:05d}'
 
 class HistorialRastreo(db.Model):
     __tablename__ = 'historial_rastreo'
@@ -131,7 +134,7 @@ class HistorialRastreo(db.Model):
     estado = db.Column(db.String(50), nullable=False)
     ubicacion = db.Column(db.String(100))
     comentarios = db.Column(db.Text)
-    creado_en = db.Column(db.DateTime, default=datetime.now)
+    creado_en = db.Column(db.DateTime, default=get_local_now)
     creado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
 
     usuario = db.relationship('Usuario', backref='actualizaciones_rastreo', lazy=True)
@@ -143,7 +146,7 @@ class Pago(db.Model):
     monto = db.Column(db.Float, nullable=False)
     metodo_pago = db.Column(db.String(50), nullable=False) # Efectivo, Transferencia, Tarjeta, etc.
     referencia = db.Column(db.String(100))
-    fecha_pago = db.Column(db.DateTime, default=datetime.now)
+    fecha_pago = db.Column(db.DateTime, default=get_local_now)
     registrado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
 
     usuario = db.relationship('Usuario', backref='pagos_registrados', lazy=True)
@@ -153,7 +156,7 @@ class Tarifa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), unique=True, nullable=False) # aereo, maritimo
     precio_por_libra = db.Column(db.Float, nullable=False)
-    actualizado_en = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    actualizado_en = db.Column(db.DateTime, default=get_local_now, onupdate=get_local_now)
 
 class TarifaEspecialCliente(db.Model):
     __tablename__ = 'tarifas_especiales_cliente'
@@ -170,7 +173,7 @@ class RegistroActividad(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     accion = db.Column(db.String(100), nullable=False)
     detalles = db.Column(db.Text)
-    fecha = db.Column(db.DateTime, default=datetime.now)
+    fecha = db.Column(db.DateTime, default=get_local_now)
 
     usuario = db.relationship('Usuario', backref=db.backref('actividades', lazy=True, cascade='all, delete-orphan'))
 
