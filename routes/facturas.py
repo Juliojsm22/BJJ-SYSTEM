@@ -348,80 +348,24 @@ def generar_pdf_factura(factura):
     story.append(paquetes_table)
     story.append(Spacer(1, 0.2*inch))
 
-    # Consultar saldo anterior
-    from models import Factura, Paquete
-    
-    facturas_pendientes = Factura.query.filter(
-        Factura.cliente_id == factura.cliente_id,
-        Factura.estado != 'pagada',
-        Factura.id != factura.id
-    ).all()
-    
-    paquetes_sin_facturar = Paquete.query.filter(
-        Paquete.cliente_id == factura.cliente_id,
-        Paquete.factura_id == None
-    ).all()
-
-    saldo_anterior = 0.0
-
-    if facturas_pendientes or paquetes_sin_facturar:
-        story.append(Paragraph('<b>SALDO ANTERIOR PENDIENTE</b>', styles['Normal']))
-        story.append(Spacer(1, 0.1*inch))
-        
-        saldo_data = [['Descripción', 'Total']]
-        
-        for f_pend in facturas_pendientes:
-            saldo_data.append([f'Factura #{f_pend.numero} ({f_pend.fecha_emision.strftime("%d/%m/%Y")})', f'${f_pend.total:.2f}'])
-            saldo_anterior += f_pend.total
-            
-        for p_sin in paquetes_sin_facturar:
-            saldo_data.append([f'Paquete sin facturar: {p_sin.nombre} ({p_sin.numero_seguimiento or "Sin tracking"})', f'${(p_sin.costo or 0):.2f}'])
-            saldo_anterior += (p_sin.costo or 0)
-            
-        saldo_table = Table(saldo_data, colWidths=[5.0*inch, 1.8*inch])
-        saldo_table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), COLOR_PRIMARIO),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 9),
-            ('ALIGN', (1,0), (1,-1), 'RIGHT'),
-            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f5f5f5')]),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dddddd')),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ]))
-        story.append(saldo_table)
-        story.append(Spacer(1, 0.2*inch))
-
     # Total
-    gran_total = factura.total + saldo_anterior
-    total_cordobas = gran_total * 37
-    
-    if saldo_anterior > 0:
-        total_data = [
-            ['', '', '', '', 'Subtotal Factura $:', f'${factura.total:.2f}'],
-            ['', '', '', '', 'Saldo Anterior $:', f'${saldo_anterior:.2f}'],
-            ['', '', '', '', 'TOTAL A PAGAR $:', f'${gran_total:.2f}'],
-            ['', '', '', '', 'TOTAL A PAGAR C$:', f'C${total_cordobas:.2f}']
-        ]
-    else:
-        total_data = [
-            ['', '', '', '', 'TOTAL $:', f'${factura.total:.2f}'],
-            ['', '', '', '', 'TOTAL C$:', f'C${total_cordobas:.2f}']
-        ]
-        
+    total_cordobas = factura.total * 37
+    total_data = [
+        ['', '', '', '', 'TOTAL $:', f'${factura.total:.2f}'],
+        ['', '', '', '', 'TOTAL C$:', f'C${total_cordobas:.2f}']
+    ]
     total_table = Table(total_data, colWidths=col_widths)
     total_table.setStyle(TableStyle([
-        ('FONTNAME', (4,0), (5,-1), 'Helvetica-Bold'),
-        ('FONTSIZE', (4,0), (5,-2), 11),
-        ('FONTSIZE', (4,-1), (5,-1), 10),
-        ('ALIGN', (4,0), (4,-1), 'LEFT'),
-        ('ALIGN', (5,0), (5,-1), 'RIGHT'),
-        ('BACKGROUND', (4,0), (5,-1), COLOR_ACENTO),
-        ('TEXTCOLOR', (4,0), (5,-1), colors.white),
-        ('TOPPADDING', (4,0), (5,-1), 6),
-        ('BOTTOMPADDING', (4,0), (5,-1), 6),
-        ('LINEBELOW', (4,0), (5,-2), 0.5, colors.white),
+        ('FONTNAME', (4,0), (5,1), 'Helvetica-Bold'),
+        ('FONTSIZE', (4,0), (5,0), 11),
+        ('FONTSIZE', (4,1), (5,1), 10),
+        ('ALIGN', (4,0), (4,1), 'LEFT'),
+        ('ALIGN', (5,0), (5,1), 'RIGHT'),
+        ('BACKGROUND', (4,0), (5,1), COLOR_ACENTO),
+        ('TEXTCOLOR', (4,0), (5,1), colors.white),
+        ('TOPPADDING', (4,0), (5,1), 6),
+        ('BOTTOMPADDING', (4,0), (5,1), 6),
+        ('LINEBELOW', (4,0), (5,0), 0.5, colors.white),
     ]))
     story.append(total_table)
 
