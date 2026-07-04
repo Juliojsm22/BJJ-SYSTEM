@@ -32,18 +32,12 @@ def index():
         else_=0
     )
 
-    ganancias_semana = db.session.query(func.sum(ganancia_expr)).join(
-        Factura, Paquete.factura_id == Factura.id
-    ).filter(
-        Factura.fecha_emision >= inicio_semana,
-        Factura.estado.in_(['finalizada', 'pagada'])
+    ganancias_semana = db.session.query(func.sum(ganancia_expr)).filter(
+        Paquete.registrado_en >= inicio_semana
     ).scalar() or 0
 
-    ganancias_mes = db.session.query(func.sum(ganancia_expr)).join(
-        Factura, Paquete.factura_id == Factura.id
-    ).filter(
-        Factura.fecha_emision >= inicio_mes,
-        Factura.estado.in_(['finalizada', 'pagada'])
+    ganancias_mes = db.session.query(func.sum(ganancia_expr)).filter(
+        Paquete.registrado_en >= inicio_mes
     ).scalar() or 0
 
     total_clientes = Cliente.query.filter_by(activo=True).count()
@@ -70,12 +64,9 @@ def index():
             dia = hoy - timedelta(days=i)
             inicio = dia.replace(hour=0, minute=0, second=0, microsecond=0)
             fin = inicio + timedelta(days=1)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             
             lbl = inicio.strftime('%d %b')
@@ -88,12 +79,9 @@ def index():
         for i in range(3, -1, -1):
             inicio = inicio_semana - timedelta(days=7 * i)
             fin = inicio + timedelta(days=7)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             
             lbl = f"{inicio.strftime('%d %b')}"
@@ -110,12 +98,9 @@ def index():
                 fin = mes.replace(year=mes.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
                 fin = mes.replace(month=mes.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             tendencia_labels.append(mes.strftime('%b %Y'))
             tendencia_valores.append(float(total))
@@ -167,11 +152,8 @@ def api_stats():
         (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
         else_=0
     )
-    ganancias_mes = db.session.query(func.sum(ganancia_expr)).join(
-        Factura, Paquete.factura_id == Factura.id
-    ).filter(
-        Factura.fecha_emision >= inicio_mes,
-        Factura.estado.in_(['finalizada', 'pagada'])
+    ganancias_mes = db.session.query(func.sum(ganancia_expr)).filter(
+        Paquete.registrado_en >= inicio_mes
     ).scalar() or 0
     return jsonify({'ganancias_mes': float(ganancias_mes)})
 
@@ -212,12 +194,9 @@ def pdf_reporte():
             dia = hoy - timedelta(days=i)
             inicio = dia.replace(hour=0, minute=0, second=0, microsecond=0)
             fin = inicio + timedelta(days=1)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             
             lbl = inicio.strftime('%d %b')
@@ -230,12 +209,9 @@ def pdf_reporte():
         for i in range(3, -1, -1):
             inicio = inicio_semana - timedelta(days=7 * i)
             fin = inicio + timedelta(days=7)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             
             lbl = f"{inicio.strftime('%d %b')} - {(fin - timedelta(days=1)).strftime('%d %b')}"
@@ -252,12 +228,9 @@ def pdf_reporte():
                 fin = mes.replace(year=mes.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
                 fin = mes.replace(month=mes.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            total = db.session.query(func.sum(ganancia_expr)).join(
-                Factura, Paquete.factura_id == Factura.id
-            ).filter(
-                Factura.fecha_emision >= inicio,
-                Factura.fecha_emision < fin,
-                Factura.estado.in_(['finalizada', 'pagada'])
+            total = db.session.query(func.sum(ganancia_expr)).filter(
+                Paquete.registrado_en >= inicio,
+                Paquete.registrado_en < fin
             ).scalar() or 0
             tendencia_data.append([mes.strftime('%b %Y'), f'${total:.2f}'])
 
