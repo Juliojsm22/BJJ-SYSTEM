@@ -73,7 +73,7 @@
             <div class="form-group">
                 <label>Número de Seguimiento *</label>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" name="numero_seguimiento[]" class="form-control" placeholder="Tracking Number" required>
+                    <input type="text" name="numero_seguimiento[]" class="form-control" placeholder="Tracking Number" required onblur="fetchAereomarData(this)">
                     <button type="button" class="btn btn-secondary" title="Escanear con cámara" onclick="abrirScanner(this.previousElementSibling)" style="padding: 10px 14px;">
                         <i class="fas fa-camera"></i>
                     </button>
@@ -223,6 +223,50 @@ function actualizarBotonesEliminar() {
 }
 
 document.getElementById('cliente_id').addEventListener('change', actualizarTextosTarifa);
+
+function fetchAereomarData(inputElement) {
+    const trackingNumber = inputElement.value.trim();
+    if (!trackingNumber) return;
+    
+    inputElement.style.opacity = '0.5';
+
+    fetch('{{ url_for("paquetes.fetch_aereomar") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ tracking_number: trackingNumber })
+    })
+    .then(response => response.json())
+    .then(data => {
+        inputElement.style.opacity = '1';
+        if (data.success) {
+            const row = inputElement.closest('.paquete-row');
+            
+            if (data.descripcion) {
+                row.querySelector('input[name="descripcion[]"]').value = data.descripcion;
+            }
+            
+            if (data.peso) {
+                row.querySelector('input[name="peso[]"]').value = data.peso;
+            }
+
+            if (data.tipo_envio) {
+                const selectTipo = row.querySelector('select[name="tipo_envio[]"]');
+                selectTipo.value = data.tipo_envio;
+            }
+            
+            calcularCostoGlobal();
+        } else {
+            console.log("Aereomar Fetch failed:", data.error);
+        }
+    })
+    .catch(error => {
+        inputElement.style.opacity = '1';
+        console.error("Error fetching Aereomar data:", error);
+    });
+}
 
 // Init
 cargarTarifasBase();

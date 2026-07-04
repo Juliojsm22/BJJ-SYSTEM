@@ -414,3 +414,49 @@ def exportar():
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+@paquetes_bp.route('/fetch_aereomar', methods=['POST'])
+@login_required
+def fetch_aereomar():
+    data = request.get_json()
+    tracking_full = data.get('tracking_number', '').strip()
+    if not tracking_full:
+        return jsonify({"success": False, "error": "No tracking number provided"})
+    
+    # If the scanner reads the long barcode (e.g. WR541692XP1XU1), we extract the base WR number
+    import re
+    base_tracking_match = re.match(r'(WR\d+)', tracking_full)
+    tracking = base_tracking_match.group(1) if base_tracking_match else tracking_full
+
+    import urllib.request
+    import json
+    
+    url = f'https://aereomarexpress.multitrack.trackingpremium.us/tracking/search?type=2&number={tracking}&user=0&recibo=0&guia=0&consol=0'
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest'})
+    try:
+        resp = urllib.request.urlopen(req, timeout=10).read().decode('utf-8')
+        json_data = json.loads(resp)
+        # The structure is [[status_list], [{...}], 2, [receipts], [], [basic_data]]
+        # We want to extract basic_data at index 5.
+        if len(json_data) >= 6 and json_data[5]:
+            basic_data = json_data[5]
+            # basic_data: ["JULIO AMAZON // COSMETICOS ", 5, "0.00x0.00x0.00", 0, "Mar\u00edtimo", "N/A"]
+            desc = basic_data[0].strip() if len(basic_data) > 0 else ""
+            weight = basic_data[1] if len(basic_data) > 1 else 0
+            
+            # optionally ship_type 
+            ship_type_str = basic_data[4].lower() if len(basic_data) > 4 else ""
+            ship_type = "aereo"
+            if "mar" in ship_type_str or "maritimo" in ship_type_str:
+                ship_type = "maritimo"
+
+            return jsonify({
+                "success": True, 
+                "descripcion": desc, 
+                "peso": weight,
+                "tipo_envio": ship_type
+            })
+        else:
+            return jsonify({"success": False, "error": "No se encontraron datos para este número en AereoMar"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
