@@ -249,9 +249,9 @@ function fetchAereomarData(inputElement) {
             const row = inputElement.closest('.paquete-row');
             
             if (data.descripcion) {
-                const descInput = row.querySelector('input[name="descripcion[]"]');
-                if (descInput && descInput.value.trim() === '') {
-                    descInput.value = data.descripcion;
+                const nombreInput = row.querySelector('input[name="nombre[]"]');
+                if (nombreInput && nombreInput.value.trim() === '') {
+                    nombreInput.value = data.descripcion;
                 }
             }
             
