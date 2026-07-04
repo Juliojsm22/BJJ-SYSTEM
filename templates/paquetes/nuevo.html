@@ -81,7 +81,7 @@
             </div>
             <div class="form-group">
                 <label>Warehouse</label>
-                <input type="text" name="warehouse[]" class="form-control" placeholder="WR...">
+                <input type="text" name="warehouse[]" class="form-control" placeholder="WR..." onblur="fetchAereomarData(this)">
             </div>
         </div>
         <div class="grid-2">
@@ -250,7 +250,7 @@ function fetchAereomarData(inputElement) {
             
             if (data.descripcion) {
                 row.querySelector('input[name="nombre[]"]').value = data.descripcion;
-                row.querySelector('input[name="descripcion[]"]').value = data.descripcion;
+                // Dejamos la descripcion en blanco como solicitó el usuario
             }
             
             if (data.peso) {
@@ -259,7 +259,7 @@ function fetchAereomarData(inputElement) {
 
             if (data.warehouse) {
                 const warehouseInput = row.querySelector('input[name="warehouse[]"]');
-                if (warehouseInput) {
+                if (warehouseInput && warehouseInput.value.trim() === '') {
                     warehouseInput.value = data.warehouse;
                 }
             }

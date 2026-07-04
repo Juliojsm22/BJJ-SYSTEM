@@ -461,7 +461,11 @@ def fetch_aereomar():
                 ship_type = "maritimo"
                 
             warehouse = ""
-            if len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
+            if len(json_data) > 1 and json_data[1] and isinstance(json_data[1], list):
+                if len(json_data[1]) > 0 and 'number' in json_data[1][0]:
+                    warehouse = json_data[1][0]['number']
+                    
+            if not warehouse and len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
                 if len(json_data[3]) > 0 and 'number' in json_data[3][0]:
                     warehouse = json_data[3][0]['number']
 
