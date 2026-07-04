@@ -79,6 +79,10 @@
                     </button>
                 </div>
             </div>
+            <div class="form-group">
+                <label>Warehouse (WR) Auto</label>
+                <input type="text" name="warehouse[]" class="form-control" placeholder="WR...">
+            </div>
         </div>
         <div class="grid-2">
             <div class="form-group">
@@ -245,11 +249,19 @@ function fetchAereomarData(inputElement) {
             const row = inputElement.closest('.paquete-row');
             
             if (data.descripcion) {
+                row.querySelector('input[name="nombre[]"]').value = data.descripcion;
                 row.querySelector('input[name="descripcion[]"]').value = data.descripcion;
             }
             
             if (data.peso) {
                 row.querySelector('input[name="peso[]"]').value = data.peso;
+            }
+
+            if (data.warehouse) {
+                const warehouseInput = row.querySelector('input[name="warehouse[]"]');
+                if (warehouseInput) {
+                    warehouseInput.value = data.warehouse;
+                }
             }
 
             if (data.tipo_envio) {

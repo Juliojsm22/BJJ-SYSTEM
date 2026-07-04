@@ -56,6 +56,7 @@ class Paquete(db.Model):
     costo = db.Column(db.Float)
     tracking_number = db.Column(db.String(50), unique=True)
     numero_seguimiento = db.Column(db.String(100), index=True)
+    warehouse = db.Column(db.String(100), index=True)
     estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
