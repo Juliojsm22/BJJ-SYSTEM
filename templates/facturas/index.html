@@ -87,19 +87,25 @@
                 <label>Filtrar por Fecha:</label>
                 <select name="filtro_fecha" id="filtro_fecha" class="form-control" onchange="toggleFiltroFecha()">
                     <option value="">Todo (Sin filtro de fecha)</option>
-                    <option value="mes">Por Mes</option>
+                    <option value="dia">Por Día</option>
                     <option value="semana">Por Semana</option>
+                    <option value="mes">Por Mes</option>
                 </select>
+            </div>
+            
+            <div class="form-group" id="div_dia" style="display:none;">
+                <label>Seleccione el Día:</label>
+                <input type="date" name="dia" class="form-control">
+            </div>
+
+            <div class="form-group" id="div_semana" style="display:none;">
+                <label>Seleccione la Semana:</label>
+                <input type="week" name="semana" class="form-control">
             </div>
             
             <div class="form-group" id="div_mes" style="display:none;">
                 <label>Seleccione el Mes:</label>
                 <input type="month" name="mes" class="form-control">
-            </div>
-            
-            <div class="form-group" id="div_semana" style="display:none;">
-                <label>Seleccione la Semana:</label>
-                <input type="week" name="semana" class="form-control">
             </div>
             
             <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
@@ -140,8 +146,9 @@ function cerrarExportModal() {
 
 function toggleFiltroFecha() {
     var val = document.getElementById('filtro_fecha').value;
-    document.getElementById('div_mes').style.display = (val === 'mes') ? 'block' : 'none';
+    document.getElementById('div_dia').style.display = (val === 'dia') ? 'block' : 'none';
     document.getElementById('div_semana').style.display = (val === 'semana') ? 'block' : 'none';
+    document.getElementById('div_mes').style.display = (val === 'mes') ? 'block' : 'none';
 }
 </script>
 {% endblock %}

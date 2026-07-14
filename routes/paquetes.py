@@ -320,6 +320,7 @@ def exportar():
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
     filtro_fecha = request.args.get('filtro_fecha', '')
+    dia = request.args.get('dia', '')
     mes = request.args.get('mes', '')
     semana = request.args.get('semana', '')
 
@@ -337,7 +338,13 @@ def exportar():
     elif estado == 'facturado':
         query = query.filter(Paquete.factura_id != None)
 
-    if filtro_fecha == 'mes' and mes:
+    if filtro_fecha == 'dia' and dia:
+        from datetime import datetime, time
+        target_date = datetime.strptime(dia, '%Y-%m-%d').date()
+        start_date = datetime.combine(target_date, time.min)
+        end_date = datetime.combine(target_date, time.max)
+        query = query.filter(Paquete.registrado_en >= start_date, Paquete.registrado_en <= end_date)
+    elif filtro_fecha == 'mes' and mes:
         year, month = map(int, mes.split('-'))
         import calendar
         from datetime import datetime
