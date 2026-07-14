@@ -209,7 +209,10 @@ def paquetes_cliente(cliente_id):
     return jsonify([{
         'id': p.id, 'nombre': p.nombre, 'peso': p.peso,
         'tipo_envio': p.tipo_envio, 'costo': p.costo,
-        'factura_previa': p.factura.numero if p.factura else None
+        'factura_previa': p.factura.numero if p.factura else None,
+        'numero_seguimiento': p.numero_seguimiento,
+        'tracking_number': p.tracking_number,
+        'estado_rastreo': p.estado_rastreo
     } for p in paquetes])
 
 @facturas_bp.route('/eliminar/<int:id>', methods=['POST'])
@@ -416,7 +419,7 @@ def exportar():
     ws = wb.active
     ws.title = "Facturas"
 
-    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Notas']
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Notas']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -436,6 +439,7 @@ def exportar():
             f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
             f.estado.upper(),
             f.total,
+            f.total * 37,
             costo_agencia,
             ganancia,
             len(f.paquetes),

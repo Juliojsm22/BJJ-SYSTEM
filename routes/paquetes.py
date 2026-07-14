@@ -358,7 +358,7 @@ def exportar():
     ws = wb.active
     ws.title = "Paquetes"
 
-    headers = ['ID', 'Tracking (Sistema)', 'Guía Rastreo', 'Cliente', 'Contenido', 'Peso (lb)', 'Tipo', 'Precio Costo ($)', 'Precio Venta ($)', 'Ganancia ($)', 'Estado Actual', 'Facturado', 'Fecha Registro']
+    headers = ['ID', 'Tracking (Sistema)', 'Guía Rastreo', 'Cliente', 'Contenido', 'Peso (lb)', 'Tipo', 'Precio Costo ($)', 'Precio Venta ($)', 'Precio Venta (C$)', 'Ganancia ($)', 'Estado Actual', 'Facturado', 'Fecha Registro']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -387,6 +387,7 @@ def exportar():
             p.tipo_envio.upper() if p.tipo_envio else '',
             precio_costo,
             precio_venta,
+            precio_venta * 37,
             ganancia,
             p.estado_rastreo.replace('_', ' ').title() if p.estado_rastreo else '',
             'SÍ' if p.factura_id else 'NO',

@@ -25,6 +25,20 @@
 
             <div id="paquetesSection" style="display:none;">
                 <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir *</label>
+                
+                <!-- Barcode Scanner -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom: 5px;">
+                        <div style="flex:1; position: relative;">
+                            <i class="fas fa-barcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
+                            <input type="text" id="barcodeScanner" class="form-control" placeholder="Escanear código de barras (Tracking)..." autocomplete="off" style="padding-left: 35px;">
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="seleccionarTodos()" style="height: 38px;">Todos</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="deseleccionarTodos()" style="height: 38px;">Ninguno</button>
+                    </div>
+                    <small style="color:var(--text-muted); font-size:12px;">Escanee el paquete para marcarlo como listo para facturar.</small>
+                </div>
+
                 <div id="paquetesList" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
                     <div style="padding:20px;text-align:center;color:var(--text-muted);">
                         <i class="fas fa-spinner fa-spin"></i> Cargando paquetes...
@@ -88,21 +102,81 @@ document.getElementById('clienteSelect').addEventListener('change', function() {
 function renderPaquetes(paquetes) {
     const list = document.getElementById('paquetesList');
     list.innerHTML = paquetes.map(p => `
-        <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" 
+        <label id="label_paquete_${p.id}" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" 
                onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''" >
-            <input type="checkbox" name="paquete_ids" value="${p.id}" 
-                   onchange="actualizarTotal()" checked
+            <input type="checkbox" name="paquete_ids" value="${p.id}" id="check_paquete_${p.id}"
+                   onchange="actualizarTotal()" 
                    style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
             <div style="flex:1;">
                 <div style="font-weight:500;">${p.nombre} ${p.factura_previa ? `<span class="badge badge-warning" style="font-size:10px;margin-left:8px;">De ${p.factura_previa}</span>` : ''}</div>
                 <div style="font-size:12px;color:var(--text-muted);">
                     <span class="badge badge-${p.tipo_envio}">${p.tipo_envio === 'aereo' ? 'Aéreo' : 'Marítimo'}</span>
-                    ${p.peso.toFixed(2)} lb
+                    ${p.peso.toFixed(2)} lb | Tracking: ${p.numero_seguimiento || p.tracking_number || 'N/A'}
+                    <span id="badge_ready_${p.id}" class="badge badge-success" style="display:none; font-size:10px; margin-left:8px;"><i class="fas fa-check"></i> Listo</span>
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success);">$${p.costo.toFixed(2)}</div>
         </label>
     `).join('');
+    actualizarTotal();
+    
+    setTimeout(() => {
+        const scanner = document.getElementById('barcodeScanner');
+        if (scanner) scanner.focus();
+    }, 100);
+}
+
+document.getElementById('barcodeScanner')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const code = this.value.trim().toLowerCase();
+        if (!code) return;
+        
+        let found = false;
+        for (let p of paquetesData) {
+            const tr = (p.tracking_number || '').toLowerCase();
+            const seg = (p.numero_seguimiento || '').toLowerCase();
+            if (tr === code || seg === code || tr.includes(code) || seg.includes(code)) {
+                const checkbox = document.getElementById('check_paquete_' + p.id);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    const label = document.getElementById('label_paquete_' + p.id);
+                    if (label) {
+                        label.style.background = 'rgba(45, 212, 191, 0.15)';
+                        setTimeout(() => label.style.background = '', 1500);
+                    }
+                    const badge = document.getElementById('badge_ready_' + p.id);
+                    if (badge) badge.style.display = 'inline-block';
+                    
+                    actualizarTotal();
+                }
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            alert('Paquete no encontrado para este cliente con el código: ' + this.value);
+        }
+        this.value = '';
+    }
+});
+
+function seleccionarTodos() {
+    document.querySelectorAll('input[name="paquete_ids"]').forEach(c => {
+        c.checked = true;
+        const badge = document.getElementById('badge_ready_' + c.value);
+        if (badge) badge.style.display = 'inline-block';
+    });
+    actualizarTotal();
+}
+
+function deseleccionarTodos() {
+    document.querySelectorAll('input[name="paquete_ids"]').forEach(c => {
+        c.checked = false;
+        const badge = document.getElementById('badge_ready_' + c.value);
+        if (badge) badge.style.display = 'none';
+    });
     actualizarTotal();
 }
 
