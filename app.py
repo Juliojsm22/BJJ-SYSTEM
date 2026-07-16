@@ -62,7 +62,7 @@ def create_app():
     from flask import session
     from datetime import timedelta
     
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=10)
 
     @app.before_request
     def make_session_permanent():
