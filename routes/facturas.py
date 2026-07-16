@@ -51,6 +51,7 @@ def nueva():
                 if paquete.factura_id and paquete.factura_id != factura.id:
                     facturas_afectadas.add(paquete.factura_id)
                 paquete.factura_id = factura.id
+                paquete.estado_rastreo = 'listo_para_retirar'
 
         db.session.flush()
 
@@ -115,6 +116,7 @@ def editar(id):
                 if paquete.factura_id and paquete.factura_id != factura.id:
                     facturas_afectadas.add(paquete.factura_id)
                 paquete.factura_id = factura.id
+                paquete.estado_rastreo = 'listo_para_retirar'
                 
         db.session.flush()
         
