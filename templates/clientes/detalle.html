@@ -214,11 +214,30 @@
     <div id="tab-paquetes" class="tab-pane active">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <h3 style="color:#1e293b; font-size:16px;">Historial de Paquetes</h3>
-            {% if cliente.paquetes_sin_facturar %}
-            <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white; font-size:13px; padding:6px 12px;">
-                <i class="fas fa-file-invoice"></i> Generar factura
-            </a>
-            {% endif %}
+            <div style="display:flex; gap:10px;">
+                {% if cliente.paquetes_sin_facturar %}
+                {% set tel = (cliente.telefono|string|replace('-', '')|replace(' ', '')) %}
+                {% if tel %}
+                {% set msg = "👋 *Hola " ~ cliente.nombre_completo ~ "*,\n\nTe informamos que tienes paquete(s) recién registrado(s) / pendiente(s) en *BJJ SYSTEM*:\n\n" %}
+                {% for p in cliente.paquetes_sin_facturar %}
+                    {% set track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True) %}
+                    {% set estado_str = "" %}
+                    {% if p.estado_rastreo == 'bodega_miami' %}{% set estado_str = "🏢🇺🇸 Bodega Miami" %}
+                    {% elif p.estado_rastreo == 'en_transito' %}{% set estado_str = "🚢/✈️ En tránsito" %}
+                    {% elif p.estado_rastreo == 'listo_para_retirar' %}{% set estado_str = "✅ Listo para retirar" %}
+                    {% else %}{% set estado_str = p.estado_rastreo|replace('_', ' ')|title %}{% endif %}
+                    {% set msg = msg ~ "🔸 *" ~ p.nombre ~ "* (" ~ estado_str ~ ")\nTracking: " ~ p.tracking_number ~ "\n🔗 Rastreo: " ~ track_url ~ "\n\n" %}
+                {% endfor %}
+                {% set wa_url = "https://api.whatsapp.com/send?phone=" ~ tel ~ "&text=" ~ msg|urlencode %}
+                <a href="{{ wa_url }}" target="_blank" class="btn" style="background:#25D366; color:white; font-size:13px; padding:6px 12px;">
+                    <i class="fab fa-whatsapp"></i> Notificar Paquetes
+                </a>
+                {% endif %}
+                <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white; font-size:13px; padding:6px 12px;">
+                    <i class="fas fa-file-invoice"></i> Generar factura
+                </a>
+                {% endif %}
+            </div>
         </div>
         
         {% if cliente.paquetes %}

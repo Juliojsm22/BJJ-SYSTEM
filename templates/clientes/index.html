@@ -56,10 +56,10 @@
                             <a href="{{ url_for('paquetes.nuevo') }}?cliente_id={{ c.id }}" class="btn btn-sm btn-success" title="Agregar paquete">
                                 <i class="fas fa-box"></i>
                             </a>
-                            {% if current_user.rol == 'admin' %}
                             <a href="{{ url_for('clientes.editar', id=c.id) }}" class="btn btn-sm btn-warning" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            {% if current_user.rol == 'admin' %}
                             <form method="POST" action="{{ url_for('clientes.eliminar', id=c.id) }}" onsubmit="return confirm('¿Eliminar cliente?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">

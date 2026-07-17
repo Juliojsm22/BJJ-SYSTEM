@@ -94,11 +94,11 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:6px;">
+                            <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning" title="Editar"><i class="fas fa-edit"></i></a>
                             {% if current_user.rol == 'admin' %}
-                            <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                             <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                <button type="submit" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </form>
                             {% endif %}
                             {% if p.factura_id %}

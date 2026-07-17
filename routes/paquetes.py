@@ -160,10 +160,6 @@ def nuevo():
 @paquetes_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para editar paquetes.', 'error')
-        return redirect(url_for('paquetes.index'))
-        
     paquete = Paquete.query.get_or_404(id)
     clientes = Cliente.query.filter_by(activo=True).order_by(Cliente.nombre_completo).all()
 

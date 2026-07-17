@@ -75,10 +75,6 @@ def nuevo():
 @clientes_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para editar clientes.', 'error')
-        return redirect(url_for('clientes.index'))
-        
     cliente = Cliente.query.get_or_404(id)
     if request.method == 'POST':
         cedula = request.form.get('cedula').strip().upper()
