@@ -49,7 +49,7 @@ class Cliente(db.Model):
 class Paquete(db.Model):
     __tablename__ = 'paquetes'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(150), nullable=False)
+    nombre = db.Column(db.String(255), nullable=False)
     descripcion = db.Column(db.Text)
     peso = db.Column(db.Float, nullable=False)
     tipo_envio = db.Column(db.String(10), nullable=False, index=True)  # aereo, maritimo
