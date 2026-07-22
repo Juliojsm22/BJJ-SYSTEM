@@ -1075,6 +1075,14 @@
                         <span>Descripción</span>
                         <strong>{{ paquete.descripcion or paquete.nombre }}</strong>
                     </div>
+                    <div class="info-item">
+                        <span>Tracking</span>
+                        <strong>{{ paquete.tracking_number }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Peso</span>
+                        <strong>{{ paquete.peso }} lb</strong>
+                    </div>
                 </div>
 
                 <!-- Línea de Tiempo (Stepper) -->

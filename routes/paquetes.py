@@ -120,7 +120,7 @@ def nuevo():
                         estado_str = p.estado_rastreo.replace('_', ' ').title()
                     
                     track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
-                    mensaje += f"🔸 *{p.nombre}* ({estado_str})\nTracking: {p.tracking_number}\n🔗 Rastreo: {track_url}\n\n"
+                    mensaje += f"🔸 *{p.nombre}* ({estado_str})\nTracking: {p.tracking_number}\nPeso: {p.peso} lb\n🔗 Rastreo: {track_url}\n\n"
                 mensaje += "¡Gracias por preferir *BJJ SYSTEM*! 🚀"
                 
                 telefono_limpio = ''.join(filter(str.isdigit, str(cliente.telefono)))
