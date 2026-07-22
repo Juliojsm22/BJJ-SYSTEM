@@ -230,7 +230,7 @@ Te informamos que tienes paquete(s) recién registrado(s) / pendiente(s) en *BJJ
 {% elif p.estado_rastreo == 'listo_para_retirar' %}{% set estado_str = "✅ Listo para retirar" %}
 {% else %}{% set estado_str = p.estado_rastreo|replace('_', ' ')|title %}{% endif %}
 🔸 *{{ p.nombre }}* ({{ estado_str }})
-Tracking: {{ p.tracking_number }}
+Tracking: {{ p.numero_seguimiento or p.tracking_number }}
 Peso: {{ p.peso }} lb
 🔗 Rastreo: {{ track_url }}
 
