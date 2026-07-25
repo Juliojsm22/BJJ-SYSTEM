@@ -116,7 +116,7 @@ def editar(id):
                 if paquete.factura_id and paquete.factura_id != factura.id:
                     facturas_afectadas.add(paquete.factura_id)
                 paquete.factura_id = factura.id
-                paquete.estado_rastreo = 'listo_para_retirar'
+                paquete.estado_rastreo = 'entregado' if factura.estado == 'pagada' else 'listo_para_retirar'
                 
         db.session.flush()
         
