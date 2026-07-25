@@ -1091,15 +1091,15 @@
                         <div class="step-icon"><i class="fas fa-warehouse"></i></div>
                         <div class="step-label">Recepción<br>Miami</div>
                     </div>
-                    <div class="step {% if paquete.estado_rastreo in ['en_transito', 'listo_para_retirar', 'En Tránsito (Aéreo)', 'En Tránsito (Marítimo)', 'En Aduana', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
+                    <div class="step {% if paquete.estado_rastreo in ['en_transito', 'listo_para_retirar', 'entregado', 'En Tránsito (Aéreo)', 'En Tránsito (Marítimo)', 'En Aduana', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
                         <div class="step-icon"><i class="fas fa-{% if paquete.tipo_envio == 'aereo' %}plane{% else %}ship{% endif %}"></i></div>
                         <div class="step-label">En<br>Tránsito</div>
                     </div>
-                    <div class="step {% if paquete.estado_rastreo in ['listo_para_retirar', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
+                    <div class="step {% if paquete.estado_rastreo in ['listo_para_retirar', 'entregado', 'Listo para Retirar', 'Entregado'] %}done{% endif %}">
                         <div class="step-icon"><i class="fas fa-box-open"></i></div>
                         <div class="step-label">Listo para<br>Retirar</div>
                     </div>
-                    <div class="step {% if paquete.estado_rastreo == 'Entregado' %}done{% endif %}">
+                    <div class="step {% if paquete.estado_rastreo in ['entregado', 'Entregado'] %}done{% endif %}">
                         <div class="step-icon"><i class="fas fa-check-circle"></i></div>
                         <div class="step-label">Paquete<br>Entregado</div>
                     </div>
