@@ -177,6 +177,19 @@ def pagar(id):
         )
         db.session.add(pago)
         factura.estado = 'pagada'
+        
+        from models import HistorialRastreo
+        for paquete in factura.paquetes:
+            paquete.estado_rastreo = 'entregado'
+            nuevo_historial = HistorialRastreo(
+                paquete_id=paquete.id,
+                estado='entregado',
+                ubicacion='Agencia',
+                comentarios=f'Entregado tras pago de factura {factura.numero}',
+                creado_por=current_user.id
+            )
+            db.session.add(nuevo_historial)
+            
         db.session.commit()
         
         from models import registrar_actividad
@@ -428,7 +441,7 @@ def exportar():
     ws = wb.active
     ws.title = "Facturas"
 
-    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Notas']
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Warehouses', 'Notas']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -439,6 +452,8 @@ def exportar():
     for f in facturas:
         costo_agencia = sum((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6) for p in f.paquetes)
         ganancia = f.total - costo_agencia
+        warehouses_list = [p.warehouse for p in f.paquetes if p.warehouse]
+        warehouses_str = ', '.join(warehouses_list) if warehouses_list else ''
         
         ws.append([
             f.id,
@@ -452,6 +467,7 @@ def exportar():
             costo_agencia,
             ganancia,
             len(f.paquetes),
+            warehouses_str,
             f.notas or ''
         ])
 
