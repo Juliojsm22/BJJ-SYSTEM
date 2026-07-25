@@ -493,3 +493,24 @@ def exportar():
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+@facturas_bp.route('/fix-entregados')
+@login_required
+def fix_entregados():
+    if current_user.rol != 'admin':
+        return "Acceso denegado."
+    facturas_pagadas = Factura.query.filter_by(estado='pagada').all()
+    count = 0
+    from models import HistorialRastreo
+    for f in facturas_pagadas:
+        for p in f.paquetes:
+            if p.estado_rastreo != 'entregado':
+                p.estado_rastreo = 'entregado'
+                h = HistorialRastreo(
+                    paquete_id=p.id, estado='entregado', ubicacion='Agencia',
+                    comentarios='Actualización automática retroactiva', creado_por=current_user.id
+                )
+                db.session.add(h)
+                count += 1
+    db.session.commit()
+    return f"Se actualizaron {count} paquetes a 'entregado'. Ya puedes volver a la página principal."
