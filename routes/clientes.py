@@ -34,7 +34,7 @@ def nuevo():
             
         telefono = request.form.get('telefono', '').strip()
         if telefono:
-            telefono_limpio = re.sub(r'[\s\-\+]', '', telefono)
+            telefono_limpio = re.sub(r'[\s\-\+\(\)]', '', telefono)
             if not telefono_limpio.isdigit() or len(telefono_limpio) < 8:
                 flash('El número telefónico debe ser válido (mínimo 8 dígitos).', 'error')
                 return render_template('clientes/form.html', cliente=None)
@@ -99,7 +99,7 @@ def editar(id):
         
         telefono = request.form.get('telefono', '').strip()
         if telefono:
-            telefono_limpio = re.sub(r'[\s\-\+]', '', telefono)
+            telefono_limpio = re.sub(r'[\s\-\+\(\)]', '', telefono)
             if not telefono_limpio.isdigit() or len(telefono_limpio) < 8:
                 flash('El número telefónico debe ser válido (mínimo 8 dígitos).', 'error')
                 return render_template('clientes/form.html', cliente=cliente)

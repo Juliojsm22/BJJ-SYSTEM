@@ -84,7 +84,9 @@ def nueva():
 def detalle(id):
     factura = Factura.query.get_or_404(id)
     # WhatsApp message
-    tel = (factura.cliente.telefono or '').replace('-', '').replace(' ', '').replace('+', '')
+    import re
+    tel_raw = factura.cliente.telefono or ''
+    tel = re.sub(r'[\s\-\+\(\)]', '', tel_raw)
     if tel and len(tel) == 8:
         tel = '505' + tel
     msg = (f"Hola {factura.cliente.nombre_completo}, adjunto su factura {factura.numero} "
