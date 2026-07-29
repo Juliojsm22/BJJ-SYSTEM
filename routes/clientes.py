@@ -33,14 +33,11 @@ def nuevo():
             return render_template('clientes/form.html', cliente=None)
             
         telefono = request.form.get('telefono', '').strip()
-        # Limpiar +505 y espacios
-        telefono_digits = re.sub(r'^\+505\s*|-', '', telefono).strip()
-        
-        if telefono_digits and (len(telefono_digits) != 8 or not telefono_digits.isdigit()):
-            flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
-            return render_template('clientes/form.html', cliente=None)
-            
-        telefono_formatted = f'+505 {telefono_digits}' if telefono_digits else ''
+        if telefono:
+            telefono_limpio = re.sub(r'[\s\-\+]', '', telefono)
+            if not telefono_limpio.isdigit() or len(telefono_limpio) < 8:
+                flash('El número telefónico debe ser válido (mínimo 8 dígitos).', 'error')
+                return render_template('clientes/form.html', cliente=None)
             
         cliente_existente = Cliente.query.filter_by(cedula=cedula).first()
         if cliente_existente:
@@ -50,14 +47,14 @@ def nuevo():
             else:
                 cliente_existente.activo = True
                 cliente_existente.nombre_completo = request.form.get('nombre_completo').strip()
-                cliente_existente.telefono = telefono_formatted
+                cliente_existente.telefono = telefono
                 cliente_existente.email = request.form.get('email').strip()
                 cliente = cliente_existente
         else:
             cliente = Cliente(
                 nombre_completo=request.form.get('nombre_completo').strip(),
                 cedula=cedula,
-                telefono=telefono_formatted,
+                telefono=telefono,
                 email=request.form.get('email').strip()
             )
             db.session.add(cliente)
@@ -101,17 +98,15 @@ def editar(id):
             return render_template('clientes/form.html', cliente=cliente)
         
         telefono = request.form.get('telefono', '').strip()
-        telefono_digits = re.sub(r'^\+505\s*|-', '', telefono).strip()
-        
-        if telefono_digits and (len(telefono_digits) != 8 or not telefono_digits.isdigit()):
-            flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
-            return render_template('clientes/form.html', cliente=cliente)
-            
-        telefono_formatted = f'+505 {telefono_digits}' if telefono_digits else ''
+        if telefono:
+            telefono_limpio = re.sub(r'[\s\-\+]', '', telefono)
+            if not telefono_limpio.isdigit() or len(telefono_limpio) < 8:
+                flash('El número telefónico debe ser válido (mínimo 8 dígitos).', 'error')
+                return render_template('clientes/form.html', cliente=cliente)
             
         cliente.nombre_completo = request.form.get('nombre_completo').strip()
         cliente.cedula = cedula
-        cliente.telefono = telefono_formatted
+        cliente.telefono = telefono
         cliente.email = request.form.get('email').strip()
         
         tarifa_aereo = request.form.get('tarifa_aereo')

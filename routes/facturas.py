@@ -84,11 +84,13 @@ def nueva():
 def detalle(id):
     factura = Factura.query.get_or_404(id)
     # WhatsApp message
-    tel = (factura.cliente.telefono or '').replace('-', '').replace(' ', '')
+    tel = (factura.cliente.telefono or '').replace('-', '').replace(' ', '').replace('+', '')
+    if tel and len(tel) == 8:
+        tel = '505' + tel
     msg = (f"Hola {factura.cliente.nombre_completo}, adjunto su factura {factura.numero} "
            f"por un total de ${factura.total:.2f}. Gracias por preferirnos.")
     import urllib.parse
-    wa_url = f"https://wa.me/505{tel}?text={urllib.parse.quote(msg)}" if tel else f"https://wa.me/?text={urllib.parse.quote(msg)}"
+    wa_url = f"https://wa.me/{tel}?text={urllib.parse.quote(msg)}" if tel else f"https://wa.me/?text={urllib.parse.quote(msg)}"
     return render_template('facturas/detalle.html', factura=factura, whatsapp_url=wa_url)
 
 @facturas_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
