@@ -32,23 +32,36 @@ def nuevo():
             flash('La cédula debe tener el formato de Nicaragua: 000-000000-0000A', 'error')
             return render_template('clientes/form.html', cliente=None)
             
-        if Cliente.query.filter_by(cedula=cedula).first():
-            flash('Ya existe un cliente con esa cédula.', 'error')
-            return render_template('clientes/form.html', cliente=None)
-        
         telefono = request.form.get('telefono', '').strip()
-        if telefono and (len(telefono) != 8 or not telefono.isdigit()):
+        # Limpiar +505 y espacios
+        telefono_digits = re.sub(r'^\+505\s*|-', '', telefono).strip()
+        
+        if telefono_digits and (len(telefono_digits) != 8 or not telefono_digits.isdigit()):
             flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
             return render_template('clientes/form.html', cliente=None)
             
-        cliente = Cliente(
-            nombre_completo=request.form.get('nombre_completo').strip(),
-            cedula=cedula,
-            telefono=telefono,
-            email=request.form.get('email').strip()
-        )
-        db.session.add(cliente)
-        db.session.flush() # Para obtener el ID del cliente
+        telefono_formatted = f'+505 {telefono_digits}' if telefono_digits else ''
+            
+        cliente_existente = Cliente.query.filter_by(cedula=cedula).first()
+        if cliente_existente:
+            if cliente_existente.activo:
+                flash('Ya existe un cliente con esa cédula.', 'error')
+                return render_template('clientes/form.html', cliente=None)
+            else:
+                cliente_existente.activo = True
+                cliente_existente.nombre_completo = request.form.get('nombre_completo').strip()
+                cliente_existente.telefono = telefono_formatted
+                cliente_existente.email = request.form.get('email').strip()
+                cliente = cliente_existente
+        else:
+            cliente = Cliente(
+                nombre_completo=request.form.get('nombre_completo').strip(),
+                cedula=cedula,
+                telefono=telefono_formatted,
+                email=request.form.get('email').strip()
+            )
+            db.session.add(cliente)
+            db.session.flush() # Para obtener el ID del cliente
         
         tarifa_aereo = request.form.get('tarifa_aereo')
         tarifa_maritimo = request.form.get('tarifa_maritimo')
@@ -88,13 +101,17 @@ def editar(id):
             return render_template('clientes/form.html', cliente=cliente)
         
         telefono = request.form.get('telefono', '').strip()
-        if telefono and (len(telefono) != 8 or not telefono.isdigit()):
+        telefono_digits = re.sub(r'^\+505\s*|-', '', telefono).strip()
+        
+        if telefono_digits and (len(telefono_digits) != 8 or not telefono_digits.isdigit()):
             flash('El número telefónico debe contener exactamente 8 dígitos numéricos.', 'error')
             return render_template('clientes/form.html', cliente=cliente)
             
+        telefono_formatted = f'+505 {telefono_digits}' if telefono_digits else ''
+            
         cliente.nombre_completo = request.form.get('nombre_completo').strip()
         cliente.cedula = cedula
-        cliente.telefono = telefono
+        cliente.telefono = telefono_formatted
         cliente.email = request.form.get('email').strip()
         
         tarifa_aereo = request.form.get('tarifa_aereo')
