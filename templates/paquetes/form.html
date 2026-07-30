@@ -147,5 +147,14 @@ function actualizarTextosTarifa() {
 
 if (selCliente) selCliente.addEventListener('change', actualizarTextosTarifa);
 actualizarTextosTarifa(); // run on load
+
+// Prevenir envío automático del formulario al usar Enter
+document.getElementById('formPaquete').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+        }
+    }
+});
 </script>
 {% endblock %}

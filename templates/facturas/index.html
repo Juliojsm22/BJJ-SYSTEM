@@ -81,8 +81,15 @@
         <button type="button" onclick="cerrarExportModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
         <h3 style="margin-bottom:16px; font-family:'Syne', sans-serif;"><i class="fas fa-file-excel"></i> Exportar Facturas</h3>
         <form action="{{ url_for('facturas.exportar') }}" method="GET">
-            <input type="hidden" name="estado" value="{{ estado }}">
-            
+            <div class="form-group">
+                <label>Estado de Facturas:</label>
+                <select name="estado" class="form-control">
+                    <option value="" {% if not estado %}selected{% endif %}>Todas</option>
+                    <option value="borrador" {% if estado=='borrador' %}selected{% endif %}>Borrador</option>
+                    <option value="finalizada" {% if estado=='finalizada' %}selected{% endif %}>Finalizadas (Por pagar)</option>
+                    <option value="pagada" {% if estado=='pagada' %}selected{% endif %}>Pagadas</option>
+                </select>
+            </div>
             <div class="form-group">
                 <label>Filtrar por Fecha:</label>
                 <select name="filtro_fecha" id="filtro_fecha" class="form-control" onchange="toggleFiltroFecha()">

@@ -296,6 +296,19 @@ function fetchAereomarData(inputElement) {
     });
 }
 
+// Prevenir envío automático del formulario al usar Enter (ej. por lector de códigos de barra)
+document.getElementById('formPaquetes').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+            // Si el enter vino del campo de tracking, forzar el blur para buscar info
+            if (e.target.name === 'numero_seguimiento[]') {
+                e.target.blur();
+            }
+        }
+    }
+});
+
 // Init
 cargarTarifasBase();
 agregarPaquete(); // Agrega al menos un paquete inicial
