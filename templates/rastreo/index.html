@@ -1155,7 +1155,22 @@
         document.addEventListener("DOMContentLoaded", function() {
             var el = document.getElementById('seccion-rastreo');
             if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
+                // Un ligero retraso para asegurar que la página renderizó y el usuario nota el inicio del scroll
+                setTimeout(function() {
+                    // Calculamos la posición con un offset para que no quede pegado al borde superior
+                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                    
+                    // Un sutil efecto de resaltado para enfocar la vista del usuario en los resultados
+                    el.style.transition = "box-shadow 0.8s ease-out, transform 0.8s ease-out";
+                    el.style.transform = "scale(1.01)";
+                    el.style.boxShadow = "0 10px 40px rgba(61, 91, 160, 0.2)";
+                    
+                    setTimeout(() => {
+                        el.style.transform = "scale(1)";
+                        el.style.boxShadow = "none";
+                    }, 1500);
+                }, 300);
             }
         });
     </script>
