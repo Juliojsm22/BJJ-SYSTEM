@@ -50,11 +50,18 @@ def nuevo():
         estados_rastreo = request.form.getlist('estado_rastreo[]')
         
         # Validar números de seguimiento duplicados antes de guardar
+        numeros_vistos = set()
         for num in numeros_seguimiento:
-            if num.strip():
-                existente = Paquete.query.filter_by(numero_seguimiento=num.strip()).first()
+            num_strip = num.strip()
+            if num_strip:
+                if num_strip in numeros_vistos:
+                    flash(f'El número de seguimiento "{num_strip}" está duplicado en el formulario.', 'error')
+                    return redirect(request.url)
+                numeros_vistos.add(num_strip)
+                
+                existente = Paquete.query.filter_by(numero_seguimiento=num_strip).first()
                 if existente:
-                    flash(f'El número de seguimiento "{num.strip()}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
+                    flash(f'El número de seguimiento "{num_strip}" ya está registrado en el paquete {existente.tracking_number}.', 'error')
                     return redirect(request.url)
                     
         paquetes_creados = []

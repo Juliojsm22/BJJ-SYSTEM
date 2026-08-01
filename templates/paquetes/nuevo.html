@@ -309,6 +309,29 @@ document.getElementById('formPaquetes').addEventListener('keydown', function(e) 
     }
 });
 
+// Prevenir doble envío del formulario
+document.getElementById('formPaquetes').addEventListener('submit', function(e) {
+    const btns = this.querySelectorAll('button[type=submit]');
+    
+    // Para asegurar que el valor del botón presionado se envíe, añadimos un input oculto
+    const submitter = e.submitter;
+    if (submitter && submitter.name) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = submitter.name;
+        hidden.value = submitter.value;
+        this.appendChild(hidden);
+    }
+    
+    btns.forEach(btn => {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    });
+
+    setTimeout(() => {
+        btns.forEach(btn => btn.disabled = true);
+    }, 10);
+});
+
 // Init
 cargarTarifasBase();
 agregarPaquete(); // Agrega al menos un paquete inicial

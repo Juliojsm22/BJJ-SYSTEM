@@ -231,7 +231,8 @@ def paquetes_cliente(cliente_id):
         'factura_previa': p.factura.numero if p.factura else None,
         'numero_seguimiento': p.numero_seguimiento,
         'tracking_number': p.tracking_number,
-        'estado_rastreo': p.estado_rastreo
+        'estado_rastreo': p.estado_rastreo,
+        'warehouse': p.warehouse
     } for p in paquetes])
 
 @facturas_bp.route('/eliminar/<int:id>', methods=['POST'])

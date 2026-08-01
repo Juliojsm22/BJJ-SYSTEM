@@ -92,17 +92,23 @@ def index():
     else:
         # Últimos 6 meses
         for i in range(5, -1, -1):
-            mes = hoy - timedelta(days=30 * i)
-            inicio = mes.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            if mes.month == 12:
-                fin = mes.replace(year=mes.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            target_month = hoy.month - i
+            target_year = hoy.year
+            while target_month <= 0:
+                target_month += 12
+                target_year -= 1
+                
+            inicio = hoy.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            if target_month == 12:
+                fin = hoy.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
-                fin = mes.replace(month=mes.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                
             total = db.session.query(func.sum(ganancia_expr)).filter(
                 Paquete.registrado_en >= inicio,
                 Paquete.registrado_en < fin
             ).scalar() or 0
-            tendencia_labels.append(mes.strftime('%b %Y'))
+            tendencia_labels.append(inicio.strftime('%b %Y'))
             tendencia_valores.append(float(total))
 
     aereos = Paquete.query.filter(Paquete.tipo_envio == 'aereo', Paquete.registrado_en >= inicio_periodo).count()
@@ -222,17 +228,23 @@ def pdf_reporte():
         titulo_tabla = 'Resumen Mensual (Últimos 6 Meses)'
         encabezado_columna = 'Mes'
         for i in range(5, -1, -1):
-            mes = hoy - timedelta(days=30 * i)
-            inicio = mes.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            if mes.month == 12:
-                fin = mes.replace(year=mes.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            target_month = hoy.month - i
+            target_year = hoy.year
+            while target_month <= 0:
+                target_month += 12
+                target_year -= 1
+                
+            inicio = hoy.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            if target_month == 12:
+                fin = hoy.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
-                fin = mes.replace(month=mes.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                
             total = db.session.query(func.sum(ganancia_expr)).filter(
                 Paquete.registrado_en >= inicio,
                 Paquete.registrado_en < fin
             ).scalar() or 0
-            tendencia_data.append([mes.strftime('%b %Y'), f'${total:.2f}'])
+            tendencia_data.append([inicio.strftime('%b %Y'), f'${total:.2f}'])
 
     # Reverse data so most recent is at top, like in HTML
     tendencia_data.reverse()
