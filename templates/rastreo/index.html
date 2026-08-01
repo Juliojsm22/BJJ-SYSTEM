@@ -851,7 +851,7 @@
             <p style="color: rgba(255, 255, 255, 0.9); max-width: 800px; margin: 0 auto 30px; font-size: 1.2rem; line-height: 1.6;">
                 <strong>Somos ENVÍOS BJJ</strong>, tu agencia de paquetería de confianza. Traemos tus compras en línea y encomiendas de EEUU a Nicaragua con total seguridad, rapidez y el mejor precio del mercado. Contamos con años de experiencia garantizando que tus paquetes lleguen intactos y a tiempo.
             </p>
-            <a href="#seccion-rastreo" style="display: inline-block; padding: 15px 40px; background: white; color: var(--bjj-primary); border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); transition: transform 0.3s;">
+            <a href="#seccion-rastreo" onclick="smoothScrollToTracking(event)" style="display: inline-block; padding: 15px 40px; background: white; color: var(--bjj-primary); border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); transition: transform 0.3s;">
                 <i class="fas fa-search-location"></i> Rastrear Mi Paquete
             </a>
         </div>
@@ -1150,31 +1150,49 @@
             {% endif %}
         </div>
     </section>
-    {% if codigo or error %}
     <script>
+        function triggerTrackingAnimation(el) {
+            // Calculamos la posición con un offset para que no quede pegado al borde superior
+            const y = el.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            
+            // Un sutil efecto de resaltado para enfocar la vista del usuario en los resultados
+            el.style.transition = "box-shadow 0.8s ease-out, transform 0.8s ease-out";
+            el.style.transform = "scale(1.01)";
+            el.style.boxShadow = "0 10px 40px rgba(61, 91, 160, 0.2)";
+            
+            setTimeout(() => {
+                el.style.transform = "scale(1)";
+                el.style.boxShadow = "none";
+            }, 1500);
+        }
+
+        function smoothScrollToTracking(e) {
+            e.preventDefault();
+            var el = document.getElementById('seccion-rastreo');
+            if (el) {
+                triggerTrackingAnimation(el);
+                
+                // Si el input está visible, le damos focus para escribir de una vez
+                const input = document.getElementById('tracking_input');
+                if (input) {
+                    setTimeout(() => input.focus(), 600);
+                }
+            }
+        }
+    
         document.addEventListener("DOMContentLoaded", function() {
             var el = document.getElementById('seccion-rastreo');
+            {% if codigo or error %}
             if (el) {
                 // Un ligero retraso para asegurar que la página renderizó y el usuario nota el inicio del scroll
                 setTimeout(function() {
-                    // Calculamos la posición con un offset para que no quede pegado al borde superior
-                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                    
-                    // Un sutil efecto de resaltado para enfocar la vista del usuario en los resultados
-                    el.style.transition = "box-shadow 0.8s ease-out, transform 0.8s ease-out";
-                    el.style.transform = "scale(1.01)";
-                    el.style.boxShadow = "0 10px 40px rgba(61, 91, 160, 0.2)";
-                    
-                    setTimeout(() => {
-                        el.style.transform = "scale(1)";
-                        el.style.boxShadow = "none";
-                    }, 1500);
+                    triggerTrackingAnimation(el);
                 }, 300);
             }
+            {% endif %}
         });
     </script>
-    {% endif %}
 
     
 
