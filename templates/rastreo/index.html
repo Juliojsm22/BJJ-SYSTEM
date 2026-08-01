@@ -1032,10 +1032,12 @@
             </h2>
             <p>Ingresa tu número de guía para conocer el estado actual de tu paquete en tiempo real.</p>
             
-            <form method="GET" class="search-form">
-                <input type="text" name="codigo" value="{{ codigo }}" class="search-input" placeholder="Ej. BJJ-A-00001" required>
-                <button type="submit" class="search-btn"><i class="fas fa-search"></i> BUSCAR PAQUETE</button>
+            <form method="GET" class="search-form" id="trackingForm">
+                <input type="text" id="tracking_input" name="codigo" value="{{ codigo }}" class="search-input" placeholder="Ej. BJJ-A-00001" required>
+                <button type="submit" class="search-btn" id="btnBuscar"><i class="fas fa-search"></i> BUSCAR PAQUETE</button>
             </form>
+
+            <div id="trackingResultsContainer" style="transition: opacity 0.3s ease;">
 
             {% if error %}
             <div class="alert-box">
@@ -1146,8 +1148,10 @@
                         {% endfor %}
                     </ul>
                 </div>
+                </div>
             </div>
             {% endif %}
+            </div>
         </div>
     </section>
     <script>
@@ -1191,6 +1195,50 @@
                 }, 300);
             }
             {% endif %}
+
+            const form = document.getElementById('trackingForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('btnBuscar');
+                    const input = document.getElementById('tracking_input');
+                    const codigo = input.value.trim();
+                    const container = document.getElementById('trackingResultsContainer');
+                    
+                    if (!codigo) return;
+                    
+                    // Animación de carga
+                    btn.disabled = true;
+                    const originalBtnHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> BUSCANDO...';
+                    container.style.opacity = '0.3';
+                    
+                    fetch('/rastreo/?codigo=' + encodeURIComponent(codigo))
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newContainer = doc.getElementById('trackingResultsContainer');
+                            
+                            if (newContainer) {
+                                container.innerHTML = newContainer.innerHTML;
+                                container.style.opacity = '1';
+                                btn.disabled = false;
+                                btn.innerHTML = originalBtnHtml;
+                                
+                                triggerTrackingAnimation(document.getElementById('seccion-rastreo'));
+                                
+                                window.history.pushState({}, '', '/rastreo/?codigo=' + encodeURIComponent(codigo));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error:', err);
+                            btn.disabled = false;
+                            btn.innerHTML = originalBtnHtml;
+                            container.style.opacity = '1';
+                        });
+                });
+            }
         });
     </script>
 
