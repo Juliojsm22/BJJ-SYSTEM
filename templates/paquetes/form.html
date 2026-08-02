@@ -62,13 +62,22 @@
                 </div>
             </div>
             
-            <div class="form-group">
-                <label>Estado de Rastreo</label>
-                <select name="estado_rastreo" class="form-control">
-                    <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
-                    <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
-                    <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
-                </select>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Estado de Rastreo</label>
+                    <select name="estado_rastreo" class="form-control">
+                        <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
+                        <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
+                        <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
+                    </select>
+                </div>
+                {% if current_user.rol == 'admin' %}
+                <div class="form-group">
+                    <label>Fecha de Registro</label>
+                    <input type="datetime-local" name="registrado_en" class="form-control"
+                           value="{{ paquete.registrado_en.strftime('%Y-%m-%dT%H:%M') if paquete.registrado_en else '' }}">
+                </div>
+                {% endif %}
             </div>
 
             <!-- Costo calculado -->

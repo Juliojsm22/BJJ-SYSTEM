@@ -11,9 +11,16 @@
     <div class="card">
         <form method="POST">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
-                <div style="font-size:13px;color:var(--text-muted);">Cliente</div>
-                <div style="font-size:18px;font-weight:600;margin-top:4px;">{{ factura.cliente.nombre_completo }}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:15px;">
+                <div>
+                    <div style="font-size:13px;color:var(--text-muted);">Cliente</div>
+                    <div style="font-size:18px;font-weight:600;margin-top:4px;">{{ factura.cliente.nombre_completo }}</div>
+                </div>
+                <div style="min-width:240px;">
+                    <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px;">Fecha de Emisión</label>
+                    <input type="datetime-local" name="fecha_emision" class="form-control"
+                           value="{{ factura.fecha_emision.strftime('%Y-%m-%dT%H:%M') if factura.fecha_emision else '' }}">
+                </div>
             </div>
 
             <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir</label>

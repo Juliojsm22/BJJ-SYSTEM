@@ -203,6 +203,15 @@ def editar(id):
         paquete.costo = round(peso * tarifa, 2)
         paquete.cliente_id = int(request.form.get('cliente_id'))
         
+        if current_user.rol == 'admin':
+            registrado_en_str = request.form.get('registrado_en')
+            if registrado_en_str:
+                try:
+                    from datetime import datetime
+                    paquete.registrado_en = datetime.strptime(registrado_en_str, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    pass
+
         if paquete.factura:
             paquete.factura.actualizar_total()
             

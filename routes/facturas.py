@@ -106,6 +106,13 @@ def editar(id):
 
     if request.method == 'POST':
         factura.notas = request.form.get('notas', '')
+        fecha_emision_str = request.form.get('fecha_emision')
+        if fecha_emision_str:
+            try:
+                factura.fecha_emision = datetime.strptime(fecha_emision_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+
         # Quitar paquetes actuales
         for p in factura.paquetes:
             p.factura_id = None

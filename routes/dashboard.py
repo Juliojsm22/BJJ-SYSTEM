@@ -8,6 +8,23 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 from flask import request
 
+from sqlalchemy.orm import joinedload
+
+def calcular_ganancia_facturas(inicio, fin=None):
+    query = Factura.query.options(joinedload(Factura.paquetes)).filter(
+        Factura.estado.in_(['finalizada', 'pagada']),
+        Factura.fecha_emision >= inicio
+    )
+    if fin:
+        query = query.filter(Factura.fecha_emision < fin)
+    
+    facturas = query.all()
+    total_ganancia = 0.0
+    for f in facturas:
+        costo_agencia = sum((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6) for p in f.paquetes)
+        total_ganancia += (f.total - costo_agencia)
+    return round(total_ganancia, 2)
+
 @dashboard_bp.route('/')
 @login_required
 def index():
@@ -26,19 +43,8 @@ def index():
     else:  # mes
         inicio_periodo = inicio_mes
 
-    ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
-        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
-        else_=0
-    )
-
-    ganancias_semana = db.session.query(func.sum(ganancia_expr)).filter(
-        Paquete.registrado_en >= inicio_semana
-    ).scalar() or 0
-
-    ganancias_mes = db.session.query(func.sum(ganancia_expr)).filter(
-        Paquete.registrado_en >= inicio_mes
-    ).scalar() or 0
+    ganancias_semana = calcular_ganancia_facturas(inicio_semana)
+    ganancias_mes = calcular_ganancia_facturas(inicio_mes)
 
     total_clientes = Cliente.query.filter_by(activo=True).count()
     total_paquetes = Paquete.query.count()
@@ -49,8 +55,9 @@ def index():
         Cliente.nombre_completo,
         func.sum(Paquete.peso).label('total_libras'),
         func.count(Paquete.id).label('total_paquetes')
-    ).join(Paquete, Cliente.id == Paquete.cliente_id)\
-     .filter(Cliente.activo == True, Paquete.registrado_en >= inicio_periodo)\
+    ).join(Factura, Cliente.id == Factura.cliente_id)\
+     .join(Paquete, Factura.id == Paquete.factura_id)\
+     .filter(Cliente.activo == True, Factura.estado.in_(['finalizada', 'pagada']), Factura.fecha_emision >= inicio_periodo)\
      .group_by(Cliente.id)\
      .order_by(func.sum(Paquete.peso).desc())\
      .limit(5).all()
@@ -64,10 +71,7 @@ def index():
             dia = hoy - timedelta(days=i)
             inicio = dia.replace(hour=0, minute=0, second=0, microsecond=0)
             fin = inicio + timedelta(days=1)
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             
             lbl = inicio.strftime('%d %b')
             if i == 0: lbl = "Hoy"
@@ -79,10 +83,7 @@ def index():
         for i in range(3, -1, -1):
             inicio = inicio_semana - timedelta(days=7 * i)
             fin = inicio + timedelta(days=7)
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             
             lbl = f"{inicio.strftime('%d %b')}"
             if i == 0: lbl = "Esta Sem"
@@ -104,15 +105,21 @@ def index():
             else:
                 fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             tendencia_labels.append(inicio.strftime('%b %Y'))
             tendencia_valores.append(float(total))
 
-    aereos = Paquete.query.filter(Paquete.tipo_envio == 'aereo', Paquete.registrado_en >= inicio_periodo).count()
-    maritimos = Paquete.query.filter(Paquete.tipo_envio == 'maritimo', Paquete.registrado_en >= inicio_periodo).count()
+    aereos = Paquete.query.join(Factura).filter(
+        Paquete.tipo_envio == 'aereo',
+        Factura.estado.in_(['finalizada', 'pagada']),
+        Factura.fecha_emision >= inicio_periodo
+    ).count()
+
+    maritimos = Paquete.query.join(Factura).filter(
+        Paquete.tipo_envio == 'maritimo',
+        Factura.estado.in_(['finalizada', 'pagada']),
+        Factura.fecha_emision >= inicio_periodo
+    ).count()
 
     # Legacy variables for tables
     meses_data = []
@@ -153,14 +160,7 @@ def index():
 def api_stats():
     hoy = get_local_now()
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
-        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
-        else_=0
-    )
-    ganancias_mes = db.session.query(func.sum(ganancia_expr)).filter(
-        Paquete.registrado_en >= inicio_mes
-    ).scalar() or 0
+    ganancias_mes = calcular_ganancia_facturas(inicio_mes)
     return jsonify({'ganancias_mes': float(ganancias_mes)})
 
 @dashboard_bp.route('/pdf-reporte')
@@ -182,12 +182,6 @@ def pdf_reporte():
     periodo = request.args.get('periodo', 'mes')
     hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    ganancia_expr = case(
-        (Paquete.tipo_envio == 'aereo', Paquete.costo - (Paquete.peso * 5.0)),
-        (Paquete.tipo_envio == 'maritimo', Paquete.costo - (Paquete.peso * 1.6)),
-        else_=0
-    )
 
     tendencia_data = []
     titulo_tabla = ""
@@ -200,10 +194,7 @@ def pdf_reporte():
             dia = hoy - timedelta(days=i)
             inicio = dia.replace(hour=0, minute=0, second=0, microsecond=0)
             fin = inicio + timedelta(days=1)
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             
             lbl = inicio.strftime('%d %b')
             if i == 0: lbl = "Hoy"
@@ -215,10 +206,7 @@ def pdf_reporte():
         for i in range(3, -1, -1):
             inicio = inicio_semana - timedelta(days=7 * i)
             fin = inicio + timedelta(days=7)
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             
             lbl = f"{inicio.strftime('%d %b')} - {(fin - timedelta(days=1)).strftime('%d %b')}"
             if i == 0: lbl = "Esta Semana"
@@ -240,10 +228,7 @@ def pdf_reporte():
             else:
                 fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 
-            total = db.session.query(func.sum(ganancia_expr)).filter(
-                Paquete.registrado_en >= inicio,
-                Paquete.registrado_en < fin
-            ).scalar() or 0
+            total = calcular_ganancia_facturas(inicio, fin)
             tendencia_data.append([inicio.strftime('%b %Y'), f'${total:.2f}'])
 
     # Reverse data so most recent is at top, like in HTML
