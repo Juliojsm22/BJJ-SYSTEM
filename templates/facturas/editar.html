@@ -7,10 +7,31 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width:800px;">
+<div style="max-width:850px;">
+    <!-- Scanner Bar para edición rápida -->
+    <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; flex-wrap:wrap; gap:6px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--accent); display:flex; align-items:center; gap:6px;">
+                <i class="fas fa-barcode"></i> Escanear para Incluir Paquete
+            </span>
+            <span style="font-size: 11px; color: var(--text-muted);">
+                Usa la cámara o lector de barras para marcar paquetes
+            </span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <div style="flex:1; position: relative;">
+                <i class="fas fa-qrcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
+                <input type="text" id="editScannerInput" class="form-control" placeholder="Escanear código de barras (Tracking o WR)..." autocomplete="off" style="padding-left: 36px;">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('editScannerInput'))" title="Escanear con Cámara" style="height: 38px; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+                <i class="fas fa-camera"></i> <span>Escanear con Cámara</span>
+            </button>
+        </div>
+    </div>
+
     <div class="card">
         <form method="POST">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:15px;">
                 <div>
                     <div style="font-size:13px;color:var(--text-muted);">Cliente</div>
@@ -23,24 +44,43 @@
                 </div>
             </div>
 
-            <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                <label style="font-size:13px;color:var(--text-muted);margin:0;">Paquetes a incluir</label>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="seleccionarTodos()"><i class="fas fa-check-square"></i> Todos</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="deseleccionarTodos()"><i class="far fa-square"></i> Ninguno</button>
+                </div>
+            </div>
+
             <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
                 {% set paquetes_disponibles = factura.paquetes + paquetes_sin_facturar %}
                 {% for p in paquetes_disponibles %}
-                <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);">
-                    <input type="checkbox" name="paquete_ids" value="{{ p.id }}"
+                <label id="label_p_{{ p.id }}" class="paquete-item"
+                       data-tracking="{{ (p.tracking_number or '')|lower }}" 
+                       data-seguimiento="{{ (p.numero_seguimiento or '')|lower }}" 
+                       data-warehouse="{{ (p.warehouse or '')|lower }}"
+                       data-costo="{{ p.costo }}"
+                       style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:all 0.2s;">
+                    <input type="checkbox" name="paquete_ids" value="{{ p.id }}" id="check_p_{{ p.id }}"
                            {% if p in factura.paquetes %}checked{% endif %}
+                           onchange="actualizarTotalEdit(); resaltarFilaEdit({{ p.id }});"
                            style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
                     <div style="flex:1;">
-                        <div style="font-weight:500;">{{ p.nombre }}</div>
-                        <div style="font-size:12px;color:var(--text-muted);">
-                            <span class="badge badge-{{ p.tipo_envio }}">{{ 'Aéreo' if p.tipo_envio == 'aereo' else 'Marítimo' }}</span>
-                            {{ "%.2f"|format(p.peso) }} lb
+                        <div style="font-weight:500; font-size:15px;">{{ p.nombre }}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                            <span class="badge badge-{{ p.tipo_envio }}">{{ '✈️ Aéreo' if p.tipo_envio == 'aereo' else '🚢 Marítimo' }}</span>
+                            {{ "%.2f"|format(p.peso) }} lb | Tracking: <strong style="color:var(--text);">{{ p.numero_seguimiento or p.tracking_number or 'N/A' }}</strong>{% if p.warehouse %} | WR: <strong style="color:var(--text);">{{ p.warehouse }}</strong>{% endif %}
+                            <span id="badge_edit_{{ p.id }}" class="badge badge-success" style="{% if p in factura.paquetes %}display:inline-block;{% else %}display:none;{% endif %} font-size:11px; margin-left:8px;"><i class="fas fa-check"></i> En Factura</span>
                         </div>
                     </div>
-                    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success)">${{ "%.2f"|format(p.costo) }}</div>
+                    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--success);">${{ "%.2f"|format(p.costo) }}</div>
                 </label>
                 {% endfor %}
+            </div>
+
+            <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div style="font-size:13px;color:var(--text-muted);">Total de la factura</div>
+                <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--success);" id="totalPreview">${{ "%.2f"|format(factura.total) }}</div>
             </div>
 
             <div class="form-group">
@@ -55,4 +95,93 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function resaltarFilaEdit(id, flash = false) {
+    const label = document.getElementById('label_p_' + id);
+    const badge = document.getElementById('badge_edit_' + id);
+    const check = document.getElementById('check_p_' + id);
+    if (check && check.checked) {
+        if (badge) badge.style.display = 'inline-block';
+        if (label) {
+            label.style.background = 'rgba(45, 212, 191, 0.12)';
+            if (flash) {
+                label.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                label.style.boxShadow = '0 0 10px rgba(45, 212, 191, 0.5)';
+                setTimeout(() => { label.style.boxShadow = ''; }, 1500);
+            }
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+        if (label) label.style.background = '';
+    }
+}
+
+function actualizarTotalEdit() {
+    let total = 0;
+    document.querySelectorAll('.paquete-item').forEach(item => {
+        const chk = item.querySelector('input[type="checkbox"]');
+        if (chk && chk.checked) {
+            const costo = parseFloat(item.dataset.costo || '0');
+            total += costo;
+        }
+    });
+    document.getElementById('totalPreview').textContent = '$' + total.toFixed(2);
+}
+
+function procesarScanEdit() {
+    const input = document.getElementById('editScannerInput');
+    if (!input) return;
+    const code = input.value.trim().toLowerCase();
+    if (!code) return;
+    
+    let found = false;
+    document.querySelectorAll('.paquete-item').forEach(item => {
+        const tr = item.dataset.tracking || '';
+        const seg = item.dataset.seguimiento || '';
+        const wh = item.dataset.warehouse || '';
+        
+        if (tr === code || seg === code || wh === code || tr.includes(code) || seg.includes(code) || (wh && wh.includes(code))) {
+            const chk = item.querySelector('input[type="checkbox"]');
+            if (chk) {
+                chk.checked = true;
+                const id = chk.value;
+                resaltarFilaEdit(id, true);
+                actualizarTotalEdit();
+                found = true;
+            }
+        }
+    });
+    
+    if (!found) {
+        alert('No se encontró ningún paquete con el código: ' + input.value);
+    }
+    input.value = '';
+}
+
+document.getElementById('editScannerInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        procesarScanEdit();
+    }
+});
+
+function seleccionarTodos() {
+    document.querySelectorAll('.paquete-item input[type="checkbox"]').forEach(c => {
+        c.checked = true;
+        resaltarFilaEdit(c.value);
+    });
+    actualizarTotalEdit();
+}
+
+function deseleccionarTodos() {
+    document.querySelectorAll('.paquete-item input[type="checkbox"]').forEach(c => {
+        c.checked = false;
+        resaltarFilaEdit(c.value);
+    });
+    actualizarTotalEdit();
+}
+</script>
 {% endblock %}

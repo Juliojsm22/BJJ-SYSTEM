@@ -228,13 +228,9 @@ function fetchAereomarEdit(searchType) {
             if (data.warehouse && inputWr) inputWr.value = data.warehouse;
             if (data.numero_seguimiento && inputTr) inputTr.value = data.numero_seguimiento;
             
+            const nombreVal = data.nombre || data.descripcion || data.descripcion_completa;
             const inputNombre = document.getElementById('input_nombre');
-            if (data.descripcion && inputNombre) inputNombre.value = data.descripcion;
-            
-            const inputDesc = document.getElementById('input_descripcion');
-            if (data.descripcion_completa && inputDesc && inputDesc.value.trim() === '') {
-                inputDesc.value = data.descripcion_completa;
-            }
+            if (nombreVal && inputNombre) inputNombre.value = nombreVal;
             
             if (data.peso) {
                 document.getElementById('peso').value = Math.max(1, parseInt(data.peso, 10));

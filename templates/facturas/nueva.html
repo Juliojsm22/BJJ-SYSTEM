@@ -7,10 +7,36 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width:800px;">
+<div style="max-width:850px;">
+    <!-- Quick Scanner Bar (Funciona con o sin cliente seleccionado) -->
+    <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; flex-wrap:wrap; gap:8px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--accent); display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-barcode"></i> Escaneo Inteligente para Facturación
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted);">
+                Escanear Tracking o Warehouse selecciona automáticamente al cliente y marca el paquete
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div style="flex:1; position: relative;">
+                <i class="fas fa-qrcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
+                <input type="text" id="quickScannerInput" class="form-control" placeholder="Escanear código de barras o escribir Tracking / Warehouse..." autocomplete="off" style="padding-left: 36px;">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('quickScannerInput'))" title="Escanear con Cámara del Dispositivo" style="height: 38px; display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                <i class="fas fa-camera"></i> <span>Escanear con Cámara</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="procesarBusquedaRapida()" style="height: 38px;" title="Buscar">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <div id="quickScanFeedback" style="display:none; font-size:12px; margin-top:10px; padding:8px 12px; border-radius:6px;"></div>
+    </div>
+
     <div class="card">
         <form method="POST" id="formFactura">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
             <div class="form-group">
                 <label>Cliente *</label>
                 <select name="cliente_id" id="clienteSelect" class="form-control" required>
@@ -24,19 +50,12 @@
             </div>
 
             <div id="paquetesSection" style="display:none;">
-                <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paquetes a incluir *</label>
-                
-                <!-- Barcode Scanner -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display:flex; gap:10px; align-items:center; margin-bottom: 5px;">
-                        <div style="flex:1; position: relative;">
-                            <i class="fas fa-barcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
-                            <input type="text" id="barcodeScanner" class="form-control" placeholder="Escanear código de barras (Tracking)..." autocomplete="off" style="padding-left: 35px;">
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="seleccionarTodos()" style="height: 38px;">Todos</button>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="deseleccionarTodos()" style="height: 38px;">Ninguno</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                    <label style="font-size:13px;color:var(--text-muted);margin:0;">Paquetes a incluir *</label>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="seleccionarTodos()"><i class="fas fa-check-square"></i> Seleccionar Todos</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="deseleccionarTodos()"><i class="far fa-square"></i> Ninguno</button>
                     </div>
-                    <small style="color:var(--text-muted); font-size:12px;">Escanee el paquete para marcarlo como listo para facturar.</small>
                 </div>
 
                 <div id="paquetesList" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
@@ -44,6 +63,7 @@
                         <i class="fas fa-spinner fa-spin"></i> Cargando paquetes...
                     </div>
                 </div>
+
                 <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div style="font-size:13px;color:var(--text-muted);">Total seleccionado</div>
                     <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--success);" id="totalPreview">$0.00</div>
@@ -73,14 +93,45 @@
 <script>
 let paquetesData = [];
 
+function mostrarFeedback(msg, tipo = 'info') {
+    const fb = document.getElementById('quickScanFeedback');
+    if (!fb) return;
+    fb.style.display = 'block';
+    if (tipo === 'success') {
+        fb.style.background = 'rgba(16, 185, 129, 0.15)';
+        fb.style.color = 'var(--success)';
+        fb.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+        fb.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+    } else if (tipo === 'error') {
+        fb.style.background = 'rgba(239, 68, 68, 0.15)';
+        fb.style.color = '#ef4444';
+        fb.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        fb.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
+    } else {
+        fb.style.background = 'rgba(79, 70, 229, 0.15)';
+        fb.style.color = 'var(--accent)';
+        fb.style.border = '1px solid rgba(79, 70, 229, 0.3)';
+        fb.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
+    }
+}
+
 document.getElementById('clienteSelect').addEventListener('change', function() {
     const cid = this.value;
+    cargarPaquetesCliente(cid);
+});
+
+function cargarPaquetesCliente(cid, paqueteIdToCheck = null) {
     if (!cid) {
         document.getElementById('paquetesSection').style.display = 'none';
         document.getElementById('sinPaquetes').style.display = 'none';
         document.getElementById('btnSubmit').disabled = true;
         return;
     }
+    
+    document.getElementById('paquetesSection').style.display = 'block';
+    document.getElementById('sinPaquetes').style.display = 'none';
+    document.getElementById('paquetesList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Cargando paquetes...</div>';
+
     fetch(`/facturas/paquetes-cliente/${cid}`)
         .then(r => r.json())
         .then(paquetes => {
@@ -95,79 +146,130 @@ document.getElementById('clienteSelect').addEventListener('change', function() {
             }
             sinPaq.style.display = 'none';
             section.style.display = 'block';
-            renderPaquetes(paquetes);
+            renderPaquetes(paquetes, paqueteIdToCheck);
+        })
+        .catch(err => {
+            console.error("Error cargando paquetes:", err);
         });
-});
-
-function renderPaquetes(paquetes) {
-    const list = document.getElementById('paquetesList');
-    list.innerHTML = paquetes.map(p => `
-        <label id="label_paquete_${p.id}" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" 
-               onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''" >
-            <input type="checkbox" name="paquete_ids" value="${p.id}" id="check_paquete_${p.id}"
-                   onchange="actualizarTotal()" 
-                   style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
-            <div style="flex:1;">
-                <div style="font-weight:500;">${p.nombre} ${p.factura_previa ? `<span class="badge badge-warning" style="font-size:10px;margin-left:8px;">De ${p.factura_previa}</span>` : ''}</div>
-                <div style="font-size:12px;color:var(--text-muted);">
-                    <span class="badge badge-${p.tipo_envio}">${p.tipo_envio === 'aereo' ? 'Aéreo' : 'Marítimo'}</span>
-                    ${p.peso.toFixed(2)} lb | Tracking: ${p.numero_seguimiento || p.tracking_number || 'N/A'}${p.warehouse ? ` | WR: ${p.warehouse}` : ''}
-                    <span id="badge_ready_${p.id}" class="badge badge-success" style="display:none; font-size:10px; margin-left:8px;"><i class="fas fa-check"></i> Listo</span>
-                </div>
-            </div>
-            <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success);">$${p.costo.toFixed(2)}</div>
-        </label>
-    `).join('');
-    actualizarTotal();
-    
-    setTimeout(() => {
-        const scanner = document.getElementById('barcodeScanner');
-        if (scanner) scanner.focus();
-    }, 100);
 }
 
-document.getElementById('barcodeScanner')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const code = this.value.trim().toLowerCase();
-        if (!code) return;
-        
-        let found = false;
-        for (let p of paquetesData) {
-            const tr = (p.tracking_number || '').toLowerCase();
-            const seg = (p.numero_seguimiento || '').toLowerCase();
-            const wh = (p.warehouse || '').toLowerCase();
-            if (tr === code || seg === code || wh === code || tr.includes(code) || seg.includes(code) || (wh && wh.includes(code))) {
-                const checkbox = document.getElementById('check_paquete_' + p.id);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.checked = true;
-                    const label = document.getElementById('label_paquete_' + p.id);
-                    if (label) {
-                        label.style.background = 'rgba(45, 212, 191, 0.15)';
-                        setTimeout(() => label.style.background = '', 1500);
-                    }
-                    const badge = document.getElementById('badge_ready_' + p.id);
-                    if (badge) badge.style.display = 'inline-block';
-                    
-                    actualizarTotal();
-                }
-                found = true;
+function renderPaquetes(paquetes, paqueteIdToCheck = null) {
+    const list = document.getElementById('paquetesList');
+    list.innerHTML = paquetes.map(p => `
+        <label id="label_paquete_${p.id}" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:all 0.2s;" 
+               onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="if(!document.getElementById('check_paquete_${p.id}').checked) this.style.background=''" >
+            <input type="checkbox" name="paquete_ids" value="${p.id}" id="check_paquete_${p.id}"
+                   onchange="actualizarTotal(); resaltarFila(${p.id});" 
+                   style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+            <div style="flex:1;">
+                <div style="font-weight:500; font-size:15px;">${p.nombre} ${p.factura_previa ? `<span class="badge badge-warning" style="font-size:10px;margin-left:8px;">De ${p.factura_previa}</span>` : ''}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                    <span class="badge badge-${p.tipo_envio}">${p.tipo_envio === 'aereo' ? '✈️ Aéreo' : '🚢 Marítimo'}</span>
+                    ${p.peso.toFixed(2)} lb | Tracking: <strong style="color:var(--text);">${p.numero_seguimiento || p.tracking_number || 'N/A'}</strong>${p.warehouse ? ` | WR: <strong style="color:var(--text);">${p.warehouse}</strong>` : ''}
+                    <span id="badge_ready_${p.id}" class="badge badge-success" style="display:none; font-size:11px; margin-left:8px;"><i class="fas fa-check"></i> Listo para facturar</span>
+                </div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--success);">$${p.costo.toFixed(2)}</div>
+        </label>
+    `).join('');
+    
+    if (paqueteIdToCheck) {
+        const checkbox = document.getElementById('check_paquete_' + paqueteIdToCheck);
+        if (checkbox) {
+            checkbox.checked = true;
+            resaltarFila(paqueteIdToCheck, true);
+        }
+    }
+    
+    actualizarTotal();
+}
+
+function resaltarFila(paqueteId, flash = false) {
+    const label = document.getElementById('label_paquete_' + paqueteId);
+    const badge = document.getElementById('badge_ready_' + paqueteId);
+    const checkbox = document.getElementById('check_paquete_' + paqueteId);
+    
+    if (checkbox && checkbox.checked) {
+        if (badge) badge.style.display = 'inline-block';
+        if (label) {
+            label.style.background = 'rgba(45, 212, 191, 0.12)';
+            if (flash) {
+                label.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                label.style.boxShadow = '0 0 10px rgba(45, 212, 191, 0.5)';
+                setTimeout(() => { label.style.boxShadow = ''; }, 1500);
+            }
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+        if (label) label.style.background = '';
+    }
+}
+
+function procesarBusquedaRapida() {
+    const input = document.getElementById('quickScannerInput');
+    if (!input) return;
+    const code = input.value.trim();
+    if (!code) return;
+    
+    const codeLower = code.toLowerCase();
+    
+    // 1. Si ya hay cliente seleccionado y el paquete está en la lista actual
+    let foundInCurrent = false;
+    for (let p of paquetesData) {
+        const tr = (p.tracking_number || '').toLowerCase();
+        const seg = (p.numero_seguimiento || '').toLowerCase();
+        const wh = (p.warehouse || '').toLowerCase();
+        if (tr === codeLower || seg === codeLower || wh === codeLower || tr.includes(codeLower) || seg.includes(codeLower) || (wh && wh.includes(codeLower))) {
+            const checkbox = document.getElementById('check_paquete_' + p.id);
+            if (checkbox) {
+                checkbox.checked = true;
+                resaltarFila(p.id, true);
+                actualizarTotal();
+                mostrarFeedback(`Paquete marcado: <strong>${p.nombre}</strong>`, 'success');
+                foundInCurrent = true;
                 break;
             }
         }
-        
-        if (!found) {
-            alert('Paquete no encontrado para este cliente con el código: ' + this.value);
-        }
-        this.value = '';
+    }
+    
+    if (foundInCurrent) {
+        input.value = '';
+        return;
+    }
+    
+    // 2. Si no está en la lista actual o no hay cliente seleccionado, buscar en el servidor
+    mostrarFeedback(`Buscando paquete '${code}'...`, 'info');
+    fetch(`/facturas/buscar-paquete?code=${encodeURIComponent(code)}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.paquete) {
+                const p = res.paquete;
+                const sel = document.getElementById('clienteSelect');
+                sel.value = p.cliente_id;
+                mostrarFeedback(`Cliente autoseleccionado: <strong>${p.cliente_nombre}</strong> | Paquete: <strong>${p.nombre}</strong>`, 'success');
+                cargarPaquetesCliente(p.cliente_id, p.id);
+                input.value = '';
+            } else {
+                mostrarFeedback(res.error || 'No se encontró ningún paquete pendiente con ese código.', 'error');
+            }
+        })
+        .catch(err => {
+            mostrarFeedback('Error en la búsqueda del paquete.', 'error');
+            console.error(err);
+        });
+}
+
+document.getElementById('quickScannerInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        procesarBusquedaRapida();
     }
 });
 
 function seleccionarTodos() {
     document.querySelectorAll('input[name="paquete_ids"]').forEach(c => {
         c.checked = true;
-        const badge = document.getElementById('badge_ready_' + c.value);
-        if (badge) badge.style.display = 'inline-block';
+        resaltarFila(c.value);
     });
     actualizarTotal();
 }
@@ -175,8 +277,7 @@ function seleccionarTodos() {
 function deseleccionarTodos() {
     document.querySelectorAll('input[name="paquete_ids"]').forEach(c => {
         c.checked = false;
-        const badge = document.getElementById('badge_ready_' + c.value);
-        if (badge) badge.style.display = 'none';
+        resaltarFila(c.value);
     });
     actualizarTotal();
 }
@@ -192,13 +293,13 @@ function actualizarTotal() {
     document.getElementById('btnSubmit').disabled = checks.length === 0;
 }
 
-// Auto-load if cliente_id in URL
+// Auto-load si viene cliente_id en URL
 const params = new URLSearchParams(window.location.search);
 const cid = params.get('cliente_id');
 if (cid) {
     const sel = document.getElementById('clienteSelect');
     sel.value = cid;
-    sel.dispatchEvent(new Event('change'));
+    cargarPaquetesCliente(cid);
 }
 </script>
 {% endblock %}

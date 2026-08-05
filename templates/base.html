@@ -282,6 +282,21 @@
             targetInputForScanner.dispatchEvent(new Event('input', { bubbles: true }));
             targetInputForScanner.dispatchEvent(new Event('change', { bubbles: true }));
             targetInputForScanner.dispatchEvent(new Event('blur', { bubbles: true }));
+            
+            // Disparar evento de Enter para listeners de escáner de código de barras
+            const enterEvent = new KeyboardEvent('keypress', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13,
+                bubbles: true,
+                cancelable: true
+            });
+            targetInputForScanner.dispatchEvent(enterEvent);
+            
+            if (typeof onCameraScanSuccess === 'function') {
+                onCameraScanSuccess(decodedText, targetInputForScanner);
+            }
         }
         cerrarScanner();
     }

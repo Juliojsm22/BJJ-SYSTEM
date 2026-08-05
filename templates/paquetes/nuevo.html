@@ -321,18 +321,11 @@ function fetchAereomarData(inputElement, searchType) {
                 if (trInput) trInput.value = data.numero_seguimiento;
             }
             
-            // 3. Nombre del paquete (producto limpio)
-            if (data.descripcion) {
+            // 3. Nombre del paquete (todo el texto de la descripción)
+            const nombreVal = data.nombre || data.descripcion || data.descripcion_completa;
+            if (nombreVal) {
                 const nombreInput = row.querySelector('.input-nombre');
-                if (nombreInput) nombreInput.value = data.descripcion;
-            }
-
-            // 4. Descripción completa u observaciones
-            if (data.descripcion_completa && data.descripcion_completa !== data.descripcion) {
-                const descInput = row.querySelector('.input-descripcion');
-                if (descInput && descInput.value.trim() === '') {
-                    descInput.value = data.descripcion_completa;
-                }
+                if (nombreInput) nombreInput.value = nombreVal;
             }
             
             // 5. Peso

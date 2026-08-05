@@ -242,6 +242,49 @@ def paquetes_cliente(cliente_id):
         'warehouse': p.warehouse
     } for p in paquetes])
 
+@facturas_bp.route('/buscar-paquete')
+@login_required
+def buscar_paquete():
+    code = request.args.get('code', '').strip()
+    if not code:
+        return jsonify({"success": False, "error": "No se proporcionó código"})
+    
+    from sqlalchemy import or_
+    paquetes = Paquete.query.outerjoin(Factura).filter(
+        or_(
+            Paquete.tracking_number.ilike(code),
+            Paquete.numero_seguimiento.ilike(code),
+            Paquete.warehouse.ilike(code),
+            Paquete.tracking_number.ilike(f'%{code}%'),
+            Paquete.numero_seguimiento.ilike(f'%{code}%'),
+            Paquete.warehouse.ilike(f'%{code}%')
+        ),
+        or_(
+            Paquete.factura_id == None,
+            Factura.estado != 'pagada'
+        )
+    ).all()
+    
+    if not paquetes:
+        return jsonify({"success": False, "error": f"No se encontró ningún paquete pendiente de facturar con el código '{code}'"})
+    
+    p = paquetes[0]
+    return jsonify({
+        "success": True,
+        "paquete": {
+            "id": p.id,
+            "nombre": p.nombre,
+            "peso": p.peso,
+            "tipo_envio": p.tipo_envio,
+            "costo": p.costo,
+            "cliente_id": p.cliente_id,
+            "cliente_nombre": p.cliente.nombre_completo if p.cliente else "Desconocido",
+            "numero_seguimiento": p.numero_seguimiento,
+            "tracking_number": p.tracking_number,
+            "warehouse": p.warehouse
+        }
+    })
+
 @facturas_bp.route('/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar(id):
