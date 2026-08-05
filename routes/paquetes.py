@@ -440,63 +440,181 @@ def exportar():
 @paquetes_bp.route('/fetch_aereomar', methods=['POST'])
 @login_required
 def fetch_aereomar():
-    data = request.get_json()
+    data = request.get_json() or {}
     tracking_full = data.get('tracking_number', '').strip()
+    search_type_hint = data.get('search_type', '').strip().lower() # 'warehouse', 'tracking', or ''
+    
     if not tracking_full:
-        return jsonify({"success": False, "error": "No tracking number provided"})
+        return jsonify({"success": False, "error": "No se proporcionó número para buscar"})
     
     import re
     import urllib.request
     import json
+    import unicodedata
     
-    base_tracking_match = re.match(r'(WR\d+)', tracking_full, re.IGNORECASE)
+    def normalize_str(s):
+        if not s:
+            return ""
+        s = unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode('utf-8')
+        return re.sub(r'[^a-zA-Z0-9\s]', ' ', s).lower().strip()
+    
+    base_tracking_match = re.match(r'^(WR\d+)', tracking_full, re.IGNORECASE)
+    is_warehouse_query = (search_type_hint == 'warehouse') or bool(base_tracking_match) or tracking_full.upper().startswith('WR')
     
     def fetch_data(search_type, search_number):
         url = f'https://aereomarexpress.multitrack.trackingpremium.us/tracking/search?type={search_type}&number={search_number}&user=0&recibo=0&guia=0&consol=0'
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'X-Requested-With': 'XMLHttpRequest'})
         resp = urllib.request.urlopen(req, timeout=10).read().decode('utf-8')
         return json.loads(resp)
 
     try:
         json_data = None
-        # Si parece un WR (Warehouse), intentamos type=2 primero con la base WR. Si no, type=4.
-        if base_tracking_match:
-            tracking = base_tracking_match.group(1).upper()
-            json_data = fetch_data(2, tracking)
-            if not (len(json_data) >= 6 and json_data[5]):
-                json_data = fetch_data(4, tracking_full) # fallback
+        # Si es tipo warehouse (WR), intentamos type=2 primero
+        if is_warehouse_query:
+            wr_code = base_tracking_match.group(1).upper() if base_tracking_match else tracking_full.upper()
+            try:
+                json_data = fetch_data(2, wr_code)
+            except Exception:
+                json_data = None
+            if not (json_data and len(json_data) >= 6 and json_data[5]):
+                try:
+                    json_data = fetch_data(4, tracking_full) # fallback tracking
+                except Exception:
+                    pass
         else:
-            json_data = fetch_data(4, tracking_full)
-            if not (len(json_data) >= 6 and json_data[5]):
-                json_data = fetch_data(2, tracking_full) # fallback
+            # Si es tracking normal, intentamos type=4 primero
+            try:
+                json_data = fetch_data(4, tracking_full)
+            except Exception:
+                json_data = None
+            if not (json_data and len(json_data) >= 6 and json_data[5]):
+                try:
+                    json_data = fetch_data(2, tracking_full) # fallback warehouse
+                except Exception:
+                    pass
+            if not (json_data and len(json_data) >= 6 and json_data[5]):
+                try:
+                    json_data = fetch_data(3, tracking_full) # fallback recibo/paquete
+                except Exception:
+                    pass
 
         if json_data and len(json_data) >= 6 and json_data[5]:
             basic_data = json_data[5]
-            desc = basic_data[0].strip() if len(basic_data) > 0 else ""
+            raw_desc = basic_data[0].strip() if len(basic_data) > 0 and basic_data[0] else ""
             weight = basic_data[1] if len(basic_data) > 1 else 0
             
-            ship_type_str = basic_data[4].lower() if len(basic_data) > 4 else ""
+            ship_type_str = str(basic_data[4]).lower() if len(basic_data) > 4 else ""
             ship_type = "aereo"
             if "mar" in ship_type_str or "maritimo" in ship_type_str:
                 ship_type = "maritimo"
                 
+            # Extraer Warehouse
             warehouse = ""
             if len(json_data) > 1 and json_data[1] and isinstance(json_data[1], list):
                 if len(json_data[1]) > 0 and 'number' in json_data[1][0]:
-                    warehouse = json_data[1][0]['number']
+                    warehouse = str(json_data[1][0]['number']).strip()
                     
-            if not warehouse and len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
-                if len(json_data[3]) > 0 and 'number' in json_data[3][0]:
-                    warehouse = json_data[3][0]['number']
+            if not warehouse and is_warehouse_query:
+                warehouse = base_tracking_match.group(1).upper() if base_tracking_match else tracking_full.upper()
+
+            # Extraer lista de paquetes contenidos en este recibo / warehouse
+            packages_list = []
+            primary_tracking = ""
+            if len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
+                for p_item in json_data[3]:
+                    if isinstance(p_item, dict):
+                        p_num = str(p_item.get('number', '')).strip()
+                        p_desc = str(p_item.get('description', '')).strip()
+                        p_weight = p_item.get('weight', 0)
+                        if p_num:
+                            packages_list.append({
+                                "numero_seguimiento": p_num,
+                                "descripcion": p_desc,
+                                "peso": p_weight
+                            })
+
+            if packages_list:
+                primary_tracking = packages_list[0]['numero_seguimiento']
+            elif not is_warehouse_query:
+                primary_tracking = tracking_full
+
+            # Parsear descripción: separar alias del cliente y producto
+            # Ejemplos habituales: "JULIO AMAZON // COSMETICOS ", "KEVIN DUARTE // ROPA", "JULIO - ZAPATOS"
+            nombre_limpio = raw_desc
+            alias_cliente = ""
+            if "//" in raw_desc:
+                partes = raw_desc.split("//", 1)
+                alias_cliente = partes[0].strip()
+                nombre_limpio = partes[1].strip()
+            elif " - " in raw_desc:
+                partes = raw_desc.split(" - ", 1)
+                alias_cliente = partes[0].strip()
+                nombre_limpio = partes[1].strip()
+            elif "/" in raw_desc:
+                partes = raw_desc.split("/", 1)
+                alias_cliente = partes[0].strip()
+                nombre_limpio = partes[1].strip()
+            else:
+                alias_cliente = raw_desc
+
+            # Smart Client Match en base de datos local
+            matched_cliente = None
+            if alias_cliente:
+                norm_alias = normalize_str(alias_cliente)
+                # Palabras a ignorar para matching (tiendas o palabras comunes)
+                stop_words = {'amazon', 'shein', 'temu', 'ebay', 'walmart', 'bjj', 'express', 'box', 'casillero', 'paquete', 'usa', 'miami'}
+                alias_words = [w for w in norm_alias.split() if len(w) > 2 and w not in stop_words]
+                
+                clientes_activos = Cliente.query.filter_by(activo=True).all()
+                best_score = 0
+                
+                for c in clientes_activos:
+                    c_norm = normalize_str(c.nombre_completo)
+                    c_words = [w for w in c_norm.split() if len(w) > 2]
+                    
+                    # 1. Coincidencia de nombre completo exacto
+                    if c_norm and (c_norm in norm_alias or norm_alias in c_norm):
+                        score = 100
+                    else:
+                        # 2. Coincidencia de palabras compartidas
+                        shared = set(alias_words).intersection(set(c_words))
+                        if len(shared) >= 2:
+                            score = 80 + len(shared) * 5
+                        elif len(shared) == 1 and len(c_words) <= 2:
+                            score = 60
+                        elif len(shared) == 1:
+                            score = 40
+                        else:
+                            score = 0
+                            
+                    if score > best_score and score >= 40:
+                        best_score = score
+                        matched_cliente = c
+
+            cliente_data = None
+            if matched_cliente:
+                tarifa_esp = getattr(matched_cliente, 'tarifa_especial', None)
+                cliente_data = {
+                    "id": matched_cliente.id,
+                    "nombre": matched_cliente.nombre_completo,
+                    "cedula": matched_cliente.cedula,
+                    "tarifa_aereo": tarifa_esp.aereo if tarifa_esp and tarifa_esp.aereo else None,
+                    "tarifa_maritimo": tarifa_esp.maritimo if tarifa_esp and tarifa_esp.maritimo else None
+                }
 
             return jsonify({
-                "success": True, 
-                "descripcion": desc, 
+                "success": True,
+                "warehouse": warehouse,
+                "numero_seguimiento": primary_tracking,
+                "descripcion": nombre_limpio or raw_desc,
+                "descripcion_completa": raw_desc,
                 "peso": weight,
                 "tipo_envio": ship_type,
-                "warehouse": warehouse
+                "cliente": cliente_data,
+                "paquetes": packages_list
             })
         else:
-            return jsonify({"success": False, "error": "No se encontraron datos para este número en AereoMar"})
+            return jsonify({"success": False, "error": "No se encontraron datos en AereoMar para este número"})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": f"Error consultando AereoMar: {str(e)}"})
+

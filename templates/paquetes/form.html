@@ -9,13 +9,51 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width:640px;">
+<div style="max-width:680px;">
     <div class="card">
         <form method="POST" id="formPaquete">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <!-- Búsqueda en Aereomar -->
+            <div style="background: var(--surface2); padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border);">
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px;">
+                    <i class="fas fa-bolt" style="color: var(--accent2);"></i> Sincronizar con Aereomar (Escribe o Escanea cualquiera)
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px; font-weight: 600;"><i class="fas fa-warehouse"></i> Warehouse (WR...)</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" name="warehouse" id="input_warehouse" class="form-control"
+                                   value="{{ paquete.warehouse or '' }}"
+                                   placeholder="Ej: WR541692" onblur="fetchAereomarEdit('warehouse')">
+                            <button type="button" class="btn btn-secondary" title="Escanear Warehouse" onclick="abrirScanner(this.previousElementSibling)" style="padding: 9px 12px;">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn_search_wr" title="Consultar en Aereomar" onclick="fetchAereomarEdit('warehouse')" style="padding: 9px 12px;">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px; font-weight: 600;"><i class="fas fa-barcode"></i> Número de Seguimiento *</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" name="numero_seguimiento" id="input_tracking" class="form-control"
+                                   value="{{ paquete.numero_seguimiento }}"
+                                   placeholder="Ej: WR541692XP1 o Tracking" required onblur="fetchAereomarEdit('tracking')">
+                            <button type="button" class="btn btn-secondary" title="Escanear Tracking" onclick="abrirScanner(this.previousElementSibling)" style="padding: 9px 12px;">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn_search_tr" title="Consultar en Aereomar" onclick="fetchAereomarEdit('tracking')" style="padding: 9px 12px;">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
-                <label>Cliente *</label>
-                <select name="cliente_id" class="form-control" required>
+                <label><i class="fas fa-user"></i> Cliente *</label>
+                <select name="cliente_id" id="cliente_id" class="form-control" required>
                     <option value="">Seleccionar cliente...</option>
                     {% for c in clientes %}
                     <option value="{{ c.id }}" {% if paquete.cliente_id == c.id %}selected{% endif %}>
@@ -23,28 +61,23 @@
                     </option>
                     {% endfor %}
                 </select>
+                <div id="cliente_autodetect_badge" style="display:none; margin-top:6px; font-size:12px; color:var(--success); align-items:center; gap:6px;">
+                    <i class="fas fa-check-circle"></i> <span id="cliente_autodetect_text"></span>
+                </div>
             </div>
+
             <div class="form-group">
                 <label>Nombre del paquete *</label>
-                <input type="text" name="nombre" class="form-control"
+                <input type="text" name="nombre" id="input_nombre" class="form-control"
                        value="{{ paquete.nombre }}" required
                        placeholder="Ej: Ropa deportiva, Electrónico, etc.">
             </div>
-            <div class="form-group">
-                <label>Número de Seguimiento *</label>
-                <div style="display:flex; gap:8px;">
-                    <input type="text" name="numero_seguimiento" class="form-control"
-                           value="{{ paquete.numero_seguimiento }}"
-                           placeholder="Ej: 1Z9999999999999999" required autofocus>
-                    <button type="button" class="btn btn-secondary" title="Escanear con cámara" onclick="abrirScanner(this.previousElementSibling)" style="padding: 10px 14px;">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                </div>
-            </div>
+
             <div class="form-group">
                 <label>Descripción</label>
-                <textarea name="descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion }}</textarea>
+                <textarea name="descripcion" id="input_descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion }}</textarea>
             </div>
+
             <div class="grid-2">
                 <div class="form-group">
                     <label>Peso (libras) *</label>
@@ -65,7 +98,7 @@
             <div class="grid-2">
                 <div class="form-group">
                     <label>Estado de Rastreo</label>
-                    <select name="estado_rastreo" class="form-control">
+                    <select name="estado_rastreo" id="estado_rastreo" class="form-control">
                         <option value="bodega_miami" {% if paquete.estado_rastreo == 'bodega_miami' %}selected{% endif %}>🏢 En bodega Miami</option>
                         <option value="en_transito" {% if paquete.estado_rastreo == 'en_transito' %}selected{% endif %}>🚢/✈️ En tránsito</option>
                         <option value="listo_para_retirar" {% if paquete.estado_rastreo == 'listo_para_retirar' %}selected{% endif %}>✅ Listo para retirar</option>
@@ -107,7 +140,7 @@
 function calcularCosto() {
     const peso = parseInt(document.getElementById('peso').value, 10) || 0;
     const tipo = document.getElementById('tipo_envio').value;
-    const selectCliente = document.querySelector('select[name="cliente_id"]');
+    const selectCliente = document.getElementById('cliente_id');
     const cliente_id = selectCliente ? selectCliente.value : null;
     const preview = document.getElementById('costoPreview');
 
@@ -134,7 +167,7 @@ function calcularCosto() {
 document.getElementById('peso').addEventListener('input', calcularCosto);
 document.getElementById('tipo_envio').addEventListener('change', calcularCosto);
 
-const selCliente = document.querySelector('select[name="cliente_id"]');
+const selCliente = document.getElementById('cliente_id');
 
 function actualizarTextosTarifa() {
     const cliente_id = selCliente ? selCliente.value : null;
@@ -157,11 +190,92 @@ function actualizarTextosTarifa() {
 if (selCliente) selCliente.addEventListener('change', actualizarTextosTarifa);
 actualizarTextosTarifa(); // run on load
 
+function fetchAereomarEdit(searchType) {
+    const inputWr = document.getElementById('input_warehouse');
+    const inputTr = document.getElementById('input_tracking');
+    const targetInput = searchType === 'warehouse' ? inputWr : inputTr;
+    const searchValue = targetInput ? targetInput.value.trim() : '';
+    
+    if (!searchValue) return;
+    
+    const btnSearch = searchType === 'warehouse' ? document.getElementById('btn_search_wr') : document.getElementById('btn_search_tr');
+    let originalHtml = '';
+    if (btnSearch) {
+        originalHtml = btnSearch.innerHTML;
+        btnSearch.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btnSearch.disabled = true;
+    }
+
+    fetch('{{ url_for("paquetes.fetch_aereomar") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ 
+            tracking_number: searchValue,
+            search_type: searchType 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (btnSearch) {
+            btnSearch.innerHTML = originalHtml;
+            btnSearch.disabled = false;
+        }
+
+        if (data.success) {
+            if (data.warehouse && inputWr) inputWr.value = data.warehouse;
+            if (data.numero_seguimiento && inputTr) inputTr.value = data.numero_seguimiento;
+            
+            const inputNombre = document.getElementById('input_nombre');
+            if (data.descripcion && inputNombre) inputNombre.value = data.descripcion;
+            
+            const inputDesc = document.getElementById('input_descripcion');
+            if (data.descripcion_completa && inputDesc && inputDesc.value.trim() === '') {
+                inputDesc.value = data.descripcion_completa;
+            }
+            
+            if (data.peso) {
+                document.getElementById('peso').value = Math.max(1, parseInt(data.peso, 10));
+            }
+            if (data.tipo_envio) {
+                document.getElementById('tipo_envio').value = data.tipo_envio;
+            }
+
+            if (data.cliente && data.cliente.id && selCliente) {
+                selCliente.value = data.cliente.id;
+                const badge = document.getElementById('cliente_autodetect_badge');
+                const badgeTxt = document.getElementById('cliente_autodetect_text');
+                if (badge && badgeTxt) {
+                    badgeTxt.textContent = `Cliente autodetectado: ${data.cliente.nombre} (${data.cliente.cedula})`;
+                    badge.style.display = 'flex';
+                }
+                actualizarTextosTarifa();
+            }
+
+            calcularCosto();
+        }
+    })
+    .catch(err => {
+        if (btnSearch) {
+            btnSearch.innerHTML = originalHtml;
+            btnSearch.disabled = false;
+        }
+        console.error("Error consultando Aereomar:", err);
+    });
+}
+
 // Prevenir envío automático del formulario al usar Enter
 document.getElementById('formPaquete').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
             e.preventDefault();
+            if (e.target.id === 'input_warehouse') {
+                fetchAereomarEdit('warehouse');
+            } else if (e.target.id === 'input_tracking') {
+                fetchAereomarEdit('tracking');
+            }
         }
     }
 });

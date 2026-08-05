@@ -279,6 +279,9 @@
     function onScanSuccess(decodedText, decodedResult) {
         if (targetInputForScanner) {
             targetInputForScanner.value = decodedText;
+            targetInputForScanner.dispatchEvent(new Event('input', { bubbles: true }));
+            targetInputForScanner.dispatchEvent(new Event('change', { bubbles: true }));
+            targetInputForScanner.dispatchEvent(new Event('blur', { bubbles: true }));
         }
         cerrarScanner();
     }

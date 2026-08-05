@@ -12,9 +12,10 @@
 <div style="max-width:100%;">
     <div class="card">
         <form method="POST" id="formPaquetes">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="form-group" style="max-width: 400px; margin-bottom: 24px;">
-                <label>Cliente *</label>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div class="form-group" style="max-width: 480px; margin-bottom: 24px;">
+                <label style="font-weight: 600;"><i class="fas fa-user"></i> Cliente *</label>
                 <select name="cliente_id" id="cliente_id" class="form-control" required>
                     <option value="">Seleccionar cliente...</option>
                     {% for c in clientes %}
@@ -23,6 +24,9 @@
                     </option>
                     {% endfor %}
                 </select>
+                <div id="cliente_autodetect_badge" style="display:none; margin-top:8px; font-size:12px; color:var(--success); align-items:center; gap:6px;">
+                    <i class="fas fa-check-circle"></i> <span id="cliente_autodetect_text"></span>
+                </div>
             </div>
 
             <div id="paquetes-container">
@@ -50,11 +54,6 @@
                 <button type="submit" name="accion" value="guardar" class="btn btn-primary">
                     <i class="fas fa-save"></i> Registrar Todo
                 </button>
-                <!-- Botón desactivado a petición
-                <button type="submit" name="accion" value="facturar" class="btn btn-success">
-                    <i class="fas fa-file-invoice-dollar"></i> Registrar y Facturar
-                </button>
-                -->
                 <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
@@ -62,28 +61,59 @@
 </div>
 
 <template id="paquete-template">
-    <div class="paquete-row" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; position: relative;">
+    <div class="paquete-row" style="border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; position: relative; background: var(--surface);">
         <button type="button" class="btn btn-sm btn-danger btn-eliminar" style="position: absolute; top: 16px; right: 16px;" onclick="eliminarPaquete(this)">
             <i class="fas fa-trash"></i>
         </button>
-        <h4 style="margin-bottom: 16px; font-size: 16px; color: var(--accent);"><i class="fas fa-box"></i> Paquete <span class="paquete-index"></span></h4>
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Nombre del paquete *</label>
-                <input type="text" name="nombre[]" class="form-control" required placeholder="Ej: Ropa, Zapatos...">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom: 16px;">
+            <h4 style="margin: 0; font-size: 16px; color: var(--accent);"><i class="fas fa-box"></i> Paquete <span class="paquete-index"></span></h4>
+            <span class="aereomar-feedback-badge" style="display:none; font-size: 11px; padding: 3px 9px; border-radius: 12px; background: rgba(16,185,129,0.15); color: var(--success); font-weight: 600;">
+                <i class="fas fa-check-double"></i> Aereomar Sincronizado
+            </span>
+        </div>
+
+        <!-- Búsqueda Dual: Warehouse o Tracking -->
+        <div style="background: var(--surface2); padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border);">
+            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px;">
+                <i class="fas fa-bolt" style="color: var(--accent2);"></i> Búsqueda en Aereomar (Escribe o Escanea cualquiera de los dos)
             </div>
-            <div class="form-group">
-                <label>Número de Seguimiento *</label>
-                <div style="display:flex; gap:8px;">
-                    <input type="text" name="numero_seguimiento[]" class="form-control" placeholder="Tracking Number" required onblur="fetchAereomarData(this)">
-                    <button type="button" class="btn btn-secondary" title="Escanear con cámara" onclick="abrirScanner(this.previousElementSibling)" style="padding: 10px 14px;">
-                        <i class="fas fa-camera"></i>
-                    </button>
+            <div class="grid-2">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 12px; font-weight: 600;"><i class="fas fa-warehouse"></i> Warehouse (WR...)</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" name="warehouse[]" class="form-control input-warehouse" placeholder="Ej: WR541692" onblur="fetchAereomarData(this, 'warehouse')">
+                        <button type="button" class="btn btn-secondary" title="Escanear Warehouse" onclick="abrirScanner(this.previousElementSibling)" style="padding: 9px 12px;">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-buscar-wr" title="Consultar en Aereomar" onclick="fetchAereomarData(this.previousElementSibling.previousElementSibling, 'warehouse')" style="padding: 9px 12px;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 12px; font-weight: 600;"><i class="fas fa-barcode"></i> Número de Seguimiento (Tracking) *</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" name="numero_seguimiento[]" class="form-control input-tracking" placeholder="Ej: WR541692XP1 o Tracking" required onblur="fetchAereomarData(this, 'tracking')">
+                        <button type="button" class="btn btn-secondary" title="Escanear Tracking" onclick="abrirScanner(this.previousElementSibling)" style="padding: 9px 12px;">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-buscar-tr" title="Consultar en Aereomar" onclick="fetchAereomarData(this.previousElementSibling.previousElementSibling, 'tracking')" style="padding: 9px 12px;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Campos de Información -->
+        <div class="grid-2">
             <div class="form-group">
-                <label>Warehouse</label>
-                <input type="text" name="warehouse[]" class="form-control" placeholder="WR..." onblur="fetchAereomarData(this)">
+                <label>Nombre / Contenido del paquete *</label>
+                <input type="text" name="nombre[]" class="form-control input-nombre" required placeholder="Ej: Ropa, Zapatos, Cosméticos...">
+            </div>
+            <div class="form-group">
+                <label>Descripción detallada</label>
+                <input type="text" name="descripcion[]" class="form-control input-descripcion" placeholder="Observaciones o contenido adicional...">
             </div>
         </div>
         <div class="grid-2">
@@ -100,19 +130,13 @@
                 </select>
             </div>
         </div>
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Estado de Rastreo</label>
-                <select name="estado_rastreo[]" class="form-control">
-                    <option value="bodega_miami" selected>🏢 En bodega Miami</option>
-                    <option value="en_transito">🚢/✈️ En tránsito</option>
-                    <option value="listo_para_retirar">✅ Listo para retirar</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Descripción</label>
-                <input type="text" name="descripcion[]" class="form-control" placeholder="Contenido (opcional)...">
-            </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Estado de Rastreo Inicial</label>
+            <select name="estado_rastreo[]" class="form-control select-estado">
+                <option value="bodega_miami" selected>🏢 En bodega Miami</option>
+                <option value="en_transito">🚢/✈️ En tránsito</option>
+                <option value="listo_para_retirar">✅ Listo para retirar</option>
+            </select>
         </div>
     </div>
 </template>
@@ -177,15 +201,18 @@ function calcularCostoGlobal(tAereo, tMaritimo) {
 
     const filas = document.querySelectorAll('.paquete-row');
     filas.forEach(fila => {
-        const pesoStr = fila.querySelector('.input-peso').value;
-        const tipo = fila.querySelector('.select-tipo').value;
-        
-        if (pesoStr && tipo) {
-            const peso = parseInt(pesoStr, 10);
-            if (peso > 0) {
-                const tarifa = tipo === 'aereo' ? tAereo : tMaritimo;
-                costoTotal += peso * tarifa;
-                paquetesValidos++;
+        const pesoInput = fila.querySelector('.input-peso');
+        const tipoSelect = fila.querySelector('.select-tipo');
+        if (pesoInput && tipoSelect) {
+            const pesoStr = pesoInput.value;
+            const tipo = tipoSelect.value;
+            if (pesoStr && tipo) {
+                const peso = parseInt(pesoStr, 10);
+                if (peso > 0) {
+                    const tarifa = tipo === 'aereo' ? tAereo : tMaritimo;
+                    costoTotal += peso * tarifa;
+                    paquetesValidos++;
+                }
             }
         }
     });
@@ -205,14 +232,14 @@ function agregarPaquete() {
     actualizarTextosTarifa();
     actualizarBotonesEliminar();
     
-    // Dar focus al campo de seguimiento del paquete recién agregado
+    // Dar focus al campo de warehouse del paquete recién agregado
     setTimeout(() => {
         const rows = container.querySelectorAll('.paquete-row');
         const lastRow = rows[rows.length - 1];
         if (lastRow) {
-            const inputSeguimiento = lastRow.querySelector('input[name="numero_seguimiento[]"]');
-            if (inputSeguimiento) {
-                inputSeguimiento.focus();
+            const inputWr = lastRow.querySelector('.input-warehouse');
+            if (inputWr) {
+                inputWr.focus();
             }
         }
     }, 50);
@@ -226,7 +253,6 @@ function eliminarPaquete(btn) {
 
 function actualizarBotonesEliminar() {
     const filas = document.querySelectorAll('.paquete-row');
-    // Si solo hay un paquete, ocultar el botón eliminar
     if (filas.length <= 1) {
         filas.forEach(fila => {
             const btn = fila.querySelector('.btn-eliminar');
@@ -240,13 +266,28 @@ function actualizarBotonesEliminar() {
     }
 }
 
-document.getElementById('cliente_id').addEventListener('change', actualizarTextosTarifa);
+document.getElementById('cliente_id').addEventListener('change', () => {
+    document.getElementById('cliente_autodetect_badge').style.display = 'none';
+    actualizarTextosTarifa();
+});
 
-function fetchAereomarData(inputElement) {
-    const trackingNumber = inputElement.value.trim();
-    if (!trackingNumber) return;
+function fetchAereomarData(inputElement, searchType) {
+    if (!inputElement) return;
+    const searchValue = inputElement.value.trim();
+    if (!searchValue) return;
     
+    const row = inputElement.closest('.paquete-row');
+    if (!row) return;
+
+    // Feedback visual de carga
     inputElement.style.opacity = '0.5';
+    const btnSearch = searchType === 'warehouse' ? row.querySelector('.btn-buscar-wr') : row.querySelector('.btn-buscar-tr');
+    let originalBtnHtml = '';
+    if (btnSearch) {
+        originalBtnHtml = btnSearch.innerHTML;
+        btnSearch.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btnSearch.disabled = true;
+    }
 
     fetch('{{ url_for("paquetes.fetch_aereomar") }}', {
         method: 'POST',
@@ -254,56 +295,128 @@ function fetchAereomarData(inputElement) {
             'Content-Type': 'application/json',
             'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
         },
-        body: JSON.stringify({ tracking_number: trackingNumber })
+        body: JSON.stringify({ 
+            tracking_number: searchValue,
+            search_type: searchType 
+        })
     })
     .then(response => response.json())
     .then(data => {
         inputElement.style.opacity = '1';
+        if (btnSearch) {
+            btnSearch.innerHTML = originalBtnHtml;
+            btnSearch.disabled = false;
+        }
+
         if (data.success) {
-            const row = inputElement.closest('.paquete-row');
-            
-            if (data.descripcion) {
-                const nombreInput = row.querySelector('input[name="nombre[]"]');
-                if (nombreInput && nombreInput.value.trim() === '') {
-                    nombreInput.value = data.descripcion;
-                }
-            }
-            
-            if (data.peso) {
-                row.querySelector('input[name="peso[]"]').value = data.peso;
-            }
-
+            // 1. Warehouse
             if (data.warehouse) {
-                const warehouseInput = row.querySelector('input[name="warehouse[]"]');
-                if (warehouseInput && warehouseInput.value.trim() === '') {
-                    warehouseInput.value = data.warehouse;
+                const wrInput = row.querySelector('.input-warehouse');
+                if (wrInput) wrInput.value = data.warehouse;
+            }
+            
+            // 2. Tracking / Seguimiento
+            if (data.numero_seguimiento) {
+                const trInput = row.querySelector('.input-tracking');
+                if (trInput) trInput.value = data.numero_seguimiento;
+            }
+            
+            // 3. Nombre del paquete (producto limpio)
+            if (data.descripcion) {
+                const nombreInput = row.querySelector('.input-nombre');
+                if (nombreInput) nombreInput.value = data.descripcion;
+            }
+
+            // 4. Descripción completa u observaciones
+            if (data.descripcion_completa && data.descripcion_completa !== data.descripcion) {
+                const descInput = row.querySelector('.input-descripcion');
+                if (descInput && descInput.value.trim() === '') {
+                    descInput.value = data.descripcion_completa;
+                }
+            }
+            
+            // 5. Peso
+            if (data.peso) {
+                const pesoInput = row.querySelector('.input-peso');
+                if (pesoInput) pesoInput.value = Math.max(1, parseInt(data.peso, 10));
+            }
+
+            // 6. Tipo de envío
+            if (data.tipo_envio) {
+                const selectTipo = row.querySelector('.select-tipo');
+                if (selectTipo) selectTipo.value = data.tipo_envio;
+            }
+            
+            // Badge de sincronización exitosa en la fila
+            const badge = row.querySelector('.aereomar-feedback-badge');
+            if (badge) {
+                badge.style.display = 'inline-flex';
+            }
+
+            // 7. Auto-selección inteligente del cliente
+            if (data.cliente && data.cliente.id) {
+                const selCliente = document.getElementById('cliente_id');
+                if (selCliente) {
+                    selCliente.value = data.cliente.id;
+                    const badgeCliente = document.getElementById('cliente_autodetect_badge');
+                    const textCliente = document.getElementById('cliente_autodetect_text');
+                    if (badgeCliente && textCliente) {
+                        textCliente.textContent = `Cliente autodetectado: ${data.cliente.nombre} (${data.cliente.cedula})`;
+                        badgeCliente.style.display = 'flex';
+                    }
+                    actualizarTextosTarifa();
                 }
             }
 
-            if (data.tipo_envio) {
-                const selectTipo = row.querySelector('select[name="tipo_envio[]"]');
-                selectTipo.value = data.tipo_envio;
+            // 8. Soporte para múltiples bultos dentro del mismo Warehouse
+            if (data.paquetes && data.paquetes.length > 1) {
+                const container = document.getElementById('paquetes-container');
+                const extraItems = data.paquetes.slice(1);
+                
+                extraItems.forEach(item => {
+                    // Verificar si ya existe una fila con este número de seguimiento
+                    const existingInputs = Array.from(container.querySelectorAll('.input-tracking')).map(i => i.value.trim());
+                    if (!existingInputs.includes(item.numero_seguimiento)) {
+                        agregarPaquete();
+                        const rows = container.querySelectorAll('.paquete-row');
+                        const newRow = rows[rows.length - 1];
+                        if (newRow) {
+                            newRow.querySelector('.input-warehouse').value = data.warehouse || '';
+                            newRow.querySelector('.input-tracking').value = item.numero_seguimiento;
+                            newRow.querySelector('.input-nombre').value = data.descripcion;
+                            newRow.querySelector('.input-peso').value = Math.max(1, parseInt(item.peso || data.peso, 10));
+                            newRow.querySelector('.select-tipo').value = data.tipo_envio;
+                            const b = newRow.querySelector('.aereomar-feedback-badge');
+                            if (b) b.style.display = 'inline-flex';
+                        }
+                    }
+                });
             }
-            
+
             calcularCostoGlobal();
         } else {
-            console.log("Aereomar Fetch failed:", data.error);
+            console.log("Aereomar Fetch no devolvió resultados:", data.error);
         }
     })
     .catch(error => {
         inputElement.style.opacity = '1';
-        console.error("Error fetching Aereomar data:", error);
+        if (btnSearch) {
+            btnSearch.innerHTML = originalBtnHtml;
+            btnSearch.disabled = false;
+        }
+        console.error("Error consultando Aereomar:", error);
     });
 }
 
-// Prevenir envío automático del formulario al usar Enter (ej. por lector de códigos de barra)
+// Prevenir envío accidental con Enter y disparar búsqueda si está en inputs de tracking/warehouse
 document.getElementById('formPaquetes').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
             e.preventDefault();
-            // Si el enter vino del campo de tracking, forzar el blur para buscar info
-            if (e.target.name === 'numero_seguimiento[]') {
-                e.target.blur();
+            if (e.target.classList.contains('input-warehouse')) {
+                fetchAereomarData(e.target, 'warehouse');
+            } else if (e.target.classList.contains('input-tracking')) {
+                fetchAereomarData(e.target, 'tracking');
             }
         }
     }
@@ -312,8 +425,6 @@ document.getElementById('formPaquetes').addEventListener('keydown', function(e) 
 // Prevenir doble envío del formulario
 document.getElementById('formPaquetes').addEventListener('submit', function(e) {
     const btns = this.querySelectorAll('button[type=submit]');
-    
-    // Para asegurar que el valor del botón presionado se envíe, añadimos un input oculto
     const submitter = e.submitter;
     if (submitter && submitter.name) {
         const hidden = document.createElement('input');
@@ -332,8 +443,8 @@ document.getElementById('formPaquetes').addEventListener('submit', function(e) {
     }, 10);
 });
 
-// Init
+// Inicialización
 cargarTarifasBase();
-agregarPaquete(); // Agrega al menos un paquete inicial
+agregarPaquete();
 </script>
 {% endblock %}
