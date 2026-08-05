@@ -5,6 +5,8 @@ from sqlalchemy.orm import joinedload
 from models import Paquete, Cliente, db, HistorialRastreo, Tarifa
 import io
 import openpyxl
+import os
+import re
 
 paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
 
@@ -437,6 +439,108 @@ def exportar():
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+import urllib.request
+import urllib.parse
+import http.cookiejar
+import time
+import unicodedata
+import json
+
+class AereomarClient:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.cj = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cj))
+        self.logged_in = False
+        self.last_login_time = 0
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+
+    def login(self):
+        try:
+            home_url = 'https://aereomarexpress.multitrack.trackingpremium.us/'
+            login_url = 'https://aereomarexpress.multitrack.trackingpremium.us/login_check'
+            
+            # GET inicial
+            req_home = urllib.request.Request(home_url, headers=self.headers)
+            self.opener.open(req_home, timeout=10)
+            
+            # POST credenciales
+            login_data = urllib.parse.urlencode({
+                '_username': self.username,
+                '_password': self.password
+            }).encode('utf-8')
+            
+            headers_post = dict(self.headers)
+            headers_post['Content-Type'] = 'application/x-www-form-urlencoded'
+            headers_post['Referer'] = home_url
+            
+            req_login = urllib.request.Request(login_url, data=login_data, headers=headers_post)
+            self.opener.open(req_login, timeout=15)
+            self.logged_in = True
+            self.last_login_time = time.time()
+            return True
+        except Exception as e:
+            print("Error en login Aereomar:", e)
+            self.logged_in = False
+            return False
+
+    def ensure_logged_in(self):
+        if not self.logged_in or (time.time() - self.last_login_time > 1500):
+            return self.login()
+        return True
+
+    def fetch_whrec_trackings(self, whrec_ruta):
+        if not self.ensure_logged_in():
+            return []
+        
+        try:
+            url = f"https://aereomarexpress.multitrack.trackingpremium.us{whrec_ruta}"
+            req = urllib.request.Request(url, headers=self.headers)
+            html = self.opener.open(req, timeout=10).read().decode('utf-8', errors='ignore')
+            
+            if 'login_check' in html or len(html) < 15000:
+                self.login()
+                req = urllib.request.Request(url, headers=self.headers)
+                html = self.opener.open(req, timeout=10).read().decode('utf-8', errors='ignore')
+                
+            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
+            results = []
+            for r in rows:
+                clean_cells = re.findall(r'<td[^>]*>(.*?)</td>', r, re.DOTALL)
+                cells = [re.sub(r'<[^>]+>', '', c).strip() for c in clean_cells]
+                if len(cells) >= 8 and 'XP' in cells[0]:
+                    pkg_code = cells[0]
+                    desc = cells[5] if len(cells) > 5 else ""
+                    carrier_tracking = cells[7] if len(cells) > 7 else ""
+                    raw_weight = cells[11] if len(cells) > 11 else ""
+                    
+                    weight = 0
+                    w_m = re.search(r'([\d\.]+)', raw_weight)
+                    if w_m:
+                        try:
+                            weight = float(w_m.group(1))
+                        except Exception:
+                            weight = 0
+                            
+                    results.append({
+                        "pkg_code": pkg_code,
+                        "carrier_tracking": carrier_tracking,
+                        "description": desc,
+                        "weight": weight
+                    })
+            return results
+        except Exception as e:
+            print("Error extrayendo whrec trackings:", e)
+            return []
+
+aereomar_client = AereomarClient(
+    os.environ.get('AEREOMAR_USER', 'enviosbjjexpress@gmail.com'),
+    os.environ.get('AEREOMAR_PASS', 'Julio100!')
+)
+
 @paquetes_bp.route('/fetch_aereomar', methods=['POST'])
 @login_required
 def fetch_aereomar():
@@ -446,11 +550,6 @@ def fetch_aereomar():
     
     if not tracking_full:
         return jsonify({"success": False, "error": "No se proporcionó número para buscar"})
-    
-    import re
-    import urllib.request
-    import json
-    import unicodedata
     
     def normalize_str(s):
         if not s:
@@ -510,36 +609,65 @@ def fetch_aereomar():
                 
             # Extraer Warehouse
             warehouse = ""
+            whrec_ruta = ""
             if len(json_data) > 1 and json_data[1] and isinstance(json_data[1], list):
                 if len(json_data[1]) > 0 and 'number' in json_data[1][0]:
                     warehouse = str(json_data[1][0]['number']).strip()
+                if len(json_data[1]) > 0 and 'ruta' in json_data[1][0]:
+                    whrec_ruta = str(json_data[1][0]['ruta']).strip()
                     
             if not warehouse and is_warehouse_query:
                 warehouse = base_tracking_match.group(1).upper() if base_tracking_match else tracking_full.upper()
 
+            # Consultar tracking(s) original(es) de la tienda usando la sesión autenticada
+            whrec_items = []
+            if whrec_ruta:
+                try:
+                    whrec_items = aereomar_client.fetch_whrec_trackings(whrec_ruta)
+                except Exception as e_wh:
+                    print("Error consultando whrec autenticado:", e_wh)
+
             # Extraer lista de paquetes contenidos en este recibo / warehouse
             packages_list = []
             primary_tracking = ""
-            if len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
-                for p_item in json_data[3]:
-                    if isinstance(p_item, dict):
-                        p_num = str(p_item.get('number', '')).strip()
-                        p_desc = str(p_item.get('description', '')).strip()
-                        p_weight = p_item.get('weight', 0)
-                        if p_num:
-                            packages_list.append({
-                                "numero_seguimiento": p_num,
-                                "descripcion": p_desc,
-                                "peso": p_weight
-                            })
 
-            if packages_list:
-                primary_tracking = packages_list[0]['numero_seguimiento']
-            elif not is_warehouse_query:
+            if whrec_items:
+                # Usar los datos autenticados con trackings reales de la tienda
+                for item in whrec_items:
+                    c_track = item.get('carrier_tracking') or item.get('pkg_code')
+                    packages_list.append({
+                        "numero_seguimiento": c_track,
+                        "pkg_code": item.get('pkg_code'),
+                        "descripcion": item.get('description') or raw_desc,
+                        "peso": item.get('weight') or weight
+                    })
+                if packages_list:
+                    primary_tracking = packages_list[0]['numero_seguimiento']
+            else:
+                # Fallback al json público
+                if len(json_data) > 3 and json_data[3] and isinstance(json_data[3], list):
+                    for p_item in json_data[3]:
+                        if isinstance(p_item, dict):
+                            p_num = str(p_item.get('number', '')).strip()
+                            p_desc = str(p_item.get('description', '')).strip()
+                            p_weight = p_item.get('weight', 0)
+                            if p_num:
+                                packages_list.append({
+                                    "numero_seguimiento": p_num,
+                                    "descripcion": p_desc,
+                                    "peso": p_weight
+                                })
+
+                if packages_list:
+                    primary_tracking = packages_list[0]['numero_seguimiento']
+                elif not is_warehouse_query:
+                    primary_tracking = tracking_full
+
+            # Si el usuario buscó por tracking original, respetamos ese tracking exacto
+            if not is_warehouse_query and tracking_full:
                 primary_tracking = tracking_full
 
             # Parsear descripción: separar alias del cliente y producto
-            # Ejemplos habituales: "JULIO AMAZON // COSMETICOS ", "KEVIN DUARTE // ROPA", "JULIO - ZAPATOS"
             nombre_limpio = raw_desc
             alias_cliente = ""
             if "//" in raw_desc:
@@ -561,7 +689,6 @@ def fetch_aereomar():
             matched_cliente = None
             if alias_cliente:
                 norm_alias = normalize_str(alias_cliente)
-                # Palabras a ignorar para matching (tiendas o palabras comunes)
                 stop_words = {'amazon', 'shein', 'temu', 'ebay', 'walmart', 'bjj', 'express', 'box', 'casillero', 'paquete', 'usa', 'miami'}
                 alias_words = [w for w in norm_alias.split() if len(w) > 2 and w not in stop_words]
                 
@@ -572,11 +699,9 @@ def fetch_aereomar():
                     c_norm = normalize_str(c.nombre_completo)
                     c_words = [w for w in c_norm.split() if len(w) > 2]
                     
-                    # 1. Coincidencia de nombre completo exacto
                     if c_norm and (c_norm in norm_alias or norm_alias in c_norm):
                         score = 100
                     else:
-                        # 2. Coincidencia de palabras compartidas
                         shared = set(alias_words).intersection(set(c_words))
                         if len(shared) >= 2:
                             score = 80 + len(shared) * 5
@@ -617,4 +742,5 @@ def fetch_aereomar():
             return jsonify({"success": False, "error": "No se encontraron datos en AereoMar para este número"})
     except Exception as e:
         return jsonify({"success": False, "error": f"Error consultando AereoMar: {str(e)}"})
+
 
