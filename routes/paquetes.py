@@ -19,9 +19,17 @@ def index():
 
     query = Paquete.query.options(joinedload(Paquete.cliente), joinedload(Paquete.factura)).join(Cliente).filter(Cliente.activo == True)
     if q:
+        q_clean = re.sub(r'[^a-zA-Z0-9]', '', q).upper()
+        base_wr = re.search(r'WR\d+', q_clean, flags=re.I)
+        base_wr_str = base_wr.group(0).upper() if base_wr else q
+        
         query = query.filter(
             (Paquete.nombre.ilike(f'%{q}%')) |
-            (Cliente.nombre_completo.ilike(f'%{q}%'))
+            (Cliente.nombre_completo.ilike(f'%{q}%')) |
+            (Paquete.warehouse.ilike(f'%{q}%')) |
+            (Paquete.warehouse.ilike(f'%{base_wr_str}%')) |
+            (Paquete.numero_seguimiento.ilike(f'%{q}%')) |
+            (Paquete.tracking_number.ilike(f'%{q}%'))
         )
     if tipo:
         query = query.filter(Paquete.tipo_envio == tipo)

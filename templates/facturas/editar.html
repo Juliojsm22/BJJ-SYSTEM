@@ -131,19 +131,53 @@ function actualizarTotalEdit() {
     document.getElementById('totalPreview').textContent = '$' + total.toFixed(2);
 }
 
+function normalizarCodEdit(str) {
+    return (str || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function matchPaqueteItem(item, rawCode) {
+    if (!rawCode) return false;
+    const code = normalizarCodEdit(rawCode);
+    if (!code) return false;
+
+    const variations = [code];
+    const noXu = code.replace(/xu\d+/g, '');
+    if (noXu && !variations.includes(noXu)) variations.push(noXu);
+    const noXpXu = code.replace(/x[pu]\d+/g, '');
+    if (noXpXu && !variations.includes(noXpXu)) variations.push(noXpXu);
+    const wrMatch = code.match(/wr\d+/);
+    if (wrMatch && !variations.includes(wrMatch[0])) variations.push(wrMatch[0]);
+    const xpMatch = code.match(/wr\d+xp\d+/);
+    if (xpMatch && !variations.includes(xpMatch[0])) variations.push(xpMatch[0]);
+
+    const pVals = [
+        normalizarCodEdit(item.dataset.tracking),
+        normalizarCodEdit(item.dataset.seguimiento),
+        normalizarCodEdit(item.dataset.warehouse)
+    ].filter(v => v.length > 0);
+
+    for (let v of pVals) {
+        for (let varCode of variations) {
+            if (v === varCode || v.includes(varCode) || varCode.includes(v)) {
+                return true;
+            }
+        }
+        if (v.length >= 4 && (code.includes(v) || v.includes(code))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function procesarScanEdit() {
     const input = document.getElementById('editScannerInput');
     if (!input) return;
-    const code = input.value.trim().toLowerCase();
+    const code = input.value.trim();
     if (!code) return;
     
     let found = false;
     document.querySelectorAll('.paquete-item').forEach(item => {
-        const tr = item.dataset.tracking || '';
-        const seg = item.dataset.seguimiento || '';
-        const wh = item.dataset.warehouse || '';
-        
-        if (tr === code || seg === code || wh === code || tr.includes(code) || seg.includes(code) || (wh && wh.includes(code))) {
+        if (matchPaqueteItem(item, code)) {
             const chk = item.querySelector('input[type="checkbox"]');
             if (chk) {
                 chk.checked = true;

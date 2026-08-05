@@ -205,21 +205,54 @@ function resaltarFila(paqueteId, flash = false) {
     }
 }
 
+function normalizarCod(str) {
+    return (str || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function matchPaquete(p, rawCode) {
+    if (!rawCode) return false;
+    const code = normalizarCod(rawCode);
+    if (!code) return false;
+
+    const variations = [code];
+    const noXu = code.replace(/xu\d+/g, '');
+    if (noXu && !variations.includes(noXu)) variations.push(noXu);
+    const noXpXu = code.replace(/x[pu]\d+/g, '');
+    if (noXpXu && !variations.includes(noXpXu)) variations.push(noXpXu);
+    const wrMatch = code.match(/wr\d+/);
+    if (wrMatch && !variations.includes(wrMatch[0])) variations.push(wrMatch[0]);
+    const xpMatch = code.match(/wr\d+xp\d+/);
+    if (xpMatch && !variations.includes(xpMatch[0])) variations.push(xpMatch[0]);
+
+    const pVals = [
+        normalizarCod(p.tracking_number),
+        normalizarCod(p.numero_seguimiento),
+        normalizarCod(p.warehouse)
+    ].filter(v => v.length > 0);
+
+    for (let v of pVals) {
+        for (let varCode of variations) {
+            if (v === varCode || v.includes(varCode) || varCode.includes(v)) {
+                return true;
+            }
+        }
+        if (v.length >= 4 && (code.includes(v) || v.includes(code))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function procesarBusquedaRapida() {
     const input = document.getElementById('quickScannerInput');
     if (!input) return;
     const code = input.value.trim();
     if (!code) return;
     
-    const codeLower = code.toLowerCase();
-    
     // 1. Si ya hay cliente seleccionado y el paquete está en la lista actual
     let foundInCurrent = false;
     for (let p of paquetesData) {
-        const tr = (p.tracking_number || '').toLowerCase();
-        const seg = (p.numero_seguimiento || '').toLowerCase();
-        const wh = (p.warehouse || '').toLowerCase();
-        if (tr === codeLower || seg === codeLower || wh === codeLower || tr.includes(codeLower) || seg.includes(codeLower) || (wh && wh.includes(codeLower))) {
+        if (matchPaquete(p, code)) {
             const checkbox = document.getElementById('check_paquete_' + p.id);
             if (checkbox) {
                 checkbox.checked = true;

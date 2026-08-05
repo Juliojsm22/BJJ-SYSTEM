@@ -245,30 +245,73 @@ def paquetes_cliente(cliente_id):
 @facturas_bp.route('/buscar-paquete')
 @login_required
 def buscar_paquete():
-    code = request.args.get('code', '').strip()
-    if not code:
+    raw_code = request.args.get('code', '').strip()
+    if not raw_code:
         return jsonify({"success": False, "error": "No se proporcionó código"})
     
+    import re
+    code_clean = re.sub(r'[^a-zA-Z0-9]', '', raw_code).upper()
+    
+    # Extraer posibles variaciones (ej: WR495141XP1XU1 -> WR495141XP1, WR495141)
+    variations = {raw_code.strip().upper(), code_clean}
+    
+    # Quitar sufijos comunes de piezas/unidades de Aereomar (XU1, XP1, etc.)
+    no_xu = re.sub(r'XU\d+', '', code_clean, flags=re.I)
+    if no_xu:
+        variations.add(no_xu)
+    no_xp_xu = re.sub(r'X[PU]\d+', '', code_clean, flags=re.I)
+    if no_xp_xu:
+        variations.add(no_xp_xu)
+        
+    wr_match = re.search(r'WR\d+', code_clean, flags=re.I)
+    if wr_match:
+        variations.add(wr_match.group(0).upper())
+        
+    xp_match = re.search(r'WR\d+XP\d+', code_clean, flags=re.I)
+    if xp_match:
+        variations.add(xp_match.group(0).upper())
+
     from sqlalchemy import or_
-    paquetes = Paquete.query.outerjoin(Factura).filter(
-        or_(
-            Paquete.tracking_number.ilike(code),
-            Paquete.numero_seguimiento.ilike(code),
-            Paquete.warehouse.ilike(code),
-            Paquete.tracking_number.ilike(f'%{code}%'),
-            Paquete.numero_seguimiento.ilike(f'%{code}%'),
-            Paquete.warehouse.ilike(f'%{code}%')
-        ),
+    
+    # Obtener todos los paquetes pendientes de facturar
+    paquetes_pendientes = Paquete.query.outerjoin(Factura).filter(
         or_(
             Paquete.factura_id == None,
             Factura.estado != 'pagada'
         )
     ).all()
     
-    if not paquetes:
-        return jsonify({"success": False, "error": f"No se encontró ningún paquete pendiente de facturar con el código '{code}'"})
+    def match_package(p):
+        p_tr = (p.tracking_number or '').upper()
+        p_tr_clean = re.sub(r'[^a-zA-Z0-9]', '', p_tr)
+        p_seg = (p.numero_seguimiento or '').upper()
+        p_seg_clean = re.sub(r'[^a-zA-Z0-9]', '', p_seg)
+        p_wr = (p.warehouse or '').upper()
+        p_wr_clean = re.sub(r'[^a-zA-Z0-9]', '', p_wr)
+        
+        p_values = [v for v in [p_tr, p_tr_clean, p_seg, p_seg_clean, p_wr, p_wr_clean] if v]
+        
+        # 1. Coincidencia directa o parcial con variaciones
+        for var in variations:
+            if not var:
+                continue
+            for val in p_values:
+                if var == val or var in val or val in var:
+                    return True
+                    
+        # 2. Coincidencia bidireccional si tiene al menos 4 caracteres (ej: WR495141 dentro de WR495141XP1XU1)
+        for val in p_values:
+            if len(val) >= 4 and (val in code_clean or code_clean in val):
+                return True
+                
+        return False
+        
+    paquetes_encontrados = [p for p in paquetes_pendientes if match_package(p)]
     
-    p = paquetes[0]
+    if not paquetes_encontrados:
+        return jsonify({"success": False, "error": f"No se encontró ningún paquete pendiente de facturar con el código '{raw_code}'"})
+    
+    p = paquetes_encontrados[0]
     return jsonify({
         "success": True,
         "paquete": {
