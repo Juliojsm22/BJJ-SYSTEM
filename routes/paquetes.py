@@ -123,28 +123,6 @@ def nuevo():
             from models import registrar_actividad
             registrar_actividad(current_user.id, 'Registró Paquetes', f'Registró {len(paquetes_creados)} paquete(s) para {cliente.nombre_completo}')
             
-            if paquetes_creados and cliente.telefono:
-                import urllib.parse
-                mensaje = f"👋 *Hola {cliente.nombre_completo}*,\n\nTe informamos sobre el registro de tu(s) paquete(s) en *BJJ SYSTEM*.\n\n📦 *Detalles:*\n"
-                for p in paquetes_creados:
-                    if p.estado_rastreo == 'bodega_miami':
-                        estado_str = "🏢🇺🇸 Bodega Miami"
-                    elif p.estado_rastreo == 'en_transito':
-                        estado_str = "🚢/✈️ En tránsito"
-                    elif p.estado_rastreo == 'listo_para_retirar':
-                        estado_str = "✅ Listo para retirar"
-                    else:
-                        estado_str = p.estado_rastreo.replace('_', ' ').title()
-                    
-                    track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
-                    mensaje += f"🔸 *{p.nombre}* ({estado_str})\nTracking: {p.numero_seguimiento or p.tracking_number}\nPeso: {p.peso} lb\n🔗 Rastreo: {track_url}\n\n"
-                mensaje += "¡Gracias por preferir *BJJ SYSTEM*! 🚀"
-                
-                telefono_limpio = ''.join(filter(str.isdigit, str(cliente.telefono)))
-                if telefono_limpio:
-                    wa_url = f"https://api.whatsapp.com/send?phone={telefono_limpio}&text={urllib.parse.quote(mensaje)}"
-                    flash(wa_url, 'whatsapp')
-            
             accion = request.form.get('accion')
             if accion == 'facturar':
                 from models import Factura
