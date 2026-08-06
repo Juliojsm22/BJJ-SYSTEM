@@ -63,6 +63,22 @@ def create_app():
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+
+        # Marcar paquetes anteriores a hoy como notificados automáticamente (desarrollo y producción)
+        try:
+            from models import get_local_now, Paquete
+            hoy_inicio = datetime.combine(get_local_now().date(), datetime.min.time())
+            Paquete.query.filter(
+                Paquete.registrado_en < hoy_inicio,
+                (Paquete.notificado_whatsapp == False) | (Paquete.notificado_whatsapp == None)
+            ).update(
+                {Paquete.notificado_whatsapp: True, Paquete.fecha_notificacion: Paquete.registrado_en},
+                synchronize_session=False
+            )
+            db.session.commit()
+        except Exception as e:
+            print(f"Aviso actualizacion paquetes anteriores: {e}")
+            db.session.rollback()
         
         crear_usuario_admin()
 
