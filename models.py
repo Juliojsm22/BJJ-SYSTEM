@@ -46,6 +46,20 @@ class Cliente(db.Model):
     def paquetes_sin_facturar(self):
         return [p for p in self.paquetes if not p.factura_id]
 
+    @property
+    def paquetes_sin_notificar(self):
+        return [p for p in self.paquetes if not p.notificado_whatsapp]
+
+    def paquetes_del_dia(self, fecha=None):
+        if fecha is None:
+            fecha = get_local_now().date()
+        return [p for p in self.paquetes if p.registrado_en and p.registrado_en.date() == fecha]
+
+    def paquetes_del_dia_sin_notificar(self, fecha=None):
+        if fecha is None:
+            fecha = get_local_now().date()
+        return [p for p in self.paquetes if p.registrado_en and p.registrado_en.date() == fecha and not p.notificado_whatsapp]
+
 class Paquete(db.Model):
     __tablename__ = 'paquetes'
     id = db.Column(db.Integer, primary_key=True)
@@ -60,6 +74,8 @@ class Paquete(db.Model):
     estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
+    notificado_whatsapp = db.Column(db.Boolean, default=False, index=True)
+    fecha_notificacion = db.Column(db.DateTime, nullable=True)
     registrado_en = db.Column(db.DateTime, default=get_local_now)
     registrado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
 

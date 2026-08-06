@@ -18,6 +18,9 @@
 {% endblock %}
 
 {% block topbar_actions %}
+<a href="{{ url_for('paquetes.notificaciones') }}" class="btn btn-secondary" style="background:#25D366; color:white; border-color:#25D366;">
+    <i class="fab fa-whatsapp"></i> Notificaciones de Hoy
+</a>
 <a href="{{ url_for('paquetes.nuevo') }}" class="btn btn-primary">
     <i class="fas fa-plus"></i> Nuevo paquete
 </a>
@@ -36,8 +39,13 @@
         <option value="sin_facturar" {% if estado=='sin_facturar' %}selected{% endif %}>Sin facturar</option>
         <option value="facturado" {% if estado=='facturado' %}selected{% endif %}>Facturado</option>
     </select>
+    <select name="notificado" class="form-control" style="max-width:180px;">
+        <option value="">Todos los avisos</option>
+        <option value="no" {% if notificado=='no' %}selected{% endif %}>⏳ Sin notificar</option>
+        <option value="si" {% if notificado=='si' %}selected{% endif %}>✅ Notificados</option>
+    </select>
     <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
-    {% if q or tipo or estado %}
+    {% if q or tipo or estado or notificado %}
     <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
     {% endif %}
     
@@ -53,7 +61,7 @@
         {% if paquetes %}
         <table id="tablaPaquetes">
             <thead>
-                <tr><th>Paquete</th><th>Cliente</th><th>Tipo</th><th>Peso</th><th>Costo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th>Paquete</th><th>Cliente</th><th>Tipo</th><th>Peso</th><th>Costo</th><th>Fecha</th><th>Factura</th><th>WhatsApp</th><th>Acciones</th></tr>
             </thead>
             <tbody>
                 {% for p in paquetes %}
@@ -93,11 +101,25 @@
                         {% endif %}
                     </td>
                     <td>
+                        <form method="POST" action="{{ url_for('paquetes.marcar_notificado_paquete', id=p.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            {% if p.notificado_whatsapp %}
+                            <button type="submit" class="badge" style="cursor:pointer; border:1px solid #86efac; background:#dcfce7; color:#15803d; font-size:11px; font-weight:600; padding:4px 8px; border-radius:6px;" title="Notificado el {{ p.fecha_notificacion.strftime('%d/%m %H:%M') if p.fecha_notificacion else '' }}. Click para desmarcar.">
+                                <i class="fas fa-check-circle"></i> Notificado
+                            </button>
+                            {% else %}
+                            <button type="submit" class="badge" style="cursor:pointer; border:1px solid #fde68a; background:#fef3c7; color:#b45309; font-size:11px; font-weight:600; padding:4px 8px; border-radius:6px;" title="Click para marcar como notificado">
+                                <i class="fas fa-clock"></i> Pendiente
+                            </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                    <td>
                         <div style="display:flex;gap:6px;">
                             <a href="{{ url_for('paquetes.editar', id=p.id) }}" class="btn btn-sm btn-warning" title="Editar"><i class="fas fa-edit"></i></a>
                             {% if current_user.rol == 'admin' %}
                             <form method="POST" action="{{ url_for('paquetes.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar paquete?')">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </form>
                             {% endif %}

@@ -178,6 +178,7 @@
                 {% endif %}
                 <li><a href="{{ url_for('clientes.index') }}">Cliente</a></li>
                 <li><a href="{{ url_for('paquetes.index') }}">Paquetes</a></li>
+                <li><a href="{{ url_for('paquetes.notificaciones') }}"><i class="fab fa-whatsapp" style="color:#25D366; margin-right:4px;"></i> Notificaciones</a></li>
                 <li><a href="{{ url_for('facturas.index') }}">Facturas</a></li>
                 <li><a href="{{ url_for('rastreo.index') }}" target="_blank">Rastreo Público</a></li>
                 {% if current_user.rol == 'admin' %}

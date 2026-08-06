@@ -51,11 +51,17 @@ def create_app():
         # Lo ideal es que Migrate tome el control total.
         if env == 'development':
             db.create_all()
-            try:
-                db.session.execute(db.text("ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)"))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+            for query in [
+                "ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20)",
+                "ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)",
+                "ALTER TABLE paquetes ADD COLUMN notificado_whatsapp BOOLEAN DEFAULT 0",
+                "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP"
+            ]:
+                try:
+                    db.session.execute(db.text(query))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
         
         crear_usuario_admin()
 

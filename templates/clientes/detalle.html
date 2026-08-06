@@ -212,17 +212,21 @@
 
     <!-- Tab Paquetes -->
     <div id="tab-paquetes" class="tab-pane active">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="color:#1e293b; font-size:16px;">Historial de Paquetes</h3>
-            <div style="display:flex; gap:10px;">
-                {% if cliente.paquetes_sin_facturar %}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+            <h3 style="color:#1e293b; font-size:16px; margin:0;">Historial de Paquetes</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                {% set paquetes_hoy = cliente.paquetes_del_dia() %}
+                {% set paquetes_hoy_pendientes = cliente.paquetes_del_dia_sin_notificar() %}
+                {% set pkgs_notif = paquetes_hoy_pendientes if paquetes_hoy_pendientes else paquetes_hoy %}
+                
+                {% if pkgs_notif %}
                 {% set tel = (cliente.telefono|string|replace('-', '')|replace(' ', '')) %}
                 {% if tel %}
                 {% set msg %}👋 *Hola {{ cliente.nombre_completo }}*,
 
-Te informamos que tienes paquete(s) recién registrado(s) / pendiente(s) en *BJJ SYSTEM*:
+Te informamos que hoy recibimos tu(s) paquete(s) en *BJJ SYSTEM*:
 
-{% for p in cliente.paquetes_sin_facturar %}
+{% for p in pkgs_notif %}
 {% set track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True) %}
 {% set estado_str = "" %}
 {% if p.estado_rastreo == 'bodega_miami' %}{% set estado_str = "🏢🇺🇸 Bodega Miami" %}
@@ -234,12 +238,19 @@ Tracking: {{ p.numero_seguimiento or p.tracking_number }}
 Peso: {{ p.peso }} lb
 🔗 Rastreo: {{ track_url }}
 
-{% endfor %}{% endset %}
+{% endfor %}
+¡Gracias por preferir *BJJ SYSTEM*! 🚀{% endset %}
                 {% set wa_url = "https://api.whatsapp.com/send?phone=" ~ tel ~ "&text=" ~ msg|trim|urlencode %}
-                <a href="{{ wa_url }}" target="_blank" class="btn" style="background:#25D366; color:white; font-size:13px; padding:6px 12px;">
-                    <i class="fab fa-whatsapp"></i> Notificar Paquetes
-                </a>
+                <form method="POST" action="{{ url_for('paquetes.marcar_notificado_cliente', cliente_id=cliente.id) }}" target="_blank" onsubmit="window.open('{{ wa_url }}', '_blank'); setTimeout(() => location.reload(), 1000); return false;" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn" style="background:#25D366; color:white; font-size:13px; padding:6px 12px; border:none; cursor:pointer;">
+                        <i class="fab fa-whatsapp"></i> {{ 'Notificar Hoy (' ~ paquetes_hoy_pendientes|length ~ ')' if paquetes_hoy_pendientes else 'Reenviar Aviso de Hoy' }}
+                    </button>
+                </form>
                 {% endif %}
+                {% endif %}
+
+                {% if cliente.paquetes_sin_facturar %}
                 <a href="{{ url_for('facturas.nueva') }}?cliente_id={{ cliente.id }}" class="btn" style="background:#10b981; color:white; font-size:13px; padding:6px 12px;">
                     <i class="fas fa-file-invoice"></i> Generar factura
                 </a>
@@ -257,7 +268,8 @@ Peso: {{ p.peso }} lb
                         <th style="padding:12px;">Tipo</th>
                         <th style="padding:12px;">Peso</th>
                         <th style="padding:12px;">Costo</th>
-                        <th style="padding:12px;">Estado</th>
+                        <th style="padding:12px;">Factura</th>
+                        <th style="padding:12px;">WhatsApp</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -283,6 +295,20 @@ Peso: {{ p.peso }} lb
                             {% else %}
                             <span class="badge badge-borrador" style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Pendiente</span>
                             {% endif %}
+                        </td>
+                        <td style="padding:12px;">
+                            <form method="POST" action="{{ url_for('paquetes.marcar_notificado_paquete', id=p.id) }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                {% if p.notificado_whatsapp %}
+                                <button type="submit" class="badge" style="cursor:pointer; border:1px solid #86efac; background:#dcfce7; color:#15803d; font-size:11px; font-weight:600; padding:4px 8px; border-radius:6px;" title="Notificado el {{ p.fecha_notificacion.strftime('%d/%m %H:%M') if p.fecha_notificacion else '' }}. Click para desmarcar.">
+                                    <i class="fas fa-check-circle"></i> Notificado
+                                </button>
+                                {% else %}
+                                <button type="submit" class="badge" style="cursor:pointer; border:1px solid #fde68a; background:#fef3c7; color:#b45309; font-size:11px; font-weight:600; padding:4px 8px; border-radius:6px;" title="Click para marcar como notificado">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </button>
+                                {% endif %}
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

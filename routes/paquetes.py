@@ -16,6 +16,7 @@ def index():
     q = request.args.get('q', '')
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
+    notificado = request.args.get('notificado', '')
 
     query = Paquete.query.options(joinedload(Paquete.cliente), joinedload(Paquete.factura)).join(Cliente).filter(Cliente.activo == True)
     if q:
@@ -37,9 +38,13 @@ def index():
         query = query.filter(Paquete.factura_id == None)
     elif estado == 'facturado':
         query = query.filter(Paquete.factura_id != None)
+    if notificado == 'si':
+        query = query.filter(Paquete.notificado_whatsapp == True)
+    elif notificado == 'no':
+        query = query.filter(Paquete.notificado_whatsapp == False)
 
     paquetes = query.order_by(Paquete.registrado_en.desc()).all()
-    return render_template('paquetes/index.html', paquetes=paquetes, q=q, tipo=tipo, estado=estado)
+    return render_template('paquetes/index.html', paquetes=paquetes, q=q, tipo=tipo, estado=estado, notificado=notificado)
 
 @paquetes_bp.route('/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -729,5 +734,192 @@ def fetch_aereomar():
             return jsonify({"success": False, "error": "No se encontraron datos en AereoMar para este número"})
     except Exception as e:
         return jsonify({"success": False, "error": f"Error consultando AereoMar: {str(e)}"})
+
+
+@paquetes_bp.route('/notificaciones')
+@login_required
+def notificaciones():
+    from models import get_local_now
+    import urllib.parse
+    from datetime import datetime, date
+
+    fecha_str = request.args.get('fecha', '')
+    if fecha_str:
+        try:
+            fecha_filtro = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_filtro = get_local_now().date()
+    else:
+        fecha_filtro = get_local_now().date()
+    
+    start_dt = datetime.combine(fecha_filtro, datetime.min.time())
+    end_dt = datetime.combine(fecha_filtro, datetime.max.time())
+
+    paquetes_dia = Paquete.query.options(
+        joinedload(Paquete.cliente)
+    ).join(Cliente).filter(
+        Cliente.activo == True,
+        Paquete.registrado_en >= start_dt,
+        Paquete.registrado_en <= end_dt
+    ).order_by(Paquete.registrado_en.asc()).all()
+
+    clientes_dict = {}
+    for p in paquetes_dia:
+        cid = p.cliente_id
+        if cid not in clientes_dict:
+            clientes_dict[cid] = {
+                'cliente': p.cliente,
+                'paquetes': [],
+                'todos_notificados': True,
+                'alguno_notificado': False,
+                'total_peso': 0.0,
+                'total_costo': 0.0,
+                'fecha_ultima_notificacion': None
+            }
+        
+        clientes_dict[cid]['paquetes'].append(p)
+        clientes_dict[cid]['total_peso'] += (p.peso or 0.0)
+        clientes_dict[cid]['total_costo'] += (p.costo or 0.0)
+
+        if not p.notificado_whatsapp:
+            clientes_dict[cid]['todos_notificados'] = False
+        else:
+            clientes_dict[cid]['alguno_notificado'] = True
+            if p.fecha_notificacion:
+                if not clientes_dict[cid]['fecha_ultima_notificacion'] or p.fecha_notificacion > clientes_dict[cid]['fecha_ultima_notificacion']:
+                    clientes_dict[cid]['fecha_ultima_notificacion'] = p.fecha_notificacion
+
+    total_paquetes = len(paquetes_dia)
+    clientes_notificados_count = 0
+    clientes_pendientes_count = 0
+
+    for cid, data in clientes_dict.items():
+        cliente = data['cliente']
+        pkgs = data['paquetes']
+
+        pkgs_pendientes = [p for p in pkgs if not p.notificado_whatsapp]
+        if not pkgs_pendientes:
+            clientes_notificados_count += 1
+            pkgs_to_send = pkgs
+        else:
+            clientes_pendientes_count += 1
+            pkgs_to_send = pkgs_pendientes
+
+        mensaje = f"👋 *Hola {cliente.nombre_completo}*,\n\nTe informamos sobre el registro de tu(s) paquete(s) en *BJJ SYSTEM*:\n\n📦 *Detalles de hoy ({fecha_filtro.strftime('%d/%m/%Y')}):*\n"
+        for p in pkgs_to_send:
+            if p.estado_rastreo == 'bodega_miami':
+                estado_str = "🏢🇺🇸 Bodega Miami"
+            elif p.estado_rastreo == 'en_transito':
+                estado_str = "🚢/✈️ En tránsito"
+            elif p.estado_rastreo == 'listo_para_retirar':
+                estado_str = "✅ Listo para retirar"
+            else:
+                estado_str = p.estado_rastreo.replace('_', ' ').title()
+            
+            track_url = url_for('rastreo.index', codigo=p.tracking_number, _external=True)
+            mensaje += f"🔸 *{p.nombre}* ({estado_str})\nTracking: {p.numero_seguimiento or p.tracking_number}\nPeso: {p.peso} lb\n🔗 Rastreo: {track_url}\n\n"
+        mensaje += "¡Gracias por preferir *BJJ SYSTEM*! 🚀"
+
+        tel_limpio = ''.join(filter(str.isdigit, str(cliente.telefono or '')))
+        if tel_limpio:
+            data['whatsapp_url'] = f"https://api.whatsapp.com/send?phone={tel_limpio}&text={urllib.parse.quote(mensaje)}"
+        else:
+            data['whatsapp_url'] = None
+
+    clientes_list = list(clientes_dict.values())
+    clientes_list.sort(key=lambda x: (1 if x['todos_notificados'] else 0, x['cliente'].nombre_completo))
+
+    return render_template(
+        'paquetes/notificaciones.html',
+        clientes_notif=clientes_list,
+        fecha_filtro=fecha_filtro.strftime('%Y-%m-%d'),
+        fecha_formateada=fecha_filtro.strftime('%d/%m/%Y'),
+        es_hoy=(fecha_filtro == get_local_now().date()),
+        total_paquetes=total_paquetes,
+        total_clientes=len(clientes_list),
+        clientes_notificados_count=clientes_notificados_count,
+        clientes_pendientes_count=clientes_pendientes_count
+    )
+
+
+@paquetes_bp.route('/marcar-notificado-cliente/<int:cliente_id>', methods=['POST'])
+@login_required
+def marcar_notificado_cliente(cliente_id):
+    from models import get_local_now
+    from datetime import datetime
+
+    fecha_str = request.form.get('fecha')
+    if not fecha_str and request.is_json:
+        fecha_str = request.json.get('fecha')
+
+    if fecha_str:
+        try:
+            fecha_filtro = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_filtro = get_local_now().date()
+    else:
+        fecha_filtro = get_local_now().date()
+
+    start_dt = datetime.combine(fecha_filtro, datetime.min.time())
+    end_dt = datetime.combine(fecha_filtro, datetime.max.time())
+
+    paquetes = Paquete.query.filter(
+        Paquete.cliente_id == cliente_id,
+        Paquete.registrado_en >= start_dt,
+        Paquete.registrado_en <= end_dt
+    ).all()
+
+    now = get_local_now()
+    for p in paquetes:
+        p.notificado_whatsapp = True
+        p.fecha_notificacion = now
+    
+    db.session.commit()
+
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'count': len(paquetes),
+            'fecha_notificacion': now.strftime('%d/%m/%Y %H:%M')
+        })
+    
+    flash(f'Se marcaron {len(paquetes)} paquete(s) como notificados.', 'success')
+    return redirect(url_for('paquetes.notificaciones', fecha=fecha_filtro.strftime('%Y-%m-%d')))
+
+
+@paquetes_bp.route('/marcar-notificado-paquete/<int:id>', methods=['POST'])
+@login_required
+def marcar_notificado_paquete(id):
+    from models import get_local_now
+    paquete = Paquete.query.get_or_404(id)
+    
+    accion = request.form.get('accion')
+    if not accion and request.is_json:
+        accion = request.json.get('accion')
+    if not accion:
+        accion = 'toggle'
+    
+    now = get_local_now()
+    if accion == 'desmarcar':
+        paquete.notificado_whatsapp = False
+        paquete.fecha_notificacion = None
+    elif accion == 'marcar':
+        paquete.notificado_whatsapp = True
+        paquete.fecha_notificacion = now
+    else:  # toggle
+        paquete.notificado_whatsapp = not paquete.notificado_whatsapp
+        paquete.fecha_notificacion = now if paquete.notificado_whatsapp else None
+
+    db.session.commit()
+
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'notificado': paquete.notificado_whatsapp,
+            'fecha_notificacion': paquete.fecha_notificacion.strftime('%d/%m/%Y %H:%M') if paquete.fecha_notificacion else None
+        })
+
+    flash('Estado de notificación actualizado.', 'success')
+    return redirect(request.referrer or url_for('paquetes.index'))
 
 
