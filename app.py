@@ -46,22 +46,23 @@ def create_app():
     app.register_blueprint(usuarios_bp)
 
     with app.app_context():
-        # Cuando se usa Flask-Migrate, en producción ya NO usamos db.create_all()
-        # Solo lo mantenemos para desarrollo rápido o en el primer run si no hay bd.
-        # Lo ideal es que Migrate tome el control total.
-        if env == 'development':
+        try:
             db.create_all()
-            for query in [
-                "ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20)",
-                "ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)",
-                "ALTER TABLE paquetes ADD COLUMN notificado_whatsapp BOOLEAN DEFAULT 0",
-                "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP"
-            ]:
-                try:
-                    db.session.execute(db.text(query))
-                    db.session.commit()
-                except Exception:
-                    db.session.rollback()
+        except Exception as e:
+            print(f"Aviso db.create_all: {e}")
+            db.session.rollback()
+
+        for query in [
+            "ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20)",
+            "ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)",
+            "ALTER TABLE paquetes ADD COLUMN notificado_whatsapp BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP"
+        ]:
+            try:
+                db.session.execute(db.text(query))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
         
         crear_usuario_admin()
 
