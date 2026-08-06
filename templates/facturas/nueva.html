@@ -162,7 +162,7 @@ function renderPaquetes(paquetes, paqueteIdToCheck = null) {
                    onchange="actualizarTotal(); resaltarFila(${p.id});" 
                    style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
             <div style="flex:1;">
-                <div style="font-weight:500; font-size:15px;">${p.nombre} ${p.factura_previa ? `<span class="badge badge-warning" style="font-size:10px;margin-left:8px;">De ${p.factura_previa}</span>` : ''}</div>
+                <div style="font-weight:500; font-size:15px;">${p.nombre}</div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
                     <span class="badge badge-${p.tipo_envio}">${p.tipo_envio === 'aereo' ? '✈️ Aéreo' : '🚢 Marítimo'}</span>
                     ${p.peso.toFixed(2)} lb | Tracking: <strong style="color:var(--text);">${p.numero_seguimiento || p.tracking_number || 'N/A'}</strong>${p.warehouse ? ` | WR: <strong style="color:var(--text);">${p.warehouse}</strong>` : ''}

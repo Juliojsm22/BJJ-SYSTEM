@@ -42,32 +42,16 @@ def nueva():
         db.session.add(factura)
         db.session.flush()
 
-        facturas_afectadas = set()
-        
-        # Optimization: Fetch all packages at once (prevents N+1 queries)
+        # Asignar los paquetes seleccionados a esta factura
         if paquete_ids:
-            paquetes_a_actualizar = Paquete.query.filter(Paquete.id.in_([int(p) for p in paquete_ids])).all()
+            paquetes_a_actualizar = Paquete.query.filter(
+                Paquete.id.in_([int(p) for p in paquete_ids]),
+                Paquete.factura_id == None
+            ).all()
             for paquete in paquetes_a_actualizar:
-                if paquete.factura_id and paquete.factura_id != factura.id:
-                    facturas_afectadas.add(paquete.factura_id)
                 paquete.factura_id = factura.id
                 paquete.estado_rastreo = 'listo_para_retirar'
 
-        db.session.flush()
-
-        if facturas_afectadas:
-            # Optimization: Fetch all affected facturas at once
-            facturas_antiguas = Factura.query.filter(Factura.id.in_(list(facturas_afectadas))).all()
-            for f_ant in facturas_antiguas:
-                if Paquete.query.filter_by(factura_id=f_ant.id).count() == 0:
-                    from models import Pago
-                    Pago.query.filter_by(factura_id=f_ant.id).delete()
-                    db.session.delete(f_ant)
-                else:
-                    # Optimization: manually update total to prevent mid-loop db.session.commit() from f_ant.actualizar_total()
-                    f_ant.total = f_ant.calcular_total()
-
-        # Update current factura without intermediate commit
         factura.total = factura.calcular_total()
         db.session.commit()
         
@@ -113,47 +97,30 @@ def editar(id):
             except ValueError:
                 pass
 
-        # Quitar paquetes actuales
+        # Quitar paquetes actuales de esta factura
         for p in factura.paquetes:
             p.factura_id = None
             
-        # Asignar nuevos
+        # Asignar paquetes seleccionados a esta factura
         paquete_ids = request.form.getlist('paquete_ids')
-        facturas_afectadas = set()
-        
         if paquete_ids:
-            paquetes_a_actualizar = Paquete.query.filter(Paquete.id.in_([int(p) for p in paquete_ids])).all()
+            paquetes_a_actualizar = Paquete.query.filter(
+                Paquete.id.in_([int(p) for p in paquete_ids]),
+                Paquete.cliente_id == factura.cliente_id
+            ).all()
             for paquete in paquetes_a_actualizar:
-                if paquete.factura_id and paquete.factura_id != factura.id:
-                    facturas_afectadas.add(paquete.factura_id)
                 paquete.factura_id = factura.id
                 paquete.estado_rastreo = 'entregado' if factura.estado == 'pagada' else 'listo_para_retirar'
                 
-        db.session.flush()
-        
-        if facturas_afectadas:
-            facturas_antiguas = Factura.query.filter(Factura.id.in_(list(facturas_afectadas))).all()
-            for f_ant in facturas_antiguas:
-                if Paquete.query.filter_by(factura_id=f_ant.id).count() == 0:
-                    from models import Pago
-                    Pago.query.filter_by(factura_id=f_ant.id).delete()
-                    db.session.delete(f_ant)
-                else:
-                    f_ant.total = f_ant.calcular_total()
-
         factura.total = factura.calcular_total()
         db.session.commit()
         flash('Factura actualizada.', 'success')
         return redirect(url_for('facturas.detalle', id=id))
 
     cliente = factura.cliente
-    from sqlalchemy import or_
-    paquetes_sin_facturar = Paquete.query.outerjoin(Factura).filter(
-        Paquete.cliente_id == cliente.id,
-        or_(
-            Paquete.factura_id == None,
-            db.and_(Factura.estado != 'pagada', Factura.id != factura.id)
-        )
+    paquetes_sin_facturar = Paquete.query.filter_by(
+        cliente_id=cliente.id,
+        factura_id=None
     ).all()
     return render_template('facturas/editar.html', factura=factura, paquetes_sin_facturar=paquetes_sin_facturar)
 
@@ -224,18 +191,13 @@ def generar_pdf(id):
 @facturas_bp.route('/paquetes-cliente/<int:cliente_id>')
 @login_required
 def paquetes_cliente(cliente_id):
-    from sqlalchemy import or_
-    paquetes = Paquete.query.outerjoin(Factura).filter(
-        Paquete.cliente_id == cliente_id,
-        or_(
-            Paquete.factura_id == None,
-            Factura.estado != 'pagada'
-        )
+    paquetes = Paquete.query.filter_by(
+        cliente_id=cliente_id,
+        factura_id=None
     ).all()
     return jsonify([{
         'id': p.id, 'nombre': p.nombre, 'peso': p.peso,
         'tipo_envio': p.tipo_envio, 'costo': p.costo,
-        'factura_previa': p.factura.numero if p.factura else None,
         'numero_seguimiento': p.numero_seguimiento,
         'tracking_number': p.tracking_number,
         'estado_rastreo': p.estado_rastreo,
@@ -271,15 +233,8 @@ def buscar_paquete():
     if xp_match:
         variations.add(xp_match.group(0).upper())
 
-    from sqlalchemy import or_
-    
-    # Obtener todos los paquetes pendientes de facturar
-    paquetes_pendientes = Paquete.query.outerjoin(Factura).filter(
-        or_(
-            Paquete.factura_id == None,
-            Factura.estado != 'pagada'
-        )
-    ).all()
+    # Obtener todos los paquetes pendientes de facturar (sin factura asignada)
+    paquetes_pendientes = Paquete.query.filter_by(factura_id=None).all()
     
     def match_package(p):
         p_tr = (p.tracking_number or '').upper()
