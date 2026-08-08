@@ -385,9 +385,9 @@ def exportar():
         return val
 
     for p in paquetes:
-        precio_costo = (p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6)
-        precio_venta = p.costo or 0
-        ganancia = precio_venta - precio_costo
+        precio_costo = round((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6), 2)
+        precio_venta = round(p.costo or 0, 2)
+        ganancia = round(precio_venta - precio_costo, 2)
         
         row = [
             p.id,
@@ -399,7 +399,7 @@ def exportar():
             p.tipo_envio.upper() if p.tipo_envio else '',
             precio_costo,
             precio_venta,
-            precio_venta * 37,
+            round(precio_venta * 37, 2),
             ganancia,
             p.estado_rastreo.replace('_', ' ').title() if p.estado_rastreo else '',
             'SÍ' if p.factura_id else 'NO',
