@@ -24,7 +24,11 @@ def facturas_pendientes():
     )
     
     if cliente_id:
-        query = query.filter(Factura.cliente_id == cliente_id)
+        try:
+            cliente_id = int(cliente_id)
+            query = query.filter(Factura.cliente_id == cliente_id)
+        except ValueError:
+            return jsonify([])
     elif busqueda:
         # Búsqueda por número de factura o nombre de cliente
         busqueda_format = f"%{busqueda}%"
@@ -42,13 +46,14 @@ def facturas_pendientes():
     
     resultados = []
     for f in facturas:
+        total_val = float(f.total) if f.total is not None else 0.0
         resultados.append({
             'id': f.id,
             'numero': f.numero,
-            'cliente_nombre': f.cliente.nombre_completo,
+            'cliente_nombre': f.cliente.nombre_completo if f.cliente else 'Desconocido',
             'fecha_emision': f.fecha_emision.strftime('%d/%m/%Y %H:%M') if f.fecha_emision else '',
             'estado': f.estado,
-            'total': f.total,
+            'total': total_val,
             'cantidad_paquetes': len(f.paquetes)
         })
         
