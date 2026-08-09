@@ -176,6 +176,7 @@
                 {% if current_user.rol == 'admin' %}
                 <li><a href="{{ url_for('dashboard.index') }}">Inicio</a></li>
                 {% endif %}
+                <li><a href="{{ url_for('caja.index') }}"><i class="fas fa-cash-register" style="margin-right:4px;"></i> Caja</a></li>
                 <li><a href="{{ url_for('clientes.index') }}">Cliente</a></li>
                 <li><a href="{{ url_for('paquetes.index') }}">Paquetes</a></li>
                 <li><a href="{{ url_for('paquetes.notificaciones') }}"><i class="fab fa-whatsapp" style="color:#25D366; margin-right:4px;"></i> Notificaciones</a></li>

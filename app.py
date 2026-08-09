@@ -36,6 +36,7 @@ def create_app():
     from routes.dashboard import dashboard_bp
     from routes.rastreo import rastreo_bp
     from routes.usuarios import usuarios_bp
+    from routes.caja import caja_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
@@ -44,6 +45,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(rastreo_bp)
     app.register_blueprint(usuarios_bp)
+    app.register_blueprint(caja_bp)
 
     with app.app_context():
         try:

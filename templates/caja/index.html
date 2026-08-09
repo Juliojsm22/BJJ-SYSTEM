@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Caja / Punto de Pago{% endblock %}
+{% block page_title %}Caja / Punto de Pago{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    
+    <!-- Buscador -->
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 class="card-title" style="margin-bottom: 16px;"><i class="fas fa-search"></i> Buscar Facturas Pendientes</h3>
+        
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Seleccionar Cliente</label>
+                <select id="clienteSelect" class="form-control">
+                    <option value="">Seleccione un cliente...</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}">{{ c.nombre_completo }} — {{ c.cedula }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>O buscar por número de factura / nombre</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="busquedaInput" class="form-control" placeholder="Ej. FAC-2026-00001">
+                    <button type="button" class="btn btn-secondary" onclick="buscarPorTexto()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom: 16px;"><i class="fas fa-file-invoice-dollar"></i> Facturas Encontradas</h3>
+        
+        <div id="loadingIndicator" style="display:none; text-align:center; padding:20px; color:var(--text-muted);">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top:10px;">Buscando facturas...</p>
+        </div>
+
+        <div id="resultadosContainer">
+            <div class="empty-state">
+                <i class="fas fa-cash-register"></i>
+                <p>Seleccione un cliente o busque una factura para comenzar a cobrar.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal de Pago -->
+<div id="modalPago" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:var(--surface); padding:24px; border-radius:12px; max-width:400px; width:90%; position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <button onclick="cerrarModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+        
+        <h3 style="font-family:'Syne', sans-serif; color:var(--accent); margin-bottom:20px; font-size: 20px;">
+            <i class="fas fa-money-bill-wave"></i> Procesar Pago
+        </h3>
+        
+        <div style="background:var(--surface2); padding:16px; border-radius:8px; margin-bottom:20px; text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Total a Cobrar</div>
+            <div id="modalTotal" style="font-family:'Syne', sans-serif; font-size:32px; font-weight:800; color:var(--success); margin-top:5px;">$0.00</div>
+            <div id="modalFacturaNum" style="font-size:14px; font-weight:600; margin-top:5px;"></div>
+        </div>
+
+        <form id="formPago" onsubmit="procesarPago(event)">
+            <input type="hidden" id="facturaIdInput">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label>Método de Pago</label>
+                <select id="metodoPagoSelect" class="form-control" required>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Link de Pago">Link de Pago</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Referencia (Opcional)</label>
+                <input type="text" id="referenciaInput" class="form-control" placeholder="Ej. Número de voucher o transferencia">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:16px;" id="btnProcesar">
+                <i class="fas fa-check-circle"></i> Confirmar Pago
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('clienteSelect').addEventListener('change', function() {
+    const cid = this.value;
+    if (cid) {
+        document.getElementById('busquedaInput').value = '';
+        buscarFacturas(`cliente_id=${cid}`);
+    }
+});
+
+document.getElementById('busquedaInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarPorTexto();
+    }
+});
+
+function buscarPorTexto() {
+    const texto = document.getElementById('busquedaInput').value.trim();
+    if (texto) {
+        document.getElementById('clienteSelect').value = '';
+        buscarFacturas(`busqueda=${encodeURIComponent(texto)}`);
+    }
+}
+
+function buscarFacturas(queryParam) {
+    document.getElementById('resultadosContainer').innerHTML = '';
+    document.getElementById('loadingIndicator').style.display = 'block';
+    
+    fetch(`/caja/facturas-pendientes?${queryParam}`)
+        .then(r => r.json())
+        .then(facturas => {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            renderFacturas(facturas);
+        })
+        .catch(err => {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('resultadosContainer').innerHTML = `<div class="alert alert-error">Error al buscar facturas.</div>`;
+            console.error(err);
+        });
+}
+
+function renderFacturas(facturas) {
+    const container = document.getElementById('resultadosContainer');
+    if (!facturas || facturas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-check-circle" style="color:var(--success); opacity:1;"></i>
+                <p>No se encontraron facturas pendientes para cobrar.</p>
+            </div>`;
+        return;
+    }
+
+    let html = `
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Paquetes</th>
+                        <th style="text-align:right;">Total</th>
+                        <th style="text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    facturas.forEach(f => {
+        let badgeClass = f.estado === 'borrador' ? 'badge-borrador' : 'badge-finalizada';
+        html += `
+            <tr>
+                <td><strong>${f.numero}</strong></td>
+                <td>${f.cliente_nombre}</td>
+                <td>${f.fecha_emision}</td>
+                <td><span class="badge ${badgeClass}">${f.estado.toUpperCase()}</span></td>
+                <td>${f.cantidad_paquetes}</td>
+                <td style="text-align:right; font-weight:700; color:var(--accent); font-size:16px;">$${f.total.toFixed(2)}</td>
+                <td style="text-align:center;">
+                    <button class="btn btn-success btn-sm" onclick="abrirModalPago(${f.id}, '${f.numero}', ${f.total})">
+                        <i class="fas fa-hand-holding-dollar"></i> Cobrar
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+}
+
+function abrirModalPago(id, numero, total) {
+    document.getElementById('facturaIdInput').value = id;
+    document.getElementById('modalFacturaNum').innerText = `Factura: ${numero}`;
+    document.getElementById('modalTotal').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('metodoPagoSelect').value = 'Efectivo';
+    document.getElementById('referenciaInput').value = '';
+    
+    document.getElementById('modalPago').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modalPago').style.display = 'none';
+}
+
+function procesarPago(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('btnProcesar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    
+    const facturaId = document.getElementById('facturaIdInput').value;
+    const metodoPago = document.getElementById('metodoPagoSelect').value;
+    const referencia = document.getElementById('referenciaInput').value;
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    const formData = new FormData();
+    formData.append('factura_id', facturaId);
+    formData.append('metodo_pago', metodoPago);
+    formData.append('referencia', referencia);
+    
+    fetch('/caja/procesar-pago', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Pago';
+        
+        if (res.success) {
+            cerrarModal();
+            // Refrescar resultados actuales
+            const cid = document.getElementById('clienteSelect').value;
+            if (cid) {
+                buscarFacturas(`cliente_id=${cid}`);
+            } else {
+                buscarPorTexto();
+            }
+            
+            // Mostrar mensaje de exito (podemos inyectarlo en el contenedor principal)
+            const alertHtml = `
+                <div class="alert alert-success" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><i class="fas fa-check-circle"></i> ${res.message}</div>
+                    <a href="/facturas/pdf/${res.factura_id}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-print"></i> Imprimir Recibo</a>
+                </div>
+            `;
+            document.querySelector('.content-padding').insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Opcional: imprimir automáticamente
+            // window.open(`/facturas/pdf/${res.factura_id}`, '_blank');
+        } else {
+            alert('Error: ' + res.error);
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Pago';
+        alert('Error de conexión al procesar el pago.');
+        console.error(err);
+    });
+}
+</script>
+{% endblock %}
