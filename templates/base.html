@@ -88,13 +88,25 @@
 
         .table-wrap { overflow-x: auto; }
         .table-wrap:has(.dataTable-wrapper) { overflow-x: visible; }
-        .dataTable-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .dataTable-wrapper {
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .dataTable-container { 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            max-width: 100%;
+            width: 100%;
+        }
         .dataTable-top, .dataTable-bottom {
             display: flex !important;
             flex-wrap: wrap !important;
             justify-content: space-between !important;
             align-items: center !important;
             gap: 16px;
+            max-width: 100%;
+            width: 100%;
         }
         .dataTable-top > div, .dataTable-top > nav,
         .dataTable-bottom > div, .dataTable-bottom > nav {
