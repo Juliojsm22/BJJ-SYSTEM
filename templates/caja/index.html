@@ -2,6 +2,47 @@
 {% block title %}Caja / Punto de Pago{% endblock %}
 {% block page_title %}Caja / Punto de Pago{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+/* Estilos para Select2 adaptados al tema */
+.select2-container--default .select2-selection--single {
+    height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--surface);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px;
+    color: var(--text);
+    padding-left: 14px;
+    font-family: 'Outfit', sans-serif;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+.select2-dropdown {
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+}
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: var(--accent);
+}
+.select2-search--dropdown .select2-search__field {
+    background-color: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+/* Evitar que los textos de la tabla se rompan en móviles */
+.table-wrap th, .table-wrap td {
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 1000px; margin: 0 auto;">
     
@@ -95,13 +136,23 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.getElementById('clienteSelect').addEventListener('change', function() {
-    const cid = this.value;
-    if (cid) {
-        document.getElementById('busquedaInput').value = '';
-        buscarFacturas(`cliente_id=${cid}`);
-    }
+$(document).ready(function() {
+    $('#clienteSelect').select2({
+        placeholder: "Escribe el nombre o cédula...",
+        allowClear: true,
+        width: '100%'
+    });
+
+    $('#clienteSelect').on('change', function() {
+        const cid = $(this).val();
+        if (cid) {
+            document.getElementById('busquedaInput').value = '';
+            buscarFacturas(`cliente_id=${cid}`);
+        }
+    });
 });
 
 document.getElementById('busquedaInput').addEventListener('keypress', function(e) {

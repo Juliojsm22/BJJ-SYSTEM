@@ -6,6 +6,12 @@ from datetime import datetime
 
 caja_bp = Blueprint('caja', __name__, url_prefix='/caja')
 
+@caja_bp.before_request
+def check_admin():
+    if current_user.is_authenticated and current_user.rol != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder a la Caja.', 'error')
+        return redirect(url_for('paquetes.index'))
+
 @caja_bp.route('/')
 @login_required
 def index():
