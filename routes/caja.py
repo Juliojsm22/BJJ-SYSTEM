@@ -60,7 +60,8 @@ def facturas_pendientes():
             'fecha_emision': f.fecha_emision.strftime('%d/%m/%Y %H:%M') if f.fecha_emision else '',
             'estado': f.estado,
             'total': total_val,
-            'cantidad_paquetes': len(f.paquetes)
+            'cantidad_paquetes': len(f.paquetes),
+            'warehouses': [p.warehouse for p in f.paquetes if p.warehouse]
         })
         
     return jsonify(resultados)

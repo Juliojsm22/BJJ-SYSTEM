@@ -202,6 +202,12 @@ function renderFacturas(facturas) {
 
     facturas.forEach(f => {
         let badgeClass = f.estado === 'borrador' ? 'badge-borrador' : 'badge-finalizada';
+        
+        let warehousesHtml = '';
+        if (f.warehouses && f.warehouses.length > 0) {
+            warehousesHtml = `<div style="margin-top: 4px; font-size: 11px; color: var(--text-muted); background: var(--surface2); padding: 4px 8px; border-radius: 4px; display: inline-block;"><i class="fas fa-barcode"></i> WH: ${f.warehouses.join(', ')}</div>`;
+        }
+
         html += `
             <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
@@ -212,12 +218,13 @@ function renderFacturas(facturas) {
                     <span class="badge ${badgeClass}" style="flex-shrink: 0;">${f.estado.toUpperCase()}</span>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--surface2); padding-top: 12px; margin-top: 4px;">
-                    <div style="font-size: 13px; color: var(--text-muted);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--surface2); padding-top: 12px; margin-top: 4px;">
+                    <div style="font-size: 13px; color: var(--text-muted); flex: 1;">
                         <i class="far fa-calendar-alt"></i> ${f.fecha_emision || 'N/A'}<br>
                         <i class="fas fa-box"></i> ${f.cantidad_paquetes} paquete(s)
+                        ${warehousesHtml ? '<br>' + warehousesHtml : ''}
                     </div>
-                    <div style="text-align: right;">
+                    <div style="text-align: right; margin-left: 12px;">
                         <div style="font-weight: 800; color: var(--success); font-size: 20px; font-family: 'Syne', sans-serif;">$${f.total.toFixed(2)}</div>
                     </div>
                 </div>
