@@ -86,6 +86,7 @@ def create_app():
 
     from flask import session
     from datetime import timedelta
+    import time
     
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=10)
 
@@ -93,6 +94,57 @@ def create_app():
     def make_session_permanent():
         session.permanent = True
         session.modified = True
+
+    last_checked = {'time': 0}
+
+    @app.before_request
+    def actualizar_estados_paquetes():
+        current_time = time.time()
+        # Ejecutar la verificación como máximo una vez por hora (3600 segundos)
+        if current_time - last_checked['time'] > 3600:
+            last_checked['time'] = current_time
+            try:
+                from models import Paquete, HistorialRastreo, get_local_now
+                now = get_local_now()
+                limite_aduana = now - timedelta(days=12)
+                limite_transito = now - timedelta(days=2)
+
+                # 1. Paquetes que llevan más de 12 días -> En aduana
+                paquetes_aduana = Paquete.query.filter(
+                    Paquete.registrado_en <= limite_aduana,
+                    Paquete.estado_rastreo.in_(['bodega_miami', 'en_transito'])
+                ).all()
+
+                for p in paquetes_aduana:
+                    p.estado_rastreo = 'en_aduana'
+                    db.session.add(HistorialRastreo(
+                        paquete_id=p.id,
+                        estado='en_aduana',
+                        ubicacion='Aduana',
+                        comentarios='Actualización automática: 12 días después del registro'
+                    ))
+
+                # 2. Paquetes que llevan entre 2 y 12 días -> En tránsito
+                paquetes_transito = Paquete.query.filter(
+                    Paquete.registrado_en <= limite_transito,
+                    Paquete.registrado_en > limite_aduana,
+                    Paquete.estado_rastreo == 'bodega_miami'
+                ).all()
+
+                for p in paquetes_transito:
+                    p.estado_rastreo = 'en_transito'
+                    db.session.add(HistorialRastreo(
+                        paquete_id=p.id,
+                        estado='en_transito',
+                        ubicacion='En Tránsito',
+                        comentarios='Actualización automática: 2 días después del registro'
+                    ))
+
+                if paquetes_aduana or paquetes_transito:
+                    db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error actualizando estados automáticamente: {e}")
 
     return app
 
