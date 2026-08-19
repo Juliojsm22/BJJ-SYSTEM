@@ -73,7 +73,31 @@ def nueva():
             db.session.add(tarifa)
             db.session.commit()
             
-            flash('Tarifa temporal creada exitosamente.', 'success')
+            # Recalcular paquetes pendientes dentro del rango de fechas
+            from models import Paquete
+            paquetes_pendientes = Paquete.query.filter(
+                Paquete.factura_id == None,
+                Paquete.registrado_en >= fecha_inicio,
+                # Convertir fecha_fin a datetime hasta el final del día para comparar
+                db.func.date(Paquete.registrado_en) <= fecha_fin
+            ).all()
+            
+            if tarifa.cliente_id:
+                paquetes_pendientes = [p for p in paquetes_pendientes if p.cliente_id == tarifa.cliente_id]
+                
+            actualizados = 0
+            for p in paquetes_pendientes:
+                nuevo_costo = p.calcular_costo()
+                if p.costo != nuevo_costo:
+                    p.costo = nuevo_costo
+                    actualizados += 1
+            
+            if actualizados > 0:
+                db.session.commit()
+                flash(f'Tarifa temporal creada. Se recalcularon {actualizados} paquetes pendientes.', 'success')
+            else:
+                flash('Tarifa temporal creada exitosamente.', 'success')
+                
             return redirect(url_for('tarifas_temporales.index'))
         except Exception as e:
             flash(f'Error al crear tarifa: {str(e)}', 'error')
@@ -111,7 +135,41 @@ def editar(id):
                 return redirect(url_for('tarifas_temporales.editar', id=id))
                 
             db.session.commit()
-            flash('Tarifa temporal actualizada correctamente.', 'success')
+            
+            # Recalcular paquetes pendientes dentro del rango de fechas
+            from models import Paquete
+            paquetes_pendientes = Paquete.query.filter(
+                Paquete.factura_id == None,
+                Paquete.registrado_en >= tarifa.fecha_inicio,
+                db.func.date(Paquete.registrado_en) <= tarifa.fecha_fin
+            ).all()
+            
+            if tarifa.cliente_id:
+                paquetes_pendientes = [p for p in paquetes_pendientes if p.cliente_id == tarifa.cliente_id]
+                
+            actualizados = 0
+            for p in paquetes_pendientes:
+                nuevo_costo = p.calcular_costo()
+                if p.costo != nuevo_costo:
+                    p.costo = nuevo_costo
+                    actualizados += 1
+                    
+            # También debemos recalcular paquetes cuyo costo deba volver a la normalidad si la tarifa se acortó
+            # Para esto, podemos recalcular todos los paquetes pendientes que no tienen factura, es más seguro.
+            todos_pendientes = Paquete.query.filter_by(factura_id=None).all()
+            for p in todos_pendientes:
+                if p not in paquetes_pendientes:
+                    nuevo_costo = p.calcular_costo()
+                    if p.costo != nuevo_costo:
+                        p.costo = nuevo_costo
+                        actualizados += 1
+            
+            if actualizados > 0:
+                db.session.commit()
+                flash(f'Tarifa actualizada. Se recalcularon {actualizados} paquetes pendientes.', 'success')
+            else:
+                flash('Tarifa temporal actualizada correctamente.', 'success')
+                
             return redirect(url_for('tarifas_temporales.index'))
         except Exception as e:
             flash(f'Error al actualizar tarifa: {str(e)}', 'error')

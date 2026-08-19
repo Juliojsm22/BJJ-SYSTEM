@@ -94,12 +94,16 @@ class Paquete(db.Model):
         # 1. Verificar si hay una tarifa temporal global o específica para el cliente
         from models import TarifaTemporal
         from datetime import date
-        hoy = get_local_now().date()
         
-        # Filtrar las que estén vigentes hoy
+        if self.registrado_en:
+            fecha_ref = self.registrado_en.date()
+        else:
+            fecha_ref = get_local_now().date()
+        
+        # Filtrar las que estén vigentes en la fecha del paquete
         tarifa_temp_query = TarifaTemporal.query.filter(
-            TarifaTemporal.fecha_inicio <= hoy,
-            TarifaTemporal.fecha_fin >= hoy
+            TarifaTemporal.fecha_inicio <= fecha_ref,
+            TarifaTemporal.fecha_fin >= fecha_ref
         )
         
         tarifa_temporal = None
