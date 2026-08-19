@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Tarifas Temporales{% endblock %}
+{% block page_title %}Tarifas Temporales{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('tarifas_temporales.nueva') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nueva Tarifa
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Cliente</th>
+                    <th>Aéreo ($)</th>
+                    <th>Marítimo ($)</th>
+                    <th>Vigencia</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tarifas %}
+                <tr>
+                    <td>{{ t.nombre }}</td>
+                    <td>
+                        {% if t.cliente %}
+                            <a href="{{ url_for('clientes.detalle', id=t.cliente_id) }}">{{ t.cliente.nombre_completo }}</a>
+                        {% else %}
+                            <span class="badge badge-secondary">Global (Todos)</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.2f"|format(t.aereo) if t.aereo else '-' }}</td>
+                    <td>{{ "%.2f"|format(t.maritimo) if t.maritimo else '-' }}</td>
+                    <td>{{ t.fecha_inicio.strftime('%d/%m/%Y') }} - {{ t.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <span class="badge {{ t.estado_clase }}">{{ t.estado_texto }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('tarifas_temporales.editar', id=t.id) }}" class="btn-icon" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ url_for('tarifas_temporales.eliminar', id=t.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar esta tarifa?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn-icon text-danger" title="Eliminar" style="background:none;border:none;cursor:pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No hay tarifas temporales registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

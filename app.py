@@ -37,6 +37,7 @@ def create_app():
     from routes.rastreo import rastreo_bp
     from routes.usuarios import usuarios_bp
     from routes.caja import caja_bp
+    from routes.tarifas_temporales import tarifas_temporales_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
@@ -46,6 +47,7 @@ def create_app():
     app.register_blueprint(rastreo_bp)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(caja_bp)
+    app.register_blueprint(tarifas_temporales_bp)
 
     with app.app_context():
         try:

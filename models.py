@@ -91,12 +91,40 @@ class Paquete(db.Model):
             from models import Cliente
             cliente = Cliente.query.get(self.cliente_id)
             
-        if cliente and getattr(cliente, 'tarifa_especial', None):
+        # 1. Verificar si hay una tarifa temporal global o específica para el cliente
+        from models import TarifaTemporal
+        from datetime import date
+        hoy = get_local_now().date()
+        
+        # Filtrar las que estén vigentes hoy
+        tarifa_temp_query = TarifaTemporal.query.filter(
+            TarifaTemporal.fecha_inicio <= hoy,
+            TarifaTemporal.fecha_fin >= hoy
+        )
+        
+        tarifa_temporal = None
+        if cliente:
+            # Priorizar tarifa temporal específica del cliente
+            tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=cliente.id).first()
+        
+        if not tarifa_temporal:
+            # Si no hay específica, buscar una global
+            tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=None).first()
+            
+        if tarifa_temporal:
+            if self.tipo_envio == 'aereo' and tarifa_temporal.aereo is not None:
+                tarifa = tarifa_temporal.aereo
+            elif self.tipo_envio == 'maritimo' and tarifa_temporal.maritimo is not None:
+                tarifa = tarifa_temporal.maritimo
+            
+        # 2. Si no hay tarifa temporal, usar la tarifa especial del cliente
+        if tarifa is None and cliente and getattr(cliente, 'tarifa_especial', None):
             if self.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
                 tarifa = cliente.tarifa_especial.aereo
             elif self.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
                 tarifa = cliente.tarifa_especial.maritimo
 
+        # 3. Si no hay tarifa especial, usar la tarifa general de la BD
         if tarifa is None:
             tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
             if tarifa_db:
@@ -183,6 +211,20 @@ class TarifaEspecialCliente(db.Model):
     maritimo = db.Column(db.Float, nullable=True)
     
     cliente = db.relationship('Cliente', backref=db.backref('tarifa_especial', uselist=False, cascade='all, delete-orphan'), overlaps="cliente,tarifa_especial")
+
+class TarifaTemporal(db.Model):
+    __tablename__ = 'tarifas_temporales'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False) # ej. "Promo Verano"
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True) # Si es null, aplica a todos
+    aereo = db.Column(db.Float, nullable=True)
+    maritimo = db.Column(db.Float, nullable=True)
+    fecha_inicio = db.Column(db.Date, nullable=False)
+    fecha_fin = db.Column(db.Date, nullable=False)
+    creado_en = db.Column(db.DateTime, default=get_local_now)
+    creado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
+    
+    cliente = db.relationship('Cliente', backref=db.backref('tarifas_temporales', lazy=True, cascade='all, delete-orphan'))
 
 class RegistroActividad(db.Model):
     __tablename__ = 'registro_actividades'
