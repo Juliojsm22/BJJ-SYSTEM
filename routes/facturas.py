@@ -494,7 +494,7 @@ def exportar():
     ws = wb.active
     ws.title = "Facturas"
 
-    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Estado', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Warehouses', 'Notas']
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Tipo de Envío', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Warehouses', 'Notas']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -509,13 +509,16 @@ def exportar():
         warehouses_list = [p.warehouse for p in f.paquetes if p.warehouse]
         warehouses_str = ', '.join(warehouses_list) if warehouses_list else ''
         
+        tipos_envio = list(set([p.tipo_envio.upper() for p in f.paquetes if p.tipo_envio]))
+        tipo_envio_str = ', '.join(tipos_envio) if tipos_envio else ''
+        
         ws.append([
             f.id,
             f.numero,
             f.cliente.nombre_completo,
             f.cliente.cedula,
             f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
-            f.estado.upper(),
+            tipo_envio_str,
             total_facturado,
             round(total_facturado * 37, 2),
             costo_agencia,
