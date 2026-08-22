@@ -85,22 +85,22 @@ class Paquete(db.Model):
     TARIFA_MARITIMO = 2.50
 
     def calcular_costo(self):
-        tarifa = None
         cliente = self.cliente
         if not cliente and self.cliente_id:
             from models import Cliente
             cliente = Cliente.query.get(self.cliente_id)
             
-        # 1. Verificar si hay una tarifa temporal global o específica para el cliente
-        from models import TarifaTemporal
+        from models import TarifaTemporal, Tarifa
         from datetime import date
         
         if self.registrado_en:
             fecha_ref = self.registrado_en.date()
         else:
             fecha_ref = get_local_now().date()
+            
+        posibles_tarifas = []
         
-        # Filtrar las que estén vigentes en la fecha del paquete
+        # 1. Verificar si hay una tarifa temporal global o específica para el cliente
         tarifa_temp_query = TarifaTemporal.query.filter(
             TarifaTemporal.fecha_inicio <= fecha_ref,
             TarifaTemporal.fecha_fin >= fecha_ref
@@ -108,35 +108,34 @@ class Paquete(db.Model):
         
         tarifa_temporal = None
         if cliente:
-            # Priorizar tarifa temporal específica del cliente
             tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=cliente.id).first()
-        
         if not tarifa_temporal:
-            # Si no hay específica, buscar una global
             tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=None).first()
             
         if tarifa_temporal:
             if self.tipo_envio == 'aereo' and tarifa_temporal.aereo is not None:
-                tarifa = tarifa_temporal.aereo
+                posibles_tarifas.append(tarifa_temporal.aereo)
             elif self.tipo_envio == 'maritimo' and tarifa_temporal.maritimo is not None:
-                tarifa = tarifa_temporal.maritimo
+                posibles_tarifas.append(tarifa_temporal.maritimo)
             
-        # 2. Si no hay tarifa temporal, usar la tarifa especial del cliente
-        if tarifa is None and cliente and getattr(cliente, 'tarifa_especial', None):
+        # 2. Verificar la tarifa especial (base) del cliente
+        if cliente and getattr(cliente, 'tarifa_especial', None):
             if self.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                tarifa = cliente.tarifa_especial.aereo
+                posibles_tarifas.append(cliente.tarifa_especial.aereo)
             elif self.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                tarifa = cliente.tarifa_especial.maritimo
+                posibles_tarifas.append(cliente.tarifa_especial.maritimo)
 
-        # 3. Si no hay tarifa especial, usar la tarifa general de la BD
-        if tarifa is None:
-            tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
-            if tarifa_db:
-                tarifa = tarifa_db.precio_por_libra
-            else:
-                tarifa = self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO
+        # 3. Verificar la tarifa general del sistema
+        tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
+        if tarifa_db:
+            posibles_tarifas.append(tarifa_db.precio_por_libra)
+        else:
+            posibles_tarifas.append(self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO)
+            
+        # Seleccionar la tarifa más baja de todas las aplicables
+        tarifa_final = min(posibles_tarifas) if posibles_tarifas else (self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO)
                 
-        return round(self.peso * tarifa, 2)
+        return round(self.peso * tarifa_final, 2)
 
     def save(self):
         self.costo = self.calcular_costo()
