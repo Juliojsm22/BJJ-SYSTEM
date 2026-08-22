@@ -246,19 +246,38 @@
 
         .search-bar {
             display: flex; gap: 12px; align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 24px; flex-wrap: wrap;
         }
-        .search-bar .form-control { max-width: 320px; }
+        .search-bar .form-control { max-width: 320px; flex: 1 1 200px; }
 
+        .filter-bar {
+            display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-bar .filter-input {
+            flex: 1 1 200px;
+        }
+        .filter-bar .filter-select {
+            flex: 1 1 150px;
+        }
+        
         .content-padding { padding: 0 32px 32px 32px; }
-        .topbar-actions-container { display:flex; justify-content:flex-end; padding: 16px 32px 16px 32px; min-height: 0; gap: 12px; }
+        .topbar-actions-container { display:flex; justify-content:flex-end; padding: 16px 32px 16px 32px; min-height: 0; gap: 12px; flex-wrap: wrap; }
         
         @media (max-width: 768px) {
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
             .content-padding { padding: 0 16px 24px 16px; }
-            .topbar-actions-container { padding: 16px; justify-content: flex-start; flex-wrap: wrap; }
+            .topbar-actions-container { padding: 16px; justify-content: flex-start; }
+            .topbar-actions-container .btn { flex: 1 1 100%; justify-content: center; }
             .search-bar { flex-direction: column; align-items: stretch; }
             .search-bar .form-control { max-width: 100%; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-bar .filter-input, .filter-bar .filter-select { flex: 1 1 100%; width: 100%; max-width: 100%; }
+            .filter-bar .btn { flex: 1 1 100%; justify-content: center; }
+            /* Ajustes para tablas */
+            .datatable-top, .datatable-bottom { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+            .datatable-search { width: 100%; }
+            .datatable-input { width: 100% !important; max-width: 100%; }
+            .datatable-selector { width: 100% !important; }
         }
     </style>
     {% block extra_css %}{% endblock %}

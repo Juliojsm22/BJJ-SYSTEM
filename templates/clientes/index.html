@@ -10,8 +10,8 @@
 
 {% block content %}
 <div class="search-bar">
-    <form method="GET" style="display:flex;gap:12px;width:100%;">
-        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre, cédula o email..." style="max-width:360px;">
+    <form method="GET" style="display:flex;gap:12px;width:100%;flex-wrap:wrap;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre, cédula o email...">
         <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Buscar</button>
         {% if q %}<a href="{{ url_for('clientes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i></a>{% endif %}
         

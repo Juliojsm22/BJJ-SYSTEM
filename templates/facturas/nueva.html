@@ -18,17 +18,19 @@
                 Escanear Tracking o Warehouse selecciona automáticamente al cliente y marca el paquete
             </div>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div style="flex:1; position: relative;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div style="flex:1 1 100%; position: relative;">
                 <i class="fas fa-qrcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
-                <input type="text" id="quickScannerInput" class="form-control" placeholder="Escanear código de barras o escribir Tracking / Warehouse..." autocomplete="off" style="padding-left: 36px;">
+                <input type="text" id="quickScannerInput" class="form-control" placeholder="Escanear o escribir Tracking/WR..." autocomplete="off" style="padding-left: 36px;">
             </div>
-            <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('quickScannerInput'))" title="Escanear con Cámara del Dispositivo" style="height: 38px; display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                <i class="fas fa-camera"></i> <span>Escanear con Cámara</span>
-            </button>
-            <button type="button" class="btn btn-secondary" onclick="procesarBusquedaRapida()" style="height: 38px;" title="Buscar">
-                <i class="fas fa-search"></i>
-            </button>
+            <div style="display:flex; gap:10px; flex:1 1 100%;">
+                <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('quickScannerInput'))" title="Escanear con Cámara del Dispositivo" style="flex:1; justify-content:center; height: 38px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-camera"></i> <span>Cámara</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="procesarBusquedaRapida()" style="flex:1; justify-content:center; height: 38px;" title="Buscar">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
         </div>
         <div id="quickScanFeedback" style="display:none; font-size:12px; margin-top:10px; padding:8px 12px; border-radius:6px;"></div>
     </div>
@@ -81,9 +83,11 @@
                 <textarea name="notas" class="form-control" placeholder="Observaciones de la factura..."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="btnSubmit" disabled>
-                <i class="fas fa-file-invoice"></i> Generar factura
-            </button>
+            <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                <button type="submit" class="btn btn-primary" id="btnSubmit" disabled style="flex:1 1 auto; justify-content:center;">
+                    <i class="fas fa-file-invoice"></i> Generar factura
+                </button>
+            </div>
         </form>
     </div>
 </div>

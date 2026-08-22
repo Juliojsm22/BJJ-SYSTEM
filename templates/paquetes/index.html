@@ -24,19 +24,19 @@
 {% endblock %}
 
 {% block content %}
-<form method="GET" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar paquete o cliente..." style="max-width:300px;">
-    <select name="tipo" class="form-control" style="max-width:160px;">
+<form method="GET" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="form-control filter-input" placeholder="Buscar paquete o cliente...">
+    <select name="tipo" class="form-control filter-select">
         <option value="">Todos los tipos</option>
         <option value="aereo" {% if tipo=='aereo' %}selected{% endif %}>Aéreo</option>
         <option value="maritimo" {% if tipo=='maritimo' %}selected{% endif %}>Marítimo</option>
     </select>
-    <select name="estado" class="form-control" style="max-width:180px;">
+    <select name="estado" class="form-control filter-select">
         <option value="">Todos los estados</option>
         <option value="sin_facturar" {% if estado=='sin_facturar' %}selected{% endif %}>Sin facturar</option>
         <option value="facturado" {% if estado=='facturado' %}selected{% endif %}>Facturado</option>
     </select>
-    <select name="notificado" class="form-control" style="max-width:180px;">
+    <select name="notificado" class="form-control filter-select">
         <option value="">Todos los avisos</option>
         <option value="no" {% if notificado=='no' %}selected{% endif %}>⏳ Sin notificar</option>
         <option value="si" {% if notificado=='si' %}selected{% endif %}>✅ Notificados</option>

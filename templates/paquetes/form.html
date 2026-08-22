@@ -124,11 +124,11 @@
                 </div>
             </div>
 
-            <div style="display:flex;gap:12px;">
-                <button type="submit" class="btn btn-primary">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button type="submit" class="btn btn-primary" style="flex:1 1 auto;justify-content:center;">
                     <i class="fas fa-save"></i> Actualizar
                 </button>
-                <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary">Cancelar</a>
+                <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary" style="flex:1 1 auto;justify-content:center;">Cancelar</a>
             </div>
         </form>
     </div>

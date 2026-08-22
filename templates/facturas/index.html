@@ -21,8 +21,8 @@
 {% endblock %}
 
 {% block content %}
-<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:24px; align-items:center; justify-content:space-between;">
-    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+<div class="filter-bar" style="justify-content:space-between;">
+    <div style="display:flex; flex-wrap:wrap; gap:8px; flex: 1 1 auto;">
         <a href="{{ url_for('facturas.index', clear=1) }}" class="btn {% if not estado %}btn-primary{% else %}btn-secondary{% endif %}">Todas</a>
         <a href="{{ url_for('facturas.index', estado='borrador') }}" class="btn {% if estado=='borrador' %}btn-primary{% else %}btn-secondary{% endif %}">Borrador</a>
         <a href="{{ url_for('facturas.index', estado='finalizada') }}" class="btn {% if estado=='finalizada' %}btn-primary{% else %}btn-secondary{% endif %}">Finalizadas</a>

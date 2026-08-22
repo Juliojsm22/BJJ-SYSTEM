@@ -18,12 +18,12 @@
                 Usa la cámara o lector de barras para marcar paquetes
             </span>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <div style="flex:1; position: relative;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div style="flex:1 1 100%; position: relative;">
                 <i class="fas fa-qrcode" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
                 <input type="text" id="editScannerInput" class="form-control" placeholder="Escanear código de barras (Tracking o WR)..." autocomplete="off" style="padding-left: 36px;">
             </div>
-            <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('editScannerInput'))" title="Escanear con Cámara" style="height: 38px; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+            <button type="button" class="btn btn-primary" onclick="abrirScanner(document.getElementById('editScannerInput'))" title="Escanear con Cámara" style="flex:1 1 100%; justify-content:center; height: 38px; display:flex; align-items:center; gap:6px;">
                 <i class="fas fa-camera"></i> <span>Escanear con Cámara</span>
             </button>
         </div>
@@ -88,9 +88,9 @@
                 <textarea name="notas" class="form-control">{{ factura.notas or '' }}</textarea>
             </div>
 
-            <div style="display:flex;gap:12px;">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar cambios</button>
-                <a href="{{ url_for('facturas.detalle', id=factura.id) }}" class="btn btn-secondary">Cancelar</a>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button type="submit" class="btn btn-primary" style="flex:1 1 auto;justify-content:center;"><i class="fas fa-save"></i> Guardar cambios</button>
+                <a href="{{ url_for('facturas.detalle', id=factura.id) }}" class="btn btn-secondary" style="flex:1 1 auto;justify-content:center;">Cancelar</a>
             </div>
         </form>
     </div>
