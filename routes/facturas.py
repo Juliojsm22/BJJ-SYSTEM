@@ -515,7 +515,7 @@ def exportar():
         cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
 
     for f in facturas:
-        costo_agencia = round(sum((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6) for p in f.paquetes), 2)
+        costo_agencia = round(sum((p.peso * 5.0) if str(p.tipo_envio).strip().lower() in ['aereo', 'aéreo'] else (p.peso * 1.6) for p in f.paquetes), 2)
         total_facturado = round(f.total, 2)
         ganancia = round(total_facturado - costo_agencia, 2)
         warehouses_list = [p.warehouse for p in f.paquetes if p.warehouse]
