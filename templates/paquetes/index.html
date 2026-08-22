@@ -43,7 +43,7 @@
     </select>
     <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
     {% if q or tipo or estado or notificado %}
-    <a href="{{ url_for('paquetes.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+    <a href="{{ url_for('paquetes.index', clear=1) }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
     {% endif %}
     
     {% if current_user.rol == 'admin' %}

@@ -11,6 +11,18 @@ facturas_bp = Blueprint('facturas', __name__, url_prefix='/facturas')
 @facturas_bp.route('/')
 @login_required
 def index():
+    from flask import session
+    if request.args.get('clear'):
+        session.pop('facturas_filters', None)
+        return redirect(url_for('facturas.index'))
+        
+    if request.args:
+        session['facturas_filters'] = {'estado': request.args.get('estado', '')}
+    elif 'facturas_filters' in session:
+        filtros = session['facturas_filters']
+        if any(filtros.values()):
+            return redirect(url_for('facturas.index', **filtros))
+
     estado = request.args.get('estado', '')
     query = Factura.query.options(joinedload(Factura.cliente), joinedload(Factura.paquetes)).join(Cliente)
     if estado:

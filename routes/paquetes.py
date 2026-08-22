@@ -13,6 +13,23 @@ paquetes_bp = Blueprint('paquetes', __name__, url_prefix='/paquetes')
 @paquetes_bp.route('/')
 @login_required
 def index():
+    from flask import session
+    if request.args.get('clear'):
+        session.pop('paquetes_filters', None)
+        return redirect(url_for('paquetes.index'))
+        
+    if request.args:
+        session['paquetes_filters'] = {
+            'q': request.args.get('q', ''),
+            'tipo': request.args.get('tipo', ''),
+            'estado': request.args.get('estado', ''),
+            'notificado': request.args.get('notificado', '')
+        }
+    elif 'paquetes_filters' in session:
+        filtros = session['paquetes_filters']
+        if any(filtros.values()):
+            return redirect(url_for('paquetes.index', **filtros))
+
     q = request.args.get('q', '')
     tipo = request.args.get('tipo', '')
     estado = request.args.get('estado', '')
