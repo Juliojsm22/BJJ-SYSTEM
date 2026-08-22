@@ -60,8 +60,8 @@ def nueva():
                 Paquete.id.in_([int(p) for p in paquete_ids]),
                 Paquete.factura_id == None
             ).all()
+            factura.paquetes = paquetes_a_actualizar
             for paquete in paquetes_a_actualizar:
-                paquete.factura_id = factura.id
                 paquete.estado_rastreo = 'listo_para_retirar'
 
         factura.total = factura.calcular_total()
@@ -109,20 +109,20 @@ def editar(id):
             except ValueError:
                 pass
 
-        # Quitar paquetes actuales de esta factura
-        for p in factura.paquetes:
-            p.factura_id = None
-            
         # Asignar paquetes seleccionados a esta factura
         paquete_ids = request.form.getlist('paquete_ids')
+        paquetes_a_actualizar = []
         if paquete_ids:
             paquetes_a_actualizar = Paquete.query.filter(
                 Paquete.id.in_([int(p) for p in paquete_ids]),
                 Paquete.cliente_id == factura.cliente_id
             ).all()
-            for paquete in paquetes_a_actualizar:
-                paquete.factura_id = factura.id
-                paquete.estado_rastreo = 'entregado' if factura.estado == 'pagada' else 'listo_para_retirar'
+            
+        # Actualizar la relación directamente en memoria
+        factura.paquetes = paquetes_a_actualizar
+        
+        for paquete in paquetes_a_actualizar:
+            paquete.estado_rastreo = 'entregado' if factura.estado == 'pagada' else 'listo_para_retirar'
                 
         factura.total = factura.calcular_total()
         db.session.commit()
