@@ -3,6 +3,14 @@ from flask_login import UserMixin
 from datetime import datetime, timezone, timedelta
 from werkzeug.security import check_password_hash
 
+# Costos base de la agencia naviera (Lo que le cuesta a la empresa traer la carga)
+COSTOS_AGENCIA = {
+    'miami': {'aereo': 5.0, 'maritimo': 1.6},
+    'espana': {'aereo': 8.0, 'maritimo': 0.0}, # Solo aéreo
+    'panama': {'aereo': 5.5, 'maritimo': 0.0}, # Aéreo
+    'los_angeles': {'aereo': 5.5, 'maritimo': 2.1}
+}
+
 def get_local_now():
     return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=6)
 
@@ -72,6 +80,7 @@ class Paquete(db.Model):
     numero_seguimiento = db.Column(db.String(100), index=True)
     warehouse = db.Column(db.String(100), index=True)
     estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
+    origen = db.Column(db.String(50), default='miami', index=True) # miami, espana, panama, los_angeles
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
     notificado_whatsapp = db.Column(db.Boolean, default=False, index=True)
@@ -112,21 +121,28 @@ class Paquete(db.Model):
         if not tarifa_temporal:
             tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=None).first()
             
+        origen_key = self.origen if self.origen else 'miami'
+        attr_aereo = 'aereo' if origen_key == 'miami' else f'{origen_key}_aereo'
+        attr_maritimo = 'maritimo' if origen_key == 'miami' else f'{origen_key}_maritimo'
+            
         if tarifa_temporal:
-            if self.tipo_envio == 'aereo' and tarifa_temporal.aereo is not None:
-                posibles_tarifas.append(tarifa_temporal.aereo)
-            elif self.tipo_envio == 'maritimo' and tarifa_temporal.maritimo is not None:
-                posibles_tarifas.append(tarifa_temporal.maritimo)
+            if self.tipo_envio == 'aereo' and getattr(tarifa_temporal, attr_aereo, None) is not None:
+                posibles_tarifas.append(getattr(tarifa_temporal, attr_aereo))
+            elif self.tipo_envio == 'maritimo' and getattr(tarifa_temporal, attr_maritimo, None) is not None:
+                posibles_tarifas.append(getattr(tarifa_temporal, attr_maritimo))
             
         # 2. Verificar la tarifa especial (base) del cliente
         if cliente and getattr(cliente, 'tarifa_especial', None):
-            if self.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                posibles_tarifas.append(cliente.tarifa_especial.aereo)
-            elif self.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                posibles_tarifas.append(cliente.tarifa_especial.maritimo)
+            if self.tipo_envio == 'aereo' and getattr(cliente.tarifa_especial, attr_aereo, None) is not None:
+                posibles_tarifas.append(getattr(cliente.tarifa_especial, attr_aereo))
+            elif self.tipo_envio == 'maritimo' and getattr(cliente.tarifa_especial, attr_maritimo, None) is not None:
+                posibles_tarifas.append(getattr(cliente.tarifa_especial, attr_maritimo))
 
         # 3. Verificar la tarifa general del sistema
-        tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio).first()
+        tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio, origen=origen_key).first()
+        if not tarifa_db:
+            tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio, origen='miami').first() # fallback
+            
         if tarifa_db:
             posibles_tarifas.append(tarifa_db.precio_por_libra)
         else:
@@ -202,16 +218,24 @@ class Pago(db.Model):
 class Tarifa(db.Model):
     __tablename__ = 'tarifas'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), unique=True, nullable=False) # aereo, maritimo
+    nombre = db.Column(db.String(50), nullable=False) # aereo, maritimo
+    origen = db.Column(db.String(50), default='miami', nullable=False) # miami, espana, panama, los_angeles
     precio_por_libra = db.Column(db.Float, nullable=False)
     actualizado_en = db.Column(db.DateTime, default=get_local_now, onupdate=get_local_now)
+
 
 class TarifaEspecialCliente(db.Model):
     __tablename__ = 'tarifas_especiales_cliente'
     id = db.Column(db.Integer, primary_key=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
-    aereo = db.Column(db.Float, nullable=True)
-    maritimo = db.Column(db.Float, nullable=True)
+    aereo = db.Column(db.Float, nullable=True) # miami
+    maritimo = db.Column(db.Float, nullable=True) # miami
+    espana_aereo = db.Column(db.Float, nullable=True)
+    espana_maritimo = db.Column(db.Float, nullable=True)
+    panama_aereo = db.Column(db.Float, nullable=True)
+    panama_maritimo = db.Column(db.Float, nullable=True)
+    los_angeles_aereo = db.Column(db.Float, nullable=True)
+    los_angeles_maritimo = db.Column(db.Float, nullable=True)
     
     cliente = db.relationship('Cliente', backref=db.backref('tarifa_especial', uselist=False, cascade='all, delete-orphan'), overlaps="cliente,tarifa_especial")
 
@@ -220,8 +244,14 @@ class TarifaTemporal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False) # ej. "Promo Verano"
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True) # Si es null, aplica a todos
-    aereo = db.Column(db.Float, nullable=True)
-    maritimo = db.Column(db.Float, nullable=True)
+    aereo = db.Column(db.Float, nullable=True) # miami
+    maritimo = db.Column(db.Float, nullable=True) # miami
+    espana_aereo = db.Column(db.Float, nullable=True)
+    espana_maritimo = db.Column(db.Float, nullable=True)
+    panama_aereo = db.Column(db.Float, nullable=True)
+    panama_maritimo = db.Column(db.Float, nullable=True)
+    los_angeles_aereo = db.Column(db.Float, nullable=True)
+    los_angeles_maritimo = db.Column(db.Float, nullable=True)
     fecha_inicio = db.Column(db.Date, nullable=False)
     fecha_fin = db.Column(db.Date, nullable=False)
     creado_en = db.Column(db.DateTime, default=get_local_now)

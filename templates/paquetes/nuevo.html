@@ -121,6 +121,16 @@
                 <label>Peso (libras) *</label>
                 <input type="number" name="peso[]" class="form-control input-peso" step="1" min="1" required placeholder="0" oninput="calcularCostoGlobal()">
             </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Origen (Bodega) *</label>
+                <select name="origen[]" class="form-control select-origen" required onchange="calcularCostoGlobal()">
+                    <option value="miami" selected>Miami</option>
+                    <option value="espana">España</option>
+                    <option value="panama">Panamá</option>
+                    <option value="los_angeles">Los Ángeles</option>
+                </select>
+            </div>
             <div class="form-group">
                 <label>Tipo de envío *</label>
                 <select name="tipo_envio[]" class="form-control select-tipo" required onchange="calcularCostoGlobal()">
@@ -145,57 +155,26 @@
 {% block extra_js %}
 <script>
 let paqueteCount = 0;
-let tarifaAereoBase = 6.50;
-let tarifaMaritimoBase = 2.50;
+let matrizTarifas = {};
 
 function cargarTarifasBase() {
-    fetch(`{{ url_for('paquetes.tarifas_cliente') }}`)
+    const selCliente = document.getElementById('cliente_id');
+    const clienteId = selCliente ? selCliente.value : '';
+    const url = `{{ url_for('paquetes.tarifas_cliente') }}` + (clienteId ? `?cliente_id=${clienteId}` : '');
+    
+    fetch(url)
         .then(res => res.json())
         .then(data => {
-            tarifaAereoBase = data.aereo;
-            tarifaMaritimoBase = data.maritimo;
+            matrizTarifas = data;
             actualizarTextosTarifa();
         });
 }
 
 function actualizarTextosTarifa() {
-    const selCliente = document.getElementById('cliente_id');
-    const option = selCliente.options[selCliente.selectedIndex];
-    
-    let tarifaAereo = tarifaAereoBase;
-    let tarifaMaritimo = tarifaMaritimoBase;
-
-    if (option && option.value) {
-        if (option.dataset.tarifaAereo !== 'default' && option.dataset.tarifaAereo !== '') {
-            tarifaAereo = parseFloat(option.dataset.tarifaAereo);
-        }
-        if (option.dataset.tarifaMaritimo !== 'default' && option.dataset.tarifaMaritimo !== '') {
-            tarifaMaritimo = parseFloat(option.dataset.tarifaMaritimo);
-        }
-    }
-
-    document.querySelectorAll('.opt-aereo').forEach(opt => {
-        opt.textContent = `✈️ Aéreo — $${tarifaAereo.toFixed(2)}/lb`;
-    });
-    document.querySelectorAll('.opt-maritimo').forEach(opt => {
-        opt.textContent = `🚢 Marítimo — $${tarifaMaritimo.toFixed(2)}/lb`;
-    });
-
-    calcularCostoGlobal(tarifaAereo, tarifaMaritimo);
+    calcularCostoGlobal();
 }
 
-function calcularCostoGlobal(tAereo, tMaritimo) {
-    if (tAereo === undefined || tMaritimo === undefined) {
-        const selCliente = document.getElementById('cliente_id');
-        const option = selCliente.options[selCliente.selectedIndex];
-        tAereo = tarifaAereoBase;
-        tMaritimo = tarifaMaritimoBase;
-        if (option && option.value) {
-            if (option.dataset.tarifaAereo !== 'default' && option.dataset.tarifaAereo !== '') tAereo = parseFloat(option.dataset.tarifaAereo);
-            if (option.dataset.tarifaMaritimo !== 'default' && option.dataset.tarifaMaritimo !== '') tMaritimo = parseFloat(option.dataset.tarifaMaritimo);
-        }
-    }
-
+function calcularCostoGlobal() {
     let costoTotal = 0;
     let paquetesValidos = 0;
 
@@ -203,13 +182,25 @@ function calcularCostoGlobal(tAereo, tMaritimo) {
     filas.forEach(fila => {
         const pesoInput = fila.querySelector('.input-peso');
         const tipoSelect = fila.querySelector('.select-tipo');
-        if (pesoInput && tipoSelect) {
+        const origenSelect = fila.querySelector('.select-origen');
+        
+        if (pesoInput && tipoSelect && origenSelect) {
             const pesoStr = pesoInput.value;
             const tipo = tipoSelect.value;
-            if (pesoStr && tipo) {
+            const origen = origenSelect.value;
+            
+            // Actualizar textos de los options basados en el origen seleccionado
+            if (matrizTarifas[origen]) {
+                const optAereo = tipoSelect.querySelector('.opt-aereo');
+                const optMaritimo = tipoSelect.querySelector('.opt-maritimo');
+                if (optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
+                if (optMaritimo) optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+            }
+            
+            if (pesoStr && tipo && origen) {
                 const peso = parseInt(pesoStr, 10);
-                if (peso > 0) {
-                    const tarifa = tipo === 'aereo' ? tAereo : tMaritimo;
+                if (peso > 0 && matrizTarifas[origen] && matrizTarifas[origen][tipo] !== undefined) {
+                    const tarifa = matrizTarifas[origen][tipo];
                     costoTotal += peso * tarifa;
                     paquetesValidos++;
                 }
@@ -268,7 +259,7 @@ function actualizarBotonesEliminar() {
 
 document.getElementById('cliente_id').addEventListener('change', () => {
     document.getElementById('cliente_autodetect_badge').style.display = 'none';
-    actualizarTextosTarifa();
+    cargarTarifasBase();
 });
 
 function fetchAereomarData(inputElement, searchType) {
@@ -357,7 +348,7 @@ function fetchAereomarData(inputElement, searchType) {
                         textCliente.textContent = `Cliente autodetectado: ${data.cliente.nombre} (${data.cliente.cedula})`;
                         badgeCliente.style.display = 'flex';
                     }
-                    actualizarTextosTarifa();
+                    cargarTarifasBase();
                 }
             }
 

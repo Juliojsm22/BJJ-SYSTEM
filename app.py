@@ -60,7 +60,21 @@ def create_app():
             "ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20)",
             "ALTER TABLE paquetes ADD COLUMN numero_seguimiento VARCHAR(100)",
             "ALTER TABLE paquetes ADD COLUMN notificado_whatsapp BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP"
+            "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP",
+            "ALTER TABLE paquetes ADD COLUMN origen VARCHAR(50) DEFAULT 'miami'",
+            "ALTER TABLE tarifas ADD COLUMN origen VARCHAR(50) DEFAULT 'miami'",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN espana_aereo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN espana_maritimo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN panama_aereo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN panama_maritimo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN los_angeles_aereo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN los_angeles_maritimo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN espana_aereo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN espana_maritimo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN panama_aereo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN panama_maritimo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN los_angeles_aereo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN los_angeles_maritimo FLOAT"
         ]:
             try:
                 db.session.execute(db.text(query))

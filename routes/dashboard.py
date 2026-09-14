@@ -11,6 +11,7 @@ from flask import request
 from sqlalchemy.orm import joinedload
 
 def calcular_ganancia_facturas(inicio, fin=None):
+    from models import COSTOS_AGENCIA
     query = Factura.query.options(joinedload(Factura.paquetes)).filter(
         Factura.estado.in_(['finalizada', 'pagada']),
         Factura.fecha_emision >= inicio
@@ -21,7 +22,13 @@ def calcular_ganancia_facturas(inicio, fin=None):
     facturas = query.all()
     total_ganancia = 0.0
     for f in facturas:
-        costo_agencia = sum((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6) for p in f.paquetes)
+        costo_agencia = 0
+        for p in f.paquetes:
+            origen = p.origen if getattr(p, 'origen', None) else 'miami'
+            tarifas_origen = COSTOS_AGENCIA.get(origen, COSTOS_AGENCIA['miami'])
+            tarifa_aplicada = tarifas_origen.get(p.tipo_envio, tarifas_origen['aereo'])
+            costo_agencia += (p.peso * tarifa_aplicada)
+            
         total_ganancia += (f.total - costo_agencia)
     return round(total_ganancia, 2)
 

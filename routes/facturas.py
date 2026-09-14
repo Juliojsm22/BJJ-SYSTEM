@@ -514,8 +514,17 @@ def exportar():
         cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
         cell.fill = openpyxl.styles.PatternFill(start_color='3D5BA0', end_color='3D5BA0', fill_type='solid')
 
+    from models import COSTOS_AGENCIA
     for f in facturas:
-        costo_agencia = round(sum((p.peso * 5.0) if str(p.tipo_envio).strip().lower() in ['aereo', 'aéreo'] else (p.peso * 1.6) for p in f.paquetes), 2)
+        costo_agencia_total = 0
+        for p in f.paquetes:
+            origen = p.origen if getattr(p, 'origen', None) else 'miami'
+            tarifas_origen = COSTOS_AGENCIA.get(origen, COSTOS_AGENCIA['miami'])
+            tipo = 'aereo' if str(p.tipo_envio).strip().lower() in ['aereo', 'aéreo'] else 'maritimo'
+            tarifa_aplicada = tarifas_origen.get(tipo, tarifas_origen['aereo'])
+            costo_agencia_total += (p.peso * tarifa_aplicada)
+            
+        costo_agencia = round(costo_agencia_total, 2)
         total_facturado = round(f.total, 2)
         ganancia = round(total_facturado - costo_agencia, 2)
         warehouses_list = [p.warehouse for p in f.paquetes if p.warehouse]

@@ -77,6 +77,7 @@ def nuevo():
         descripciones = request.form.getlist('descripcion[]')
         pesos = request.form.getlist('peso[]')
         tipos_envio = request.form.getlist('tipo_envio[]')
+        origenes = request.form.getlist('origen[]')
         numeros_seguimiento = request.form.getlist('numero_seguimiento[]')
         warehouses = request.form.getlist('warehouse[]')
         estados_rastreo = request.form.getlist('estado_rastreo[]')
@@ -104,22 +105,14 @@ def nuevo():
             tipo_envio = tipos_envio[i]
             numero_seg = numeros_seguimiento[i].strip()
             
-            tarifa = None
-            if cliente and cliente.tarifa_especial:
-                if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                    tarifa = cliente.tarifa_especial.aereo
-                elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                    tarifa = cliente.tarifa_especial.maritimo
-                    
-            if tarifa is None:
-                tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
-                tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
-                
+            origen = origenes[i] if i < len(origenes) else 'miami'
+            
             paquete = Paquete(
                 nombre=nombres[i].strip(),
                 descripcion=descripciones[i].strip() if i < len(descripciones) else '',
                 peso=peso,
                 tipo_envio=tipo_envio,
+                origen=origen,
                 cliente_id=cliente_id_form,
                 numero_seguimiento=numero_seg,
                 warehouse=warehouses[i].strip() if i < len(warehouses) and warehouses[i].strip() else None,
@@ -133,7 +126,7 @@ def nuevo():
             historial_inicial = HistorialRastreo(
                 paquete_id=paquete.id,
                 estado=paquete.estado_rastreo,
-                ubicacion='Miami',
+                ubicacion=origen.replace('_', ' ').title(),
                 comentarios='Paquete registrado en el sistema',
                 creado_por=current_user.id
             )
@@ -183,19 +176,10 @@ def editar(id):
     if request.method == 'POST':
         peso = int(request.form.get('peso', 0))
         tipo_envio = request.form.get('tipo_envio')
+        origen = request.form.get('origen', 'miami')
         cliente_id = int(request.form.get('cliente_id'))
         
         cliente = Cliente.query.get(cliente_id)
-        tarifa = None
-        if cliente and cliente.tarifa_especial:
-            if tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                tarifa = cliente.tarifa_especial.aereo
-            elif tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                tarifa = cliente.tarifa_especial.maritimo
-                
-        if tarifa is None:
-            tarifa_db = Tarifa.query.filter_by(nombre=tipo_envio).first()
-            tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo_envio == 'aereo' else 2.50)
 
         numero_seguimiento = request.form.get('numero_seguimiento', '').strip()
         if numero_seguimiento and numero_seguimiento != paquete.numero_seguimiento:
@@ -208,9 +192,10 @@ def editar(id):
         paquete.descripcion = request.form.get('descripcion', '').strip()
         paquete.peso = peso
         paquete.tipo_envio = tipo_envio
+        paquete.origen = origen
         paquete.numero_seguimiento = numero_seguimiento
         paquete.estado_rastreo = request.form.get('estado_rastreo', paquete.estado_rastreo)
-        paquete.costo = round(peso * tarifa, 2)
+        paquete.costo = paquete.calcular_costo()
         paquete.cliente_id = int(request.form.get('cliente_id'))
         
         if current_user.rol == 'admin':
@@ -260,47 +245,36 @@ def eliminar(id):
 def calcular_costo():
     peso = int(float(request.args.get('peso', 0)))
     tipo = request.args.get('tipo', 'aereo')
+    origen = request.args.get('origen', 'miami')
     cliente_id = request.args.get('cliente_id')
     
-    tarifa = None
+    # Creamos un paquete temporal (en memoria) para aprovechar la lógica de calcular_costo()
+    p_temp = Paquete(peso=peso, tipo_envio=tipo, origen=origen)
     if cliente_id:
-        cliente = Cliente.query.get(int(cliente_id))
-        if cliente and cliente.tarifa_especial:
-            if tipo == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                tarifa = cliente.tarifa_especial.aereo
-            elif tipo == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                tarifa = cliente.tarifa_especial.maritimo
-                
-    if tarifa is None:
-        tarifa_db = Tarifa.query.filter_by(nombre=tipo).first()
-        tarifa = tarifa_db.precio_por_libra if tarifa_db else (6.50 if tipo == 'aereo' else 2.50)
+        p_temp.cliente_id = int(cliente_id)
         
-    costo = round(peso * tarifa, 2)
-    return jsonify({'costo': costo, 'tarifa': tarifa})
+    costo = p_temp.calcular_costo()
+    tarifa_aplicada = costo / peso if peso > 0 else 0
+    return jsonify({'costo': costo, 'tarifa': tarifa_aplicada})
 
 @paquetes_bp.route('/tarifas-cliente')
 @login_required
 def tarifas_cliente():
     cliente_id = request.args.get('cliente_id')
     
-    t_aereo = Tarifa.query.filter_by(nombre='aereo').first()
-    t_maritimo = Tarifa.query.filter_by(nombre='maritimo').first()
+    origenes = ['miami', 'espana', 'panama', 'los_angeles']
+    tipos = ['aereo', 'maritimo']
     
-    precio_aereo = t_aereo.precio_por_libra if t_aereo else 6.50
-    precio_maritimo = t_maritimo.precio_por_libra if t_maritimo else 2.50
-    
-    if cliente_id:
-        cliente = Cliente.query.get(int(cliente_id))
-        if cliente and cliente.tarifa_especial:
-            if cliente.tarifa_especial.aereo is not None:
-                precio_aereo = cliente.tarifa_especial.aereo
-            if cliente.tarifa_especial.maritimo is not None:
-                precio_maritimo = cliente.tarifa_especial.maritimo
-                
-    return jsonify({
-        'aereo': precio_aereo,
-        'maritimo': precio_maritimo
-    })
+    result = {}
+    for origen in origenes:
+        result[origen] = {}
+        for tipo in tipos:
+            p = Paquete(peso=1, tipo_envio=tipo, origen=origen)
+            if cliente_id:
+                p.cliente_id = int(cliente_id)
+            result[origen][tipo] = p.calcular_costo()
+            
+    return jsonify(result)
 
 @paquetes_bp.route('/<int:id>/historial', methods=['GET', 'POST'])
 @login_required

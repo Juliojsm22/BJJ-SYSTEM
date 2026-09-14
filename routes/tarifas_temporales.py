@@ -45,6 +45,12 @@ def nueva():
         cliente_id = request.form.get('cliente_id')
         aereo = request.form.get('aereo')
         maritimo = request.form.get('maritimo')
+        espana_aereo = request.form.get('espana_aereo')
+        espana_maritimo = request.form.get('espana_maritimo')
+        panama_aereo = request.form.get('panama_aereo')
+        panama_maritimo = request.form.get('panama_maritimo')
+        la_aereo = request.form.get('los_angeles_aereo')
+        la_maritimo = request.form.get('los_angeles_maritimo')
         fecha_inicio_str = request.form.get('fecha_inicio')
         fecha_fin_str = request.form.get('fecha_fin')
         
@@ -65,6 +71,12 @@ def nueva():
                 cliente_id=int(cliente_id) if cliente_id else None,
                 aereo=float(aereo) if aereo else None,
                 maritimo=float(maritimo) if maritimo else None,
+                espana_aereo=float(espana_aereo) if espana_aereo else None,
+                espana_maritimo=float(espana_maritimo) if espana_maritimo else None,
+                panama_aereo=float(panama_aereo) if panama_aereo else None,
+                panama_maritimo=float(panama_maritimo) if panama_maritimo else None,
+                los_angeles_aereo=float(la_aereo) if la_aereo else None,
+                los_angeles_maritimo=float(la_maritimo) if la_maritimo else None,
                 fecha_inicio=fecha_inicio,
                 fecha_fin=fecha_fin,
                 creado_por=current_user.id
@@ -120,6 +132,12 @@ def editar(id):
         cliente_id = request.form.get('cliente_id')
         aereo = request.form.get('aereo')
         maritimo = request.form.get('maritimo')
+        espana_aereo = request.form.get('espana_aereo')
+        espana_maritimo = request.form.get('espana_maritimo')
+        panama_aereo = request.form.get('panama_aereo')
+        panama_maritimo = request.form.get('panama_maritimo')
+        la_aereo = request.form.get('los_angeles_aereo')
+        la_maritimo = request.form.get('los_angeles_maritimo')
         fecha_inicio_str = request.form.get('fecha_inicio')
         fecha_fin_str = request.form.get('fecha_fin')
         
@@ -127,6 +145,12 @@ def editar(id):
             tarifa.cliente_id = int(cliente_id) if cliente_id else None
             tarifa.aereo = float(aereo) if aereo else None
             tarifa.maritimo = float(maritimo) if maritimo else None
+            tarifa.espana_aereo = float(espana_aereo) if espana_aereo else None
+            tarifa.espana_maritimo = float(espana_maritimo) if espana_maritimo else None
+            tarifa.panama_aereo = float(panama_aereo) if panama_aereo else None
+            tarifa.panama_maritimo = float(panama_maritimo) if panama_maritimo else None
+            tarifa.los_angeles_aereo = float(la_aereo) if la_aereo else None
+            tarifa.los_angeles_maritimo = float(la_maritimo) if la_maritimo else None
             tarifa.fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
             tarifa.fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
             

@@ -62,13 +62,25 @@ def nuevo():
         
         tarifa_aereo = request.form.get('tarifa_aereo')
         tarifa_maritimo = request.form.get('tarifa_maritimo')
+        tarifa_espana_aereo = request.form.get('tarifa_espana_aereo')
+        tarifa_espana_maritimo = request.form.get('tarifa_espana_maritimo')
+        tarifa_panama_aereo = request.form.get('tarifa_panama_aereo')
+        tarifa_panama_maritimo = request.form.get('tarifa_panama_maritimo')
+        tarifa_la_aereo = request.form.get('tarifa_la_aereo')
+        tarifa_la_maritimo = request.form.get('tarifa_la_maritimo')
         
-        if tarifa_aereo or tarifa_maritimo:
+        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo:
             from models import TarifaEspecialCliente
             tarifa_esp = TarifaEspecialCliente(
                 cliente_id=cliente.id,
                 aereo=float(tarifa_aereo) if tarifa_aereo else None,
-                maritimo=float(tarifa_maritimo) if tarifa_maritimo else None
+                maritimo=float(tarifa_maritimo) if tarifa_maritimo else None,
+                espana_aereo=float(tarifa_espana_aereo) if tarifa_espana_aereo else None,
+                espana_maritimo=float(tarifa_espana_maritimo) if tarifa_espana_maritimo else None,
+                panama_aereo=float(tarifa_panama_aereo) if tarifa_panama_aereo else None,
+                panama_maritimo=float(tarifa_panama_maritimo) if tarifa_panama_maritimo else None,
+                los_angeles_aereo=float(tarifa_la_aereo) if tarifa_la_aereo else None,
+                los_angeles_maritimo=float(tarifa_la_maritimo) if tarifa_la_maritimo else None
             )
             db.session.add(tarifa_esp)
             
@@ -111,36 +123,33 @@ def editar(id):
         
         tarifa_aereo = request.form.get('tarifa_aereo')
         tarifa_maritimo = request.form.get('tarifa_maritimo')
+        tarifa_espana_aereo = request.form.get('tarifa_espana_aereo')
+        tarifa_espana_maritimo = request.form.get('tarifa_espana_maritimo')
+        tarifa_panama_aereo = request.form.get('tarifa_panama_aereo')
+        tarifa_panama_maritimo = request.form.get('tarifa_panama_maritimo')
+        tarifa_la_aereo = request.form.get('tarifa_la_aereo')
+        tarifa_la_maritimo = request.form.get('tarifa_la_maritimo')
         
         from models import TarifaEspecialCliente, Paquete, Tarifa
-        if tarifa_aereo or tarifa_maritimo:
+        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo:
             if not cliente.tarifa_especial:
                 cliente.tarifa_especial = TarifaEspecialCliente(cliente_id=cliente.id)
             cliente.tarifa_especial.aereo = float(tarifa_aereo) if tarifa_aereo else None
             cliente.tarifa_especial.maritimo = float(tarifa_maritimo) if tarifa_maritimo else None
+            cliente.tarifa_especial.espana_aereo = float(tarifa_espana_aereo) if tarifa_espana_aereo else None
+            cliente.tarifa_especial.espana_maritimo = float(tarifa_espana_maritimo) if tarifa_espana_maritimo else None
+            cliente.tarifa_especial.panama_aereo = float(tarifa_panama_aereo) if tarifa_panama_aereo else None
+            cliente.tarifa_especial.panama_maritimo = float(tarifa_panama_maritimo) if tarifa_panama_maritimo else None
+            cliente.tarifa_especial.los_angeles_aereo = float(tarifa_la_aereo) if tarifa_la_aereo else None
+            cliente.tarifa_especial.los_angeles_maritimo = float(tarifa_la_maritimo) if tarifa_la_maritimo else None
         else:
             if cliente.tarifa_especial:
                 db.session.delete(cliente.tarifa_especial)
                 
         # Recalcular costos de paquetes pendientes
-        t_aereo = Tarifa.query.filter_by(nombre='aereo').first()
-        t_maritimo = Tarifa.query.filter_by(nombre='maritimo').first()
-        precio_aereo_base = t_aereo.precio_por_libra if t_aereo else 6.50
-        precio_maritimo_base = t_maritimo.precio_por_libra if t_maritimo else 2.50
-        
         paquetes_pendientes = Paquete.query.filter_by(cliente_id=cliente.id, factura_id=None).all()
         for p in paquetes_pendientes:
-            tarifa_p = None
-            if cliente.tarifa_especial:
-                if p.tipo_envio == 'aereo' and cliente.tarifa_especial.aereo is not None:
-                    tarifa_p = cliente.tarifa_especial.aereo
-                elif p.tipo_envio == 'maritimo' and cliente.tarifa_especial.maritimo is not None:
-                    tarifa_p = cliente.tarifa_especial.maritimo
-            
-            if tarifa_p is None:
-                tarifa_p = precio_aereo_base if p.tipo_envio == 'aereo' else precio_maritimo_base
-                
-            p.costo = round(p.peso * tarifa_p, 2)
+            p.costo = p.calcular_costo()
 
         db.session.commit()
         
