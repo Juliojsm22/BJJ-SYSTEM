@@ -188,7 +188,20 @@ function actualizarTextosTarifa() {
     
     if (matrizTarifas && origen && matrizTarifas[origen]) {
         if(optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
-        if(optMaritimo) optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+        if(optMaritimo) {
+            optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+            if (origen === 'espana' || origen === 'panama') {
+                optMaritimo.disabled = true;
+                optMaritimo.hidden = true;
+                const selectTipo = document.getElementById('tipo_envio');
+                if (selectTipo && selectTipo.value === 'maritimo') {
+                    selectTipo.value = 'aereo';
+                }
+            } else {
+                optMaritimo.disabled = false;
+                optMaritimo.hidden = false;
+            }
+        }
     }
     
     calcularCosto();

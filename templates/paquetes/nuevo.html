@@ -194,7 +194,19 @@ function calcularCostoGlobal() {
                 const optAereo = tipoSelect.querySelector('.opt-aereo');
                 const optMaritimo = tipoSelect.querySelector('.opt-maritimo');
                 if (optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
-                if (optMaritimo) optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+                if (optMaritimo) {
+                    optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+                    if (origen === 'espana' || origen === 'panama') {
+                        optMaritimo.disabled = true;
+                        optMaritimo.hidden = true;
+                        if (tipoSelect.value === 'maritimo') {
+                            tipoSelect.value = 'aereo';
+                        }
+                    } else {
+                        optMaritimo.disabled = false;
+                        optMaritimo.hidden = false;
+                    }
+                }
             }
             
             if (pesoStr && tipo && origen) {
