@@ -6,8 +6,8 @@ from werkzeug.security import check_password_hash
 # Costos base de la agencia naviera (Lo que le cuesta a la empresa traer la carga)
 COSTOS_AGENCIA = {
     'miami': {'aereo': 5.0, 'maritimo': 1.6},
-    'espana': {'aereo': 8.0, 'maritimo': 0.0}, # Solo aéreo
-    'panama': {'aereo': 5.5, 'maritimo': 0.0}, # Aéreo
+    'espana': {'aereo': 8.0, 'maritimo': 0.0},
+    'panama': {'aereo': 5.5, 'maritimo': 0.0},
     'los_angeles': {'aereo': 5.5, 'maritimo': 2.1}
 }
 
@@ -92,6 +92,13 @@ class Paquete(db.Model):
 
     TARIFA_AEREO = 6.50
     TARIFA_MARITIMO = 2.50
+    
+    TARIFAS_BASE = {
+        'miami': {'aereo': 6.50, 'maritimo': 2.50},
+        'espana': {'aereo': 10.00, 'maritimo': 0.00},
+        'panama': {'aereo': 6.50, 'maritimo': 0.00},
+        'los_angeles': {'aereo': 6.50, 'maritimo': 3.50}
+    }
 
     def calcular_costo(self):
         cliente = self.cliente
@@ -140,16 +147,16 @@ class Paquete(db.Model):
 
         # 3. Verificar la tarifa general del sistema
         tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio, origen=origen_key).first()
-        if not tarifa_db:
-            tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio, origen='miami').first() # fallback
             
         if tarifa_db:
             posibles_tarifas.append(tarifa_db.precio_por_libra)
         else:
-            posibles_tarifas.append(self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO)
+            tarifas_origen = self.TARIFAS_BASE.get(origen_key, self.TARIFAS_BASE['miami'])
+            tarifa_defecto = tarifas_origen.get(self.tipo_envio, tarifas_origen['aereo'])
+            posibles_tarifas.append(tarifa_defecto)
             
         # Seleccionar la tarifa más baja de todas las aplicables
-        tarifa_final = min(posibles_tarifas) if posibles_tarifas else (self.TARIFA_AEREO if self.tipo_envio == 'aereo' else self.TARIFA_MARITIMO)
+        tarifa_final = min(posibles_tarifas) if posibles_tarifas else self.TARIFAS_BASE['miami']['aereo']
                 
         return round(self.peso * tarifa_final, 2)
 
