@@ -506,7 +506,7 @@ def exportar():
     ws = wb.active
     ws.title = "Facturas"
 
-    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Tipo de Envío', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Warehouses', 'Notas']
+    headers = ['ID', 'Número Factura', 'Cliente', 'Cédula', 'Fecha Emisión', 'Tipo de Envío', 'Total Libras', 'Total Facturado ($)', 'Total Facturado (C$)', 'Costo Agencia ($)', 'Ganancia ($)', 'Cant. Paquetes', 'Warehouses', 'Notas']
     ws.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -517,12 +517,19 @@ def exportar():
     from models import COSTOS_AGENCIA
     for f in facturas:
         costo_agencia_total = 0
+        total_libras = 0
         for p in f.paquetes:
-            origen = p.origen if getattr(p, 'origen', None) else 'miami'
-            tarifas_origen = COSTOS_AGENCIA.get(origen, COSTOS_AGENCIA['miami'])
-            tipo = 'aereo' if str(p.tipo_envio).strip().lower() in ['aereo', 'aéreo'] else 'maritimo'
-            tarifa_aplicada = tarifas_origen.get(tipo, tarifas_origen['aereo'])
-            costo_agencia_total += (p.peso * tarifa_aplicada)
+            total_libras += p.peso
+            if getattr(p, 'categoria', 'general') in ['celular', 'laptop']:
+                origen_key = p.origen if getattr(p, 'origen', None) else 'miami'
+                costo_unidad = COSTOS_AGENCIA.get(origen_key, COSTOS_AGENCIA['miami']).get(p.categoria, 0)
+                costo_agencia_total += (p.cantidad or 1) * costo_unidad
+            else:
+                origen = p.origen if getattr(p, 'origen', None) else 'miami'
+                tarifas_origen = COSTOS_AGENCIA.get(origen, COSTOS_AGENCIA['miami'])
+                tipo = 'aereo' if str(p.tipo_envio).strip().lower() in ['aereo', 'aéreo'] else 'maritimo'
+                tarifa_aplicada = tarifas_origen.get(tipo, tarifas_origen['aereo'])
+                costo_agencia_total += (p.peso * tarifa_aplicada)
             
         costo_agencia = round(costo_agencia_total, 2)
         total_facturado = round(f.total, 2)
@@ -540,6 +547,7 @@ def exportar():
             f.cliente.cedula,
             f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
             tipo_envio_str,
+            total_libras,
             total_facturado,
             round(total_facturado * 37, 2),
             costo_agencia,
