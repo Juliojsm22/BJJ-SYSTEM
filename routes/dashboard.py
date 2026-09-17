@@ -39,19 +39,36 @@ def index():
         return redirect(url_for('paquetes.index'))
         
     periodo = request.args.get('periodo', 'mes')
+    mes_historico = request.args.get('mes_historico')
     hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    if periodo == 'dia':
+    fin_periodo = None
+    
+    if periodo == 'historico' and mes_historico:
+        year, month = map(int, mes_historico.split('-'))
+        inicio_periodo = hoy.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        if month == 12:
+            fin_periodo = hoy.replace(year=year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            fin_periodo = hoy.replace(year=year, month=month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif periodo == 'dia':
         inicio_periodo = hoy.replace(hour=0, minute=0, second=0, microsecond=0)
     elif periodo == 'semana':
         inicio_periodo = inicio_semana
     else:  # mes
         inicio_periodo = inicio_mes
 
+    filtros_fecha = [Factura.fecha_emision >= inicio_periodo]
+    if fin_periodo:
+        filtros_fecha.append(Factura.fecha_emision < fin_periodo)
+
     ganancias_semana = calcular_ganancia_facturas(inicio_semana)
-    ganancias_mes = calcular_ganancia_facturas(inicio_mes)
+    if periodo == 'historico':
+        ganancias_mes = calcular_ganancia_facturas(inicio_periodo, fin_periodo)
+    else:
+        ganancias_mes = calcular_ganancia_facturas(inicio_mes)
 
     total_clientes = Cliente.query.filter_by(activo=True).count()
     total_paquetes = Paquete.query.count()
@@ -64,7 +81,7 @@ def index():
         func.count(Paquete.id).label('total_paquetes')
     ).join(Factura, Cliente.id == Factura.cliente_id)\
      .join(Paquete, Factura.id == Paquete.factura_id)\
-     .filter(Cliente.activo == True, Factura.estado.in_(['finalizada', 'pagada']), Factura.fecha_emision >= inicio_periodo)\
+     .filter(Cliente.activo == True, Factura.estado.in_(['finalizada', 'pagada']), *filtros_fecha)\
      .group_by(Cliente.id)\
      .order_by(func.sum(Paquete.peso).desc())\
      .limit(5).all()
@@ -98,19 +115,20 @@ def index():
             tendencia_valores.append(float(total))
 
     else:
-        # Últimos 6 meses
+        # Últimos 6 meses hasta inicio_periodo
+        base_date = inicio_periodo if periodo == 'historico' else hoy
         for i in range(5, -1, -1):
-            target_month = hoy.month - i
-            target_year = hoy.year
+            target_month = base_date.month - i
+            target_year = base_date.year
             while target_month <= 0:
                 target_month += 12
                 target_year -= 1
                 
-            inicio = hoy.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            inicio = base_date.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
             if target_month == 12:
-                fin = hoy.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = base_date.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
-                fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = base_date.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 
             total = calcular_ganancia_facturas(inicio, fin)
             tendencia_labels.append(inicio.strftime('%b %Y'))
@@ -119,13 +137,13 @@ def index():
     aereos = Paquete.query.join(Factura).filter(
         Paquete.tipo_envio == 'aereo',
         Factura.estado.in_(['finalizada', 'pagada']),
-        Factura.fecha_emision >= inicio_periodo
+        *filtros_fecha
     ).count()
 
     maritimos = Paquete.query.join(Factura).filter(
         Paquete.tipo_envio == 'maritimo',
         Factura.estado.in_(['finalizada', 'pagada']),
-        Factura.fecha_emision >= inicio_periodo
+        *filtros_fecha
     ).count()
 
     # Legacy variables for tables
@@ -147,6 +165,7 @@ def index():
 
     return render_template('dashboard/index.html',
         periodo=periodo,
+        mes_historico=mes_historico,
         ganancias_semana=ganancias_semana,
         ganancias_mes=ganancias_mes,
         total_clientes=total_clientes,
@@ -187,8 +206,15 @@ def pdf_reporte():
     import os
 
     periodo = request.args.get('periodo', 'mes')
+    mes_historico = request.args.get('mes_historico')
     hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    if periodo == 'historico' and mes_historico:
+        year, month = map(int, mes_historico.split('-'))
+        inicio_periodo = hoy.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        inicio_periodo = hoy
 
     tendencia_data = []
     titulo_tabla = ""
@@ -220,20 +246,21 @@ def pdf_reporte():
             tendencia_data.append([lbl, f'${total:.2f}'])
 
     else:
-        titulo_tabla = 'Resumen Mensual (Últimos 6 Meses)'
+        titulo_tabla = f'Resumen Histórico ({mes_historico})' if periodo == 'historico' else 'Resumen Mensual (Últimos 6 Meses)'
         encabezado_columna = 'Mes'
+        base_date = inicio_periodo if periodo == 'historico' else hoy
         for i in range(5, -1, -1):
-            target_month = hoy.month - i
-            target_year = hoy.year
+            target_month = base_date.month - i
+            target_year = base_date.year
             while target_month <= 0:
                 target_month += 12
                 target_year -= 1
                 
-            inicio = hoy.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            inicio = base_date.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
             if target_month == 12:
-                fin = hoy.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = base_date.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             else:
-                fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin = base_date.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 
             total = calcular_ganancia_facturas(inicio, fin)
             tendencia_data.append([inicio.strftime('%b %Y'), f'${total:.2f}'])
@@ -332,11 +359,22 @@ def exportar_excel():
     from openpyxl.styles import Font, PatternFill, Alignment
 
     periodo = request.args.get('periodo', 'mes')
+    mes_historico = request.args.get('mes_historico')
     hoy = get_local_now()
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    if periodo == 'dia':
+    fin_periodo = None
+
+    if periodo == 'historico' and mes_historico:
+        year, month = map(int, mes_historico.split('-'))
+        inicio_periodo = hoy.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        if month == 12:
+            fin_periodo = hoy.replace(year=year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            fin_periodo = hoy.replace(year=year, month=month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        titulo_periodo = f'Histórico ({mes_historico})'
+    elif periodo == 'dia':
         inicio_periodo = hoy.replace(hour=0, minute=0, second=0, microsecond=0)
         titulo_periodo = 'Diario'
     elif periodo == 'semana':
@@ -345,20 +383,24 @@ def exportar_excel():
     else:  # mes
         inicio_periodo = inicio_mes
         titulo_periodo = 'Mensual'
+        
+    filtros_fecha = [Factura.fecha_emision >= inicio_periodo]
+    if fin_periodo:
+        filtros_fecha.append(Factura.fecha_emision < fin_periodo)
 
     # 1. KPIs Globales
-    ganancia_periodo = calcular_ganancia_facturas(inicio_periodo)
+    ganancia_periodo = calcular_ganancia_facturas(inicio_periodo, fin_periodo)
     total_clientes = Cliente.query.filter_by(activo=True).count()
     total_paquetes = Paquete.query.count()
     aereos = Paquete.query.join(Factura).filter(
         Paquete.tipo_envio == 'aereo',
         Factura.estado.in_(['finalizada', 'pagada']),
-        Factura.fecha_emision >= inicio_periodo
+        *filtros_fecha
     ).count()
     maritimos = Paquete.query.join(Factura).filter(
         Paquete.tipo_envio == 'maritimo',
         Factura.estado.in_(['finalizada', 'pagada']),
-        Factura.fecha_emision >= inicio_periodo
+        *filtros_fecha
     ).count()
 
     wb = openpyxl.Workbook()
@@ -415,14 +457,15 @@ def exportar_excel():
             lbl = f"{inicio.strftime('%d %b')} - {(fin - timedelta(days=1)).strftime('%d %b')}"
             ws2.append([lbl if i != 0 else "Esta Semana", total])
     else:
+        base_date = inicio_periodo if periodo == 'historico' else hoy
         for i in range(5, -1, -1):
-            target_month = hoy.month - i
-            target_year = hoy.year
+            target_month = base_date.month - i
+            target_year = base_date.year
             while target_month <= 0:
                 target_month += 12; target_year -= 1
-            inicio = hoy.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
-            if target_month == 12: fin = hoy.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            else: fin = hoy.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            inicio = base_date.replace(year=target_year, month=target_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            if target_month == 12: fin = base_date.replace(year=target_year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            else: fin = base_date.replace(year=target_year, month=target_month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
             total = calcular_ganancia_facturas(inicio, fin)
             ws2.append([inicio.strftime('%b %Y'), total])
 
@@ -440,7 +483,7 @@ def exportar_excel():
         func.sum(Paquete.peso).label('total_libras'),
         func.count(Paquete.id).label('total_paquetes')
     ).join(Factura, Cliente.id == Factura.cliente_id).join(Paquete, Factura.id == Paquete.factura_id).filter(
-        Cliente.activo == True, Factura.estado.in_(['finalizada', 'pagada']), Factura.fecha_emision >= inicio_periodo
+        Cliente.activo == True, Factura.estado.in_(['finalizada', 'pagada']), *filtros_fecha
     ).group_by(Cliente.id).order_by(func.sum(Paquete.peso).desc()).limit(10).all()
 
     for idx, (nombre, libras, paquetes) in enumerate(top_clientes, 1):
@@ -460,7 +503,7 @@ def exportar_excel():
 
     facturas = Factura.query.options(joinedload(Factura.paquetes)).filter(
         Factura.estado.in_(['finalizada', 'pagada']),
-        Factura.fecha_emision >= inicio_periodo
+        *filtros_fecha
     ).order_by(Factura.fecha_emision.desc()).all()
 
     from models import COSTOS_AGENCIA

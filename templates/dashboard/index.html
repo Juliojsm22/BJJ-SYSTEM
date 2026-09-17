@@ -90,15 +90,27 @@
 <div id="estadisticas-sistema" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
     <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin: 0;">Estadísticas del Sistema</h3>
     <div style="display: flex; align-items: center; gap: 15px;">
-        <div class="filter-group" style="display: flex; background: var(--surface2); border-radius: 8px; padding: 4px;">
+        <div class="filter-group" style="display: flex; align-items: center; background: var(--surface2); border-radius: 8px; padding: 4px; gap: 4px;">
             <a href="{{ url_for('dashboard.index', periodo='dia') }}" class="btn {% if periodo == 'dia' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Día</a>
             <a href="{{ url_for('dashboard.index', periodo='semana') }}" class="btn {% if periodo == 'semana' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Semana</a>
             <a href="{{ url_for('dashboard.index', periodo='mes') }}" class="btn {% if periodo == 'mes' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 12px; font-size: 13px; border: none; box-shadow: none;">Mes</a>
+            
+            <span style="color: var(--text-muted); margin-left: 8px;">|</span>
+            <input type="month" id="mes_historico" value="{{ mes_historico or '' }}" class="input-form" style="padding: 4px 8px; font-size: 13px; margin-left: 8px; width: 130px; height: auto;" onchange="cambiarMesHistorico(this.value)">
         </div>
-        <a href="{{ url_for('dashboard.exportar_excel', periodo=periodo) }}" class="btn btn-primary" style="background-color: var(--success); padding: 10px 16px; border-color: var(--success);">
+        
+        <script>
+        function cambiarMesHistorico(valor) {
+            if (valor) {
+                window.location.href = "{{ url_for('dashboard.index') }}?periodo=historico&mes_historico=" + valor;
+            }
+        }
+        </script>
+
+        <a href="{{ url_for('dashboard.exportar_excel', periodo=periodo, mes_historico=mes_historico) }}" class="btn btn-primary" style="background-color: var(--success); padding: 10px 16px; border-color: var(--success);">
             <i class="fas fa-file-excel"></i> Descargar Excel
         </a>
-        <a href="{{ url_for('dashboard.pdf_reporte', periodo=periodo) }}" target="_blank" class="btn btn-primary" style="background-color: var(--accent); padding: 10px 16px;">
+        <a href="{{ url_for('dashboard.pdf_reporte', periodo=periodo, mes_historico=mes_historico) }}" target="_blank" class="btn btn-primary" style="background-color: var(--accent); padding: 10px 16px;">
             <i class="fas fa-file-pdf"></i> Descargar PDF
         </a>
     </div>
@@ -113,7 +125,11 @@
         <i class="fas fa-dollar-sign stat-icon"></i>
     </div>
     <div class="stat-card teal">
+        {% if periodo == 'historico' and mes_historico %}
+        <span class="stat-label">Ganancias en {{ mes_historico }}</span>
+        {% else %}
         <span class="stat-label">Ganancias este mes</span>
+        {% endif %}
         <span class="stat-value teal">${{ "%.2f"|format(ganancias_mes) }}</span>
         <span class="stat-sub">Facturas finalizadas / pagadas</span>
         <i class="fas fa-chart-line stat-icon"></i>
