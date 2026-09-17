@@ -81,6 +81,8 @@ def nuevo():
         numeros_seguimiento = request.form.getlist('numero_seguimiento[]')
         warehouses = request.form.getlist('warehouse[]')
         estados_rastreo = request.form.getlist('estado_rastreo[]')
+        categorias = request.form.getlist('categoria[]')
+        cantidades = request.form.getlist('cantidad[]')
         
         # Validar números de seguimiento duplicados antes de guardar
         numeros_vistos = set()
@@ -106,6 +108,8 @@ def nuevo():
             numero_seg = numeros_seguimiento[i].strip()
             
             origen = origenes[i] if i < len(origenes) else 'miami'
+            categoria = categorias[i] if i < len(categorias) else 'general'
+            cantidad = int(cantidades[i] if i < len(cantidades) and cantidades[i] else 1)
             
             paquete = Paquete(
                 nombre=nombres[i].strip(),
@@ -113,6 +117,8 @@ def nuevo():
                 peso=peso,
                 tipo_envio=tipo_envio,
                 origen=origen,
+                categoria=categoria,
+                cantidad=cantidad,
                 cliente_id=cliente_id_form,
                 numero_seguimiento=numero_seg,
                 warehouse=warehouses[i].strip() if i < len(warehouses) and warehouses[i].strip() else None,
@@ -175,8 +181,10 @@ def editar(id):
 
     if request.method == 'POST':
         peso = int(request.form.get('peso', 0))
+        cantidad = int(request.form.get('cantidad', 1))
         tipo_envio = request.form.get('tipo_envio')
         origen = request.form.get('origen', 'miami')
+        categoria = request.form.get('categoria', 'general')
         cliente_id = int(request.form.get('cliente_id'))
         
         cliente = Cliente.query.get(cliente_id)
@@ -191,8 +199,10 @@ def editar(id):
         paquete.nombre = request.form.get('nombre').strip()
         paquete.descripcion = request.form.get('descripcion', '').strip()
         paquete.peso = peso
+        paquete.cantidad = cantidad
         paquete.tipo_envio = tipo_envio
         paquete.origen = origen
+        paquete.categoria = categoria
         paquete.numero_seguimiento = numero_seguimiento
         paquete.estado_rastreo = request.form.get('estado_rastreo', paquete.estado_rastreo)
         paquete.costo = paquete.calcular_costo()
@@ -244,12 +254,14 @@ def eliminar(id):
 @login_required
 def calcular_costo():
     peso = int(float(request.args.get('peso', 0)))
+    cantidad = int(request.args.get('cantidad', 1))
     tipo = request.args.get('tipo', 'aereo')
     origen = request.args.get('origen', 'miami')
+    categoria = request.form.get('categoria') or request.args.get('categoria', 'general')
     cliente_id = request.args.get('cliente_id')
     
     # Creamos un paquete temporal (en memoria) para aprovechar la lógica de calcular_costo()
-    p_temp = Paquete(peso=peso, tipo_envio=tipo, origen=origen)
+    p_temp = Paquete(peso=peso, cantidad=cantidad, tipo_envio=tipo, origen=origen, categoria=categoria)
     if cliente_id:
         p_temp.cliente_id = int(cliente_id)
         
@@ -268,11 +280,18 @@ def tarifas_cliente():
     result = {}
     for origen in origenes:
         result[origen] = {}
+        # Tipos regulares
         for tipo in tipos:
-            p = Paquete(peso=1, tipo_envio=tipo, origen=origen)
+            p = Paquete(peso=1, tipo_envio=tipo, origen=origen, categoria='general')
             if cliente_id:
                 p.cliente_id = int(cliente_id)
             result[origen][tipo] = p.calcular_costo()
+        # Tipos de tecnologia
+        for cat in ['celular', 'laptop']:
+            p_tec = Paquete(peso=0, cantidad=1, tipo_envio='aereo', origen=origen, categoria=cat)
+            if cliente_id:
+                p_tec.cliente_id = int(cliente_id)
+            result[origen][cat] = p_tec.calcular_costo()
             
     return jsonify(result)
 
@@ -376,7 +395,14 @@ def exportar():
         return val
 
     for p in paquetes:
-        precio_costo = round((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6), 2)
+        if p.categoria in ['celular', 'laptop']:
+            origen_key = p.origen if p.origen else 'miami'
+            from models import COSTOS_AGENCIA
+            costo_unidad = COSTOS_AGENCIA.get(origen_key, COSTOS_AGENCIA['miami']).get(p.categoria, 0)
+            precio_costo = round((p.cantidad or 1) * costo_unidad, 2)
+        else:
+            precio_costo = round((p.peso * 5.0) if p.tipo_envio == 'aereo' else (p.peso * 1.6), 2)
+            
         precio_venta = round(p.costo or 0, 2)
         ganancia = round(precio_venta - precio_costo, 2)
         

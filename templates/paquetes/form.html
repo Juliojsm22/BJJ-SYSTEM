@@ -78,12 +78,29 @@
                 <textarea name="descripcion" id="input_descripcion" class="form-control" placeholder="Descripción del contenido...">{{ paquete.descripcion }}</textarea>
             </div>
 
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="form-group">
-                    <label>Peso (libras) *</label>
+                    <label>Categoría *</label>
+                    <select name="categoria" id="categoria" class="form-control" required>
+                        <option value="general" {% if paquete.categoria == 'general' or not paquete.categoria %}selected{% endif %}>📦 Carga General (Libra)</option>
+                        <option value="celular" {% if paquete.categoria == 'celular' %}selected{% endif %}>📱 Celular (Unidad)</option>
+                        <option value="laptop" {% if paquete.categoria == 'laptop' %}selected{% endif %}>💻 Laptop (Unidad)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="div-cantidad" style="{% if paquete.categoria == 'general' or not paquete.categoria %}display:none;{% endif %}">
+                    <label>Cantidad (Unidades) *</label>
+                    <input type="number" name="cantidad" id="cantidad" class="form-control"
+                           value="{{ paquete.cantidad | int if paquete.cantidad else 1 }}"
+                           step="1" min="1" {% if paquete.categoria != 'general' %}required{% endif %}>
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group" id="div-peso">
+                    <label>Peso (libras) <span id="peso-req" style="{% if paquete.categoria != 'general' %}display:none;{% endif %}">*</span></label>
                     <input type="number" name="peso" id="peso" class="form-control"
-                           value="{{ paquete.peso | int }}"
-                           step="1" min="1" required placeholder="0">
+                           value="{{ paquete.peso | int if paquete.peso else 0 }}"
+                           step="1" min="0" {% if paquete.categoria == 'general' or not paquete.categoria %}required{% endif %} placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>Origen (Bodega) *</label>
@@ -148,22 +165,30 @@
 <script>
 function calcularCosto() {
     const peso = parseInt(document.getElementById('peso').value, 10) || 0;
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10) || 1;
     const tipo = document.getElementById('tipo_envio').value;
     const origen = document.getElementById('origen').value;
+    const categoria = document.getElementById('categoria').value;
     const selectCliente = document.getElementById('cliente_id');
     const cliente_id = selectCliente ? selectCliente.value : null;
     const preview = document.getElementById('costoPreview');
 
-    if (peso > 0 && tipo && origen) {
-        let url = `{{ url_for('paquetes.calcular_costo') }}?peso=${peso}&tipo=${tipo}&origen=${origen}`;
+    if (tipo && origen) {
+        let url = `{{ url_for('paquetes.calcular_costo') }}?peso=${peso}&cantidad=${cantidad}&tipo=${tipo}&origen=${origen}`;
+        url += `&categoria=${categoria}`;
         if (cliente_id) url += `&cliente_id=${cliente_id}`;
         
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('costoValor').textContent = '$' + data.costo.toFixed(2);
-                document.getElementById('costoFormula').textContent =
-                    `${peso.toFixed(2)} lb × $${data.tarifa.toFixed(2)} = $${data.costo.toFixed(2)}`;
+                if (categoria === 'general') {
+                    document.getElementById('costoFormula').textContent =
+                        `${peso.toFixed(2)} lb × $${data.tarifa.toFixed(2)} = $${data.costo.toFixed(2)}`;
+                } else {
+                    document.getElementById('costoFormula').textContent =
+                        `${cantidad} und × $${data.tarifa.toFixed(2)} = $${data.costo.toFixed(2)}`;
+                }
                 preview.style.display = 'block';
             })
             .catch(error => {
@@ -175,8 +200,46 @@ function calcularCosto() {
 }
 
 document.getElementById('peso').addEventListener('input', calcularCosto);
+document.getElementById('cantidad').addEventListener('input', calcularCosto);
 document.getElementById('tipo_envio').addEventListener('change', calcularCosto);
 document.getElementById('origen').addEventListener('change', actualizarTextosTarifa);
+
+document.getElementById('categoria').addEventListener('change', function(e) {
+    const cat = e.target.value;
+    const divCant = document.getElementById('div-cantidad');
+    const inputCant = document.getElementById('cantidad');
+    const inputPeso = document.getElementById('peso');
+    const pesoReq = document.getElementById('peso-req');
+    const selectTipo = document.getElementById('tipo_envio');
+    const optMar = document.getElementById('opt_maritimo');
+
+    if (cat !== 'general') {
+        divCant.style.display = 'block';
+        inputCant.required = true;
+        inputPeso.required = false;
+        if(pesoReq) pesoReq.style.display = 'none';
+        
+        selectTipo.value = 'aereo';
+        if(optMar) {
+            optMar.disabled = true;
+            optMar.hidden = true;
+        }
+    } else {
+        divCant.style.display = 'none';
+        inputCant.required = false;
+        inputPeso.required = true;
+        if(pesoReq) pesoReq.style.display = 'inline';
+        
+        if(optMar) {
+            const origen = document.getElementById('origen').value;
+            if (origen !== 'espana' && origen !== 'panama') {
+                optMar.disabled = false;
+                optMar.hidden = false;
+            }
+        }
+    }
+    actualizarTextosTarifa();
+});
 
 const selCliente = document.getElementById('cliente_id');
 let matrizTarifas = null;
@@ -185,21 +248,31 @@ function actualizarTextosTarifa() {
     const origen = document.getElementById('origen').value;
     const optAereo = document.getElementById('opt_aereo');
     const optMaritimo = document.getElementById('opt_maritimo');
+    const categoria = document.getElementById('categoria').value;
     
     if (matrizTarifas && origen && matrizTarifas[origen]) {
-        if(optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
-        if(optMaritimo) {
-            optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
-            if (origen === 'espana' || origen === 'panama') {
+        if (categoria === 'general') {
+            if(optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
+            if(optMaritimo) {
+                optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+                if (origen === 'espana' || origen === 'panama') {
+                    optMaritimo.disabled = true;
+                    optMaritimo.hidden = true;
+                    const selectTipo = document.getElementById('tipo_envio');
+                    if (selectTipo && selectTipo.value === 'maritimo') {
+                        selectTipo.value = 'aereo';
+                    }
+                } else {
+                    optMaritimo.disabled = false;
+                    optMaritimo.hidden = false;
+                }
+            }
+        } else {
+            const tarifaCat = matrizTarifas[origen][categoria] || 0;
+            if(optAereo) optAereo.textContent = `✈️ Aéreo — $${tarifaCat.toFixed(2)}/und`;
+            if(optMaritimo) {
                 optMaritimo.disabled = true;
                 optMaritimo.hidden = true;
-                const selectTipo = document.getElementById('tipo_envio');
-                if (selectTipo && selectTipo.value === 'maritimo') {
-                    selectTipo.value = 'aereo';
-                }
-            } else {
-                optMaritimo.disabled = false;
-                optMaritimo.hidden = false;
             }
         }
     }

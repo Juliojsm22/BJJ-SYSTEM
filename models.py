@@ -5,10 +5,10 @@ from werkzeug.security import check_password_hash
 
 # Costos base de la agencia naviera (Lo que le cuesta a la empresa traer la carga)
 COSTOS_AGENCIA = {
-    'miami': {'aereo': 5.0, 'maritimo': 1.6},
-    'espana': {'aereo': 8.0, 'maritimo': 0.0},
-    'panama': {'aereo': 5.5, 'maritimo': 0.0},
-    'los_angeles': {'aereo': 5.5, 'maritimo': 2.1}
+    'miami': {'aereo': 5.0, 'maritimo': 1.6, 'celular': 30.0, 'laptop': 40.0},
+    'espana': {'aereo': 8.0, 'maritimo': 0.0, 'celular': 30.0, 'laptop': 40.0},
+    'panama': {'aereo': 5.5, 'maritimo': 0.0, 'celular': 30.0, 'laptop': 40.0},
+    'los_angeles': {'aereo': 5.5, 'maritimo': 2.1, 'celular': 30.0, 'laptop': 40.0}
 }
 
 def get_local_now():
@@ -81,6 +81,8 @@ class Paquete(db.Model):
     warehouse = db.Column(db.String(100), index=True)
     estado_rastreo = db.Column(db.String(50), default='bodega_miami', index=True)
     origen = db.Column(db.String(50), default='miami', index=True) # miami, espana, panama, los_angeles
+    categoria = db.Column(db.String(50), default='general', index=True) # general, celular, laptop
+    cantidad = db.Column(db.Integer, default=1)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False, index=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas.id'), nullable=True)
     notificado_whatsapp = db.Column(db.Boolean, default=False, index=True)
@@ -94,10 +96,10 @@ class Paquete(db.Model):
     TARIFA_MARITIMO = 2.50
     
     TARIFAS_BASE = {
-        'miami': {'aereo': 6.50, 'maritimo': 2.50},
-        'espana': {'aereo': 10.00, 'maritimo': 0.00},
-        'panama': {'aereo': 6.50, 'maritimo': 0.00},
-        'los_angeles': {'aereo': 6.50, 'maritimo': 3.50}
+        'miami': {'aereo': 6.50, 'maritimo': 2.50, 'celular': 40.0, 'laptop': 50.0},
+        'espana': {'aereo': 10.00, 'maritimo': 0.00, 'celular': 40.0, 'laptop': 50.0},
+        'panama': {'aereo': 6.50, 'maritimo': 0.00, 'celular': 40.0, 'laptop': 50.0},
+        'los_angeles': {'aereo': 6.50, 'maritimo': 3.50, 'celular': 40.0, 'laptop': 50.0}
     }
 
     def calcular_costo(self):
@@ -129,36 +131,45 @@ class Paquete(db.Model):
             tarifa_temporal = tarifa_temp_query.filter_by(cliente_id=None).first()
             
         origen_key = self.origen if self.origen else 'miami'
-        attr_aereo = 'aereo' if origen_key == 'miami' else f'{origen_key}_aereo'
-        attr_maritimo = 'maritimo' if origen_key == 'miami' else f'{origen_key}_maritimo'
+        es_tecnologia = hasattr(self, 'categoria') and self.categoria in ['celular', 'laptop']
+        
+        if es_tecnologia:
+            attr_buscar = self.categoria
+        else:
+            attr_buscar = 'aereo' if origen_key == 'miami' else f'{origen_key}_aereo'
+            if self.tipo_envio == 'maritimo':
+                attr_buscar = 'maritimo' if origen_key == 'miami' else f'{origen_key}_maritimo'
             
         if tarifa_temporal:
-            if self.tipo_envio == 'aereo' and getattr(tarifa_temporal, attr_aereo, None) is not None:
-                posibles_tarifas.append(getattr(tarifa_temporal, attr_aereo))
-            elif self.tipo_envio == 'maritimo' and getattr(tarifa_temporal, attr_maritimo, None) is not None:
-                posibles_tarifas.append(getattr(tarifa_temporal, attr_maritimo))
+            val = getattr(tarifa_temporal, attr_buscar, None)
+            if val is not None:
+                posibles_tarifas.append(val)
             
         # 2. Verificar la tarifa especial (base) del cliente
         if cliente and getattr(cliente, 'tarifa_especial', None):
-            if self.tipo_envio == 'aereo' and getattr(cliente.tarifa_especial, attr_aereo, None) is not None:
-                posibles_tarifas.append(getattr(cliente.tarifa_especial, attr_aereo))
-            elif self.tipo_envio == 'maritimo' and getattr(cliente.tarifa_especial, attr_maritimo, None) is not None:
-                posibles_tarifas.append(getattr(cliente.tarifa_especial, attr_maritimo))
+            val = getattr(cliente.tarifa_especial, attr_buscar, None)
+            if val is not None:
+                posibles_tarifas.append(val)
 
         # 3. Verificar la tarifa general del sistema
-        tarifa_db = Tarifa.query.filter_by(nombre=self.tipo_envio, origen=origen_key).first()
+        nombre_tarifa_db = self.categoria if es_tecnologia else self.tipo_envio
+        tarifa_db = Tarifa.query.filter_by(nombre=nombre_tarifa_db, origen=origen_key).first()
             
         if tarifa_db:
             posibles_tarifas.append(tarifa_db.precio_por_libra)
         else:
             tarifas_origen = self.TARIFAS_BASE.get(origen_key, self.TARIFAS_BASE['miami'])
-            tarifa_defecto = tarifas_origen.get(self.tipo_envio, tarifas_origen['aereo'])
+            tarifa_defecto = tarifas_origen.get(nombre_tarifa_db, tarifas_origen.get('aereo', 0))
             posibles_tarifas.append(tarifa_defecto)
             
         # Seleccionar la tarifa más baja de todas las aplicables
-        tarifa_final = min(posibles_tarifas) if posibles_tarifas else self.TARIFAS_BASE['miami']['aereo']
+        tarifa_final = min(posibles_tarifas) if posibles_tarifas else self.TARIFAS_BASE['miami'].get(nombre_tarifa_db, 0)
                 
-        return round(self.peso * tarifa_final, 2)
+        if es_tecnologia:
+            cantidad = getattr(self, 'cantidad', 1) or 1
+            return round(cantidad * tarifa_final, 2)
+        else:
+            return round(self.peso * tarifa_final, 2)
 
     def save(self):
         self.costo = self.calcular_costo()
@@ -243,6 +254,8 @@ class TarifaEspecialCliente(db.Model):
     panama_maritimo = db.Column(db.Float, nullable=True)
     los_angeles_aereo = db.Column(db.Float, nullable=True)
     los_angeles_maritimo = db.Column(db.Float, nullable=True)
+    celular = db.Column(db.Float, nullable=True)
+    laptop = db.Column(db.Float, nullable=True)
     
     cliente = db.relationship('Cliente', backref=db.backref('tarifa_especial', uselist=False, cascade='all, delete-orphan'), overlaps="cliente,tarifa_especial")
 
@@ -259,6 +272,8 @@ class TarifaTemporal(db.Model):
     panama_maritimo = db.Column(db.Float, nullable=True)
     los_angeles_aereo = db.Column(db.Float, nullable=True)
     los_angeles_maritimo = db.Column(db.Float, nullable=True)
+    celular = db.Column(db.Float, nullable=True)
+    laptop = db.Column(db.Float, nullable=True)
     fecha_inicio = db.Column(db.Date, nullable=False)
     fecha_fin = db.Column(db.Date, nullable=False)
     creado_en = db.Column(db.DateTime, default=get_local_now)

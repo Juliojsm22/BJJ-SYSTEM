@@ -62,6 +62,8 @@ def create_app():
             "ALTER TABLE paquetes ADD COLUMN notificado_whatsapp BOOLEAN DEFAULT FALSE",
             "ALTER TABLE paquetes ADD COLUMN fecha_notificacion TIMESTAMP",
             "ALTER TABLE paquetes ADD COLUMN origen VARCHAR(50) DEFAULT 'miami'",
+            "ALTER TABLE paquetes ADD COLUMN categoria VARCHAR(50) DEFAULT 'general'",
+            "ALTER TABLE paquetes ADD COLUMN cantidad INTEGER DEFAULT 1",
             "ALTER TABLE tarifas ADD COLUMN origen VARCHAR(50) DEFAULT 'miami'",
             "ALTER TABLE tarifas_especiales_cliente ADD COLUMN espana_aereo FLOAT",
             "ALTER TABLE tarifas_especiales_cliente ADD COLUMN espana_maritimo FLOAT",
@@ -69,12 +71,16 @@ def create_app():
             "ALTER TABLE tarifas_especiales_cliente ADD COLUMN panama_maritimo FLOAT",
             "ALTER TABLE tarifas_especiales_cliente ADD COLUMN los_angeles_aereo FLOAT",
             "ALTER TABLE tarifas_especiales_cliente ADD COLUMN los_angeles_maritimo FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN celular FLOAT",
+            "ALTER TABLE tarifas_especiales_cliente ADD COLUMN laptop FLOAT",
             "ALTER TABLE tarifas_temporales ADD COLUMN espana_aereo FLOAT",
             "ALTER TABLE tarifas_temporales ADD COLUMN espana_maritimo FLOAT",
             "ALTER TABLE tarifas_temporales ADD COLUMN panama_aereo FLOAT",
             "ALTER TABLE tarifas_temporales ADD COLUMN panama_maritimo FLOAT",
             "ALTER TABLE tarifas_temporales ADD COLUMN los_angeles_aereo FLOAT",
-            "ALTER TABLE tarifas_temporales ADD COLUMN los_angeles_maritimo FLOAT"
+            "ALTER TABLE tarifas_temporales ADD COLUMN los_angeles_maritimo FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN celular FLOAT",
+            "ALTER TABLE tarifas_temporales ADD COLUMN laptop FLOAT"
         ]:
             try:
                 db.session.execute(db.text(query))

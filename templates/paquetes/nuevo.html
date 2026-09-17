@@ -118,8 +118,22 @@
         </div>
         <div class="grid-2">
             <div class="form-group">
-                <label>Peso (libras) *</label>
-                <input type="number" name="peso[]" class="form-control input-peso" step="1" min="1" required placeholder="0" oninput="calcularCostoGlobal()">
+                <label>Categoría *</label>
+                <select name="categoria[]" class="form-control select-categoria" required onchange="toggleTecnologia(this)">
+                    <option value="general" selected>📦 Carga General (Libra)</option>
+                    <option value="celular">📱 Celular (Unidad)</option>
+                    <option value="laptop">💻 Laptop (Unidad)</option>
+                </select>
+            </div>
+            <div class="form-group div-cantidad" style="display:none;">
+                <label>Cantidad (Unidades) *</label>
+                <input type="number" name="cantidad[]" class="form-control input-cantidad" step="1" min="1" value="1" oninput="calcularCostoGlobal()">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group div-peso-container">
+                <label>Peso (libras) <span class="peso-req">*</span></label>
+                <input type="number" name="peso[]" class="form-control input-peso" step="1" min="0" required placeholder="0" oninput="calcularCostoGlobal()">
             </div>
         <div class="grid-2">
             <div class="form-group">
@@ -174,6 +188,52 @@ function actualizarTextosTarifa() {
     calcularCostoGlobal();
 }
 
+function toggleTecnologia(selectElem) {
+    const row = selectElem.closest('.paquete-row');
+    if (!row) return;
+    
+    const divCantidad = row.querySelector('.div-cantidad');
+    const inputPeso = row.querySelector('.input-peso');
+    const pesoReq = row.querySelector('.peso-req');
+    const inputCantidad = row.querySelector('.input-cantidad');
+    const selectTipo = row.querySelector('.select-tipo');
+    
+    if (selectElem.value !== 'general') {
+        divCantidad.style.display = 'block';
+        inputCantidad.required = true;
+        inputPeso.required = false;
+        inputPeso.value = 0;
+        if(pesoReq) pesoReq.style.display = 'none';
+        
+        if (selectTipo) {
+            selectTipo.value = 'aereo';
+            const optMaritimo = selectTipo.querySelector('.opt-maritimo');
+            if(optMaritimo) {
+                optMaritimo.disabled = true;
+                optMaritimo.hidden = true;
+            }
+        }
+    } else {
+        divCantidad.style.display = 'none';
+        inputCantidad.required = false;
+        inputPeso.required = true;
+        if(pesoReq) pesoReq.style.display = 'inline';
+        
+        if (selectTipo) {
+            const optMaritimo = selectTipo.querySelector('.opt-maritimo');
+            if(optMaritimo) {
+                const origenSelect = row.querySelector('.select-origen');
+                const origen = origenSelect ? origenSelect.value : 'miami';
+                if (origen !== 'espana' && origen !== 'panama') {
+                    optMaritimo.disabled = false;
+                    optMaritimo.hidden = false;
+                }
+            }
+        }
+    }
+    calcularCostoGlobal();
+}
+
 function calcularCostoGlobal() {
     let costoTotal = 0;
     let paquetesValidos = 0;
@@ -189,32 +249,53 @@ function calcularCostoGlobal() {
             const tipo = tipoSelect.value;
             const origen = origenSelect.value;
             
+            const categoriaSelect = fila.querySelector('.select-categoria');
+            const categoria = categoriaSelect ? categoriaSelect.value : 'general';
+            const cantidadInput = fila.querySelector('.input-cantidad');
+            
             // Actualizar textos de los options basados en el origen seleccionado
             if (matrizTarifas[origen]) {
                 const optAereo = tipoSelect.querySelector('.opt-aereo');
                 const optMaritimo = tipoSelect.querySelector('.opt-maritimo');
-                if (optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
-                if (optMaritimo) {
-                    optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
-                    if (origen === 'espana' || origen === 'panama') {
+                
+                if (categoria === 'general') {
+                    if (optAereo) optAereo.textContent = `✈️ Aéreo — $${matrizTarifas[origen].aereo.toFixed(2)}/lb`;
+                    if (optMaritimo) {
+                        optMaritimo.textContent = `🚢 Marítimo — $${matrizTarifas[origen].maritimo.toFixed(2)}/lb`;
+                        if (origen === 'espana' || origen === 'panama') {
+                            optMaritimo.disabled = true;
+                            optMaritimo.hidden = true;
+                            if (tipoSelect.value === 'maritimo') {
+                                tipoSelect.value = 'aereo';
+                            }
+                        } else {
+                            optMaritimo.disabled = false;
+                            optMaritimo.hidden = false;
+                        }
+                    }
+                } else {
+                    const tarifaCat = matrizTarifas[origen][categoria] || 0;
+                    if (optAereo) optAereo.textContent = `✈️ Aéreo — $${tarifaCat.toFixed(2)}/und`;
+                    if (optMaritimo) {
                         optMaritimo.disabled = true;
                         optMaritimo.hidden = true;
-                        if (tipoSelect.value === 'maritimo') {
-                            tipoSelect.value = 'aereo';
-                        }
-                    } else {
-                        optMaritimo.disabled = false;
-                        optMaritimo.hidden = false;
                     }
                 }
             }
             
-            if (pesoStr && tipo && origen) {
-                const peso = parseInt(pesoStr, 10);
-                if (peso > 0 && matrizTarifas[origen] && matrizTarifas[origen][tipo] !== undefined) {
-                    const tarifa = matrizTarifas[origen][tipo];
-                    costoTotal += peso * tarifa;
-                    paquetesValidos++;
+            if (tipo && origen) {
+                if (categoria === 'general' && pesoStr) {
+                    const peso = parseInt(pesoStr, 10);
+                    if (peso > 0 && matrizTarifas[origen] && matrizTarifas[origen][tipo] !== undefined) {
+                        costoTotal += peso * matrizTarifas[origen][tipo];
+                        paquetesValidos++;
+                    }
+                } else if (categoria !== 'general' && cantidadInput) {
+                    const cantidad = parseInt(cantidadInput.value, 10);
+                    if (cantidad > 0 && matrizTarifas[origen] && matrizTarifas[origen][categoria] !== undefined) {
+                        costoTotal += cantidad * matrizTarifas[origen][categoria];
+                        paquetesValidos++;
+                    }
                 }
             }
         }
