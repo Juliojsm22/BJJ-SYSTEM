@@ -495,7 +495,7 @@ def exportar_excel():
 
     # --- HOJA 4: DETALLE FACTURAS ---
     ws4 = wb.create_sheet(title="Detalle Facturas")
-    headers4 = ["Factura ID", "Número", "Fecha Emisión", "Cliente", "Estado", "Total ($)", "Costo Agencia ($)", "Ganancia Neta ($)"]
+    headers4 = ["Factura ID", "Número", "Fecha Emisión", "Cliente", "Estado", "Total Libras", "Total ($)", "Costo Agencia ($)", "Ganancia Neta ($)"]
     ws4.append(headers4)
     for i, _ in enumerate(headers4, 1):
         ws4.cell(row=1, column=i).fill = header_fill
@@ -509,7 +509,10 @@ def exportar_excel():
     from models import COSTOS_AGENCIA
     for f in facturas:
         costo_ag = 0
+        total_libras = 0
         for p in f.paquetes:
+            if getattr(p, 'peso', None):
+                total_libras += p.peso
             if getattr(p, 'categoria', 'general') in ['celular', 'laptop']:
                 origen_key = p.origen if getattr(p, 'origen', None) else 'miami'
                 costo_unidad = COSTOS_AGENCIA.get(origen_key, COSTOS_AGENCIA['miami']).get(p.categoria, 0)
@@ -521,12 +524,12 @@ def exportar_excel():
                 costo_ag += (p.peso * tarifas_origen.get(tipo, tarifas_origen['aereo']))
         ganancia = f.total - costo_ag
         ws4.append([f.id, f.numero, f.fecha_emision.strftime('%Y-%m-%d %H:%M') if f.fecha_emision else '',
-                    f.cliente.nombre_completo, f.estado, round(f.total, 2), round(costo_ag, 2), round(ganancia, 2)])
+                    f.cliente.nombre_completo, f.estado, round(total_libras, 2), round(f.total, 2), round(costo_ag, 2), round(ganancia, 2)])
 
     ws4.column_dimensions['B'].width = 15
     ws4.column_dimensions['C'].width = 20
     ws4.column_dimensions['D'].width = 30
-    for col in ['E', 'F', 'G', 'H']: ws4.column_dimensions[col].width = 18
+    for col in ['E', 'F', 'G', 'H', 'I']: ws4.column_dimensions[col].width = 18
 
     # Save to buffer
     buffer = io.BytesIO()
