@@ -68,8 +68,10 @@ def nuevo():
         tarifa_panama_maritimo = request.form.get('tarifa_panama_maritimo')
         tarifa_la_aereo = request.form.get('tarifa_la_aereo')
         tarifa_la_maritimo = request.form.get('tarifa_la_maritimo')
+        tarifa_celular = request.form.get('tarifa_celular')
+        tarifa_laptop = request.form.get('tarifa_laptop')
         
-        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo:
+        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo or tarifa_celular or tarifa_laptop:
             from models import TarifaEspecialCliente
             tarifa_esp = TarifaEspecialCliente(
                 cliente_id=cliente.id,
@@ -80,7 +82,9 @@ def nuevo():
                 panama_aereo=float(tarifa_panama_aereo) if tarifa_panama_aereo else None,
                 panama_maritimo=float(tarifa_panama_maritimo) if tarifa_panama_maritimo else None,
                 los_angeles_aereo=float(tarifa_la_aereo) if tarifa_la_aereo else None,
-                los_angeles_maritimo=float(tarifa_la_maritimo) if tarifa_la_maritimo else None
+                los_angeles_maritimo=float(tarifa_la_maritimo) if tarifa_la_maritimo else None,
+                celular=float(tarifa_celular) if tarifa_celular else None,
+                laptop=float(tarifa_laptop) if tarifa_laptop else None
             )
             db.session.add(tarifa_esp)
             
@@ -129,9 +133,11 @@ def editar(id):
         tarifa_panama_maritimo = request.form.get('tarifa_panama_maritimo')
         tarifa_la_aereo = request.form.get('tarifa_la_aereo')
         tarifa_la_maritimo = request.form.get('tarifa_la_maritimo')
+        tarifa_celular = request.form.get('tarifa_celular')
+        tarifa_laptop = request.form.get('tarifa_laptop')
         
         from models import TarifaEspecialCliente, Paquete, Tarifa
-        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo:
+        if tarifa_aereo or tarifa_maritimo or tarifa_espana_aereo or tarifa_espana_maritimo or tarifa_panama_aereo or tarifa_panama_maritimo or tarifa_la_aereo or tarifa_la_maritimo or tarifa_celular or tarifa_laptop:
             if not cliente.tarifa_especial:
                 cliente.tarifa_especial = TarifaEspecialCliente(cliente_id=cliente.id)
             cliente.tarifa_especial.aereo = float(tarifa_aereo) if tarifa_aereo else None
@@ -142,6 +148,8 @@ def editar(id):
             cliente.tarifa_especial.panama_maritimo = float(tarifa_panama_maritimo) if tarifa_panama_maritimo else None
             cliente.tarifa_especial.los_angeles_aereo = float(tarifa_la_aereo) if tarifa_la_aereo else None
             cliente.tarifa_especial.los_angeles_maritimo = float(tarifa_la_maritimo) if tarifa_la_maritimo else None
+            cliente.tarifa_especial.celular = float(tarifa_celular) if tarifa_celular else None
+            cliente.tarifa_especial.laptop = float(tarifa_laptop) if tarifa_laptop else None
         else:
             if cliente.tarifa_especial:
                 db.session.delete(cliente.tarifa_especial)
